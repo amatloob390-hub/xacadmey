@@ -2566,11 +2566,11 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     required bool isWide,
   }) {
     return Container(
-      width: isWide ? 175 : 140,
-      padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: isWide ? 22 : 16),
+      width: isWide ? 145 : 120,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 10 : 8, vertical: isWide ? 22 : 16),
       decoration: BoxDecoration(
         color: const Color(0xFF10B981),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF10B981).withValues(alpha: 0.5),
@@ -2589,13 +2589,13 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 15 : 12, fontWeight: FontWeight.w900, color: Colors.white),
+            style: _ts(fontSize: isWide ? 14 : 11, fontWeight: FontWeight.w900, color: Colors.white),
           ),
           const SizedBox(height: 4),
           Text(
             desc,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 13 : 11, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.95)),
+            style: _ts(fontSize: isWide ? 12 : 10, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.95)),
           ),
         ],
       ),
