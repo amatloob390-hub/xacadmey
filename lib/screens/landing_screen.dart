@@ -2566,16 +2566,16 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     required bool isWide,
   }) {
     return Container(
-      width: isWide ? 210 : 160,
-      padding: EdgeInsets.symmetric(horizontal: isWide ? 18 : 12, vertical: isWide ? 14 : 10),
+      width: isWide ? 220 : 165,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 20 : 14, vertical: isWide ? 14 : 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.6),
+        color: const Color(0xFF10B981),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.25),
-            blurRadius: 14,
+            color: const Color(0xFF10B981).withValues(alpha: 0.5),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2584,18 +2584,18 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: const Color(0xFF34D399), size: isWide ? 28 : 22),
-          const SizedBox(height: 8),
+          Icon(icon, color: Colors.white, size: isWide ? 28 : 22),
+          const SizedBox(height: 6),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 15 : 12, fontWeight: FontWeight.bold, color: Colors.white),
+            style: _ts(fontSize: isWide ? 16 : 13, fontWeight: FontWeight.w900, color: Colors.white),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             desc,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 13 : 11, color: Colors.white.withValues(alpha: 0.85)),
+            style: _ts(fontSize: isWide ? 13 : 11, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.95)),
           ),
         ],
       ),
