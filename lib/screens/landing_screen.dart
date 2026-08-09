@@ -195,6 +195,12 @@ class _LandingScreenState extends State<LandingScreen> {
                           if (isWide) ...[
                             _buildHeaderLink(
                               theme: theme,
+                              label: L.t('کن کے لیے', 'For Whom?'),
+                              onTap: () => _scrollToSection(_useCaseKey),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildHeaderLink(
+                              theme: theme,
                               label: L.t('طریقہ کار', 'How It Works'),
                               onTap: () => _scrollToSection(_howItWorksKey),
                             ),
@@ -627,7 +633,7 @@ class _LandingScreenState extends State<LandingScreen> {
           children: [
             // PROMINENT SECTION TAG (22pt)
             Text(
-              L.t('ان کے لیے', 'FOR THEM'),
+              L.t('کن کے لیے', 'FOR WHOM?'),
               style: _ts(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -1481,7 +1487,7 @@ class _LandingScreenState extends State<LandingScreen> {
                             onTap: () => _scrollToSection(_plansKey),
                           ),
                           _buildFooterLink(
-                            label: L.t('ان کے لیے', 'For Them'),
+                            label: L.t('کن کے لیے', 'For Whom?'),
                             onTap: () => _scrollToSection(_useCaseKey),
                           ),
                         ],
@@ -1557,7 +1563,7 @@ class _LandingScreenState extends State<LandingScreen> {
                           onTap: () => _scrollToSection(_plansKey),
                         ),
                         _buildFooterLink(
-                          label: L.t('ان کے لیے', 'For Them'),
+                          label: L.t('کن کے لیے', 'For Whom?'),
                           onTap: () => _scrollToSection(_useCaseKey),
                         ),
                       ],
