@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "buildCommand": "bash build.sh",
+  "outputDirectory": "build/web",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
