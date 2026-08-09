@@ -1933,11 +1933,12 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width > 768;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 510,
+          height: isWide ? 570 : 510,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
@@ -2028,55 +2029,63 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
   }
 
   Widget _buildSlideContent(int index) {
+    final isWide = MediaQuery.of(context).size.width > 768;
+
     if (index == 0) {
-      // Slide 0: Main Hero Intro & Tagline Slide
+      // Slide 0: Main Hero Intro & Tagline Slide (Scaled Up for Full Screen Impact)
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: EdgeInsets.symmetric(horizontal: isWide ? 40 : 20, vertical: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 22 : 16, vertical: isWide ? 8 : 6),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                  ),
+                ],
               ),
               child: Text(
                 L.t('آپ کی نئی اسکل منتظر ہے 🚀', 'Your New Skill Awaits 🚀'),
                 style: _ts(
-                  fontSize: 14,
+                  fontSize: isWide ? 16 : 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text(
               L.t('آپ کی نئی اسکل بس ایک ٹیپ کی دوری پرہے۔', 'Your New Skill Is Just A Tap Away.'),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: 26,
+                fontSize: isWide ? 38 : 28,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                height: 1.5,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               L.t('دنیا میں کہیں بھی ہوں، سیکھنا آج شروع کریں۔ 7 دن کی مفت ٹرائل لیں۔', 'Wherever You Are In The World, Start Learning Today. Take A 7-Day Free Trial.'),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: 14,
-                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: isWide ? 17 : 14,
+                color: Colors.white.withValues(alpha: 0.95),
                 height: 1.7,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 26),
             Wrap(
-              spacing: 14,
-              runSpacing: 10,
+              spacing: 16,
+              runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
                 ElevatedButton.icon(
@@ -2089,30 +2098,30 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
                       widget.onNavigateToSignUp();
                     }
                   },
-                  icon: const Icon(Icons.flash_on_rounded, size: 18),
+                  icon: Icon(Icons.flash_on_rounded, size: isWide ? 22 : 18),
                   label: Text(
                     widget.isLoggedIn ? L.t('ڈیش بورڈ پر جائیں', 'Go To Dashboard') : L.t('مفت ٹرائل شروع کریں', 'Start Free Trial'),
-                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 34 : 24, vertical: isWide ? 16 : 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    elevation: 8,
-                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.5),
+                    elevation: 10,
+                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.6),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: widget.onScrollToHowItWorks,
-                  icon: const Icon(Icons.explore_outlined, size: 18, color: Colors.white),
+                  icon: Icon(Icons.explore_outlined, size: isWide ? 22 : 18, color: Colors.white),
                   label: Text(
                     L.t('طریقہ کار', 'How It Works'),
-                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white, width: 1.6),
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                    side: const BorderSide(color: Colors.white, width: 2.0),
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 30 : 22, vertical: isWide ? 16 : 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
                 ),
@@ -2122,7 +2131,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         ),
       );
     } else if (index == 1) {
-      // Slide 1: AI ACADEMY ONLINE LEARNING (Image 1 Fix - Compact & Centralized)
+      // Slide 1: AI ACADEMY ONLINE LEARNING (Scaled Up Tech Cards)
       return Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -2133,49 +2142,51 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
+                  padding: EdgeInsets.all(isWide ? 14 : 10),
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [widget.theme.primaryColor, widget.theme.secondaryColor],
+                      colors: [Color(0xFF10B981), Color(0xFF2563EB)],
                     ),
                   ),
-                  child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 28),
+                  child: Icon(Icons.psychology_rounded, color: Colors.white, size: isWide ? 34 : 28),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Text(
                   'AI ACADEMY',
-                  style: _ts(fontSize: 22, fontWeight: FontWeight.w900, color: widget.theme.primaryColor),
+                  style: _ts(fontSize: isWide ? 30 : 22, fontWeight: FontWeight.w900, color: Colors.white),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               L.t('EMPOWER YOURSELF IN AI', 'EMPOWER YOURSELF IN AI'),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+              style: _ts(fontSize: isWide ? 24 : 18, fontWeight: FontWeight.w900, color: Colors.white),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               L.t('کورسز، پروجیکٹس اور کمیونٹی', 'Courses, Projects & Community'),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: 13, color: widget.theme.subtextColor),
+              style: _ts(fontSize: isWide ? 16 : 13, color: Colors.white.withValues(alpha: 0.9)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 22),
             Wrap(
-              spacing: 14,
-              runSpacing: 10,
+              spacing: 20,
+              runSpacing: 14,
               alignment: WrapAlignment.center,
               children: [
                 _buildMiniTechCard(
                   icon: Icons.code_rounded,
                   title: 'Python for AI',
                   desc: 'ماشین لرننگ کورس',
+                  isWide: isWide,
                 ),
                 _buildMiniTechCard(
                   icon: Icons.auto_awesome_rounded,
                   title: 'ML Foundations',
                   desc: 'ایڈوانس لرننگ',
+                  isWide: isWide,
                 ),
               ],
             ),
@@ -2183,7 +2194,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         ),
       );
     } else if (index == 2) {
-      // Slide 2: Live Instructor Session (Sir Sikandarhayat Baba - Image 2 & 3 Fix)
+      // Slide 2: Live Instructor Session (Sir Sikandarhayat Baba - Scaled Up)
       return Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -2195,105 +2206,110 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               children: [
                 Text(
                   L.t('شام 7:00 · 60 منٹ', '7:00 PM · 60 mins'),
-                  style: _ts(fontSize: 12, color: widget.theme.subtextColor),
+                  style: _ts(fontSize: isWide ? 14 : 12, color: Colors.white.withValues(alpha: 0.9)),
                 ),
                 const SizedBox(width: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF059669).withValues(alpha: 0.2),
+                    color: const Color(0xFF059669).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF34D399), width: 1.2),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 8,
-                        height: 8,
+                        width: 9,
+                        height: 9,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
+                          color: Color(0xFF34D399),
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         L.t('ابھی لائیو', 'LIVE NOW'),
-                        style: _ts(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF34D399)),
+                        style: _ts(fontSize: isWide ? 13 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF34D399)),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               L.t('مصنوعی ذہانت (AI) اور جدید ٹیکنالوجی اسکلز', 'AI & Future Tech Skills'),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+              style: _ts(fontSize: isWide ? 26 : 18, fontWeight: FontWeight.w900, color: Colors.white),
             ),
-            const SizedBox(height: 6),
-            // Image 2 Text Adjustment
+            const SizedBox(height: 8),
             Text(
               L.t('فری لانسنگ — شروع سے کمائی تک', 'Freelancing — From Start to Earnings'),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: 16,
+                fontSize: isWide ? 22 : 16,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF34D399),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: isWide ? 56 : 44,
+                  height: isWide ? 56 : 44,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [widget.theme.primaryColor, widget.theme.secondaryColor]),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF2563EB)]),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
                   alignment: Alignment.center,
-                  child: Text('SK', style: _ts(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                  child: Text('SK', style: _ts(fontSize: isWide ? 20 : 16, fontWeight: FontWeight.w900, color: Colors.white)),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       L.t('سر سکندر حیات بابا', 'Sir Sikandarhayat Baba'),
-                      style: _ts(fontSize: 16, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+                      style: _ts(fontSize: isWide ? 20 : 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     Text(
                       L.t('بیچ: اگست · لائیو سیشن', 'Batch: August · Live Session'),
-                      style: _ts(fontSize: 12, color: widget.theme.subtextColor),
+                      style: _ts(fontSize: isWide ? 14 : 12, color: Colors.white.withValues(alpha: 0.85)),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Image 3 Fix: Compact Centralized Join Button
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: widget.onNavigateToAuth,
-              icon: const Icon(Icons.video_call_rounded, size: 20),
+              icon: Icon(Icons.video_call_rounded, size: isWide ? 24 : 20),
               label: Text(
                 L.t('کلاس جوائن کریں', 'Join Class'),
-                style: _ts(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                style: _ts(fontSize: isWide ? 17 : 15, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: isWide ? 50 : 40, vertical: isWide ? 15 : 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                elevation: 6,
+                elevation: 8,
               ),
             ),
           ],
         ),
       );
     } else {
-      // Slide 3: 24/7 AI Assistant & Neural Network Classroom Hub (Matching User Screenshot)
+      // Slide 3: 24/7 AI Assistant & Neural Network Classroom Hub (Scaled Up)
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
@@ -2304,119 +2320,111 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isWide ? 12 : 8),
                   decoration: BoxDecoration(
-                    color: widget.theme.primaryColor.withValues(alpha: 0.15),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.smart_toy_rounded, color: widget.theme.primaryColor, size: 22),
+                  child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: isWide ? 28 : 22),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Text(
                   L.t('AI لرننگ اسسٹنٹ 24/7', '24/7 AI Learning Assistant'),
-                  style: _ts(fontSize: 18, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+                  style: _ts(fontSize: isWide ? 24 : 18, fontWeight: FontWeight.w900, color: Colors.white),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               L.t('کلاس کے بعد سوالات پوچھے، کوڈ پریکٹس کرے اور پروجیکٹس مکمل کریں۔', 'Ask questions after class, practice code, and complete projects.'),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: 12, color: widget.theme.subtextColor),
+              style: _ts(fontSize: isWide ? 14 : 12, color: Colors.white.withValues(alpha: 0.9)),
             ),
-            const SizedBox(height: 10),
-            // Custom AI Neural Network Graphic (Matching User's Uploaded Screenshot)
-            _buildAINeuralClassroomGraphic(),
+            const SizedBox(height: 14),
+            _buildAINeuralClassroomGraphic(isWide),
           ],
         ),
       );
     }
   }
 
-  // --- AI NEURAL CLASSROOM NETWORK GRAPHIC (MATCHING USER SCREENSHOT) ---
-  Widget _buildAINeuralClassroomGraphic() {
+  // --- AI NEURAL CLASSROOM NETWORK GRAPHIC (SCALED UP FOR DESKTOP & MOBILE) ---
+  Widget _buildAINeuralClassroomGraphic(bool isWide) {
     return Container(
-      height: 250,
+      height: isWide ? 290 : 250,
       width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 620),
-      padding: const EdgeInsets.all(12),
+      constraints: BoxConstraints(maxWidth: isWide ? 780 : 620),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF070F1E).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.6),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.8),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.25),
-            blurRadius: 24,
-            spreadRadius: 1,
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            blurRadius: 28,
+            spreadRadius: 2,
           ),
         ],
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // 1. Grid Lines Background
           Positioned.fill(
             child: CustomPaint(
               painter: _GridNetworkPainter(),
             ),
           ),
-
-          // 2. Glowing Dashed Neural Ray Lines
           Positioned.fill(
             child: CustomPaint(
               painter: _NeuralRaysPainter(),
             ),
           ),
-
-          // 3. Central Top AI Node
           Positioned(
-            top: 8,
+            top: isWide ? 12 : 8,
             child: Column(
               children: [
-                // Constellation arc dots
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(7, (i) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 5,
-                    height: 5,
+                    width: isWide ? 7 : 5,
+                    height: isWide ? 7 : 5,
                     decoration: BoxDecoration(
                       color: const Color(0xFF34D399),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF34D399).withValues(alpha: 0.9),
-                          blurRadius: 6,
+                          blurRadius: 8,
                         ),
                       ],
                     ),
                   )),
                 ),
                 const SizedBox(height: 6),
-                // AI Badge Circle
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: isWide ? 66 : 56,
+                  height: isWide ? 66 : 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
                       colors: [Color(0xFF059669), Color(0xFF0284C7)],
                     ),
-                    border: Border.all(color: const Color(0xFF6EE7B7), width: 2.2),
+                    border: Border.all(color: const Color(0xFF6EE7B7), width: 2.5),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF10B981).withValues(alpha: 0.6),
-                        blurRadius: 18,
+                        blurRadius: 20,
                         spreadRadius: 2,
                       ),
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: const Text(
+                  child: Text(
                     'AI',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: isWide ? 24 : 20,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       letterSpacing: 1.2,
@@ -2426,80 +2434,74 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               ],
             ),
           ),
-
-          // 4. Left Analytics Card (Bar Chart)
           Positioned(
-            left: 14,
-            top: 55,
+            left: isWide ? 22 : 14,
+            top: isWide ? 65 : 55,
             child: Container(
-              width: 82,
-              height: 64,
+              width: isWide ? 100 : 82,
+              height: isWide ? 76 : 64,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.4),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                    blurRadius: 10,
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                    blurRadius: 12,
                   ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(height: 3, width: 32, color: const Color(0xFF34D399)),
+                  Container(height: 4, width: 38, color: const Color(0xFF34D399)),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Container(width: 7, height: 16, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 7, height: 28, decoration: BoxDecoration(color: const Color(0xFF34D399), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 7, height: 20, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 7, height: 32, decoration: BoxDecoration(color: const Color(0xFF6EE7B7), borderRadius: BorderRadius.circular(2))),
+                      Container(width: 8, height: isWide ? 22 : 16, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
+                      Container(width: 8, height: isWide ? 36 : 28, decoration: BoxDecoration(color: const Color(0xFF34D399), borderRadius: BorderRadius.circular(2))),
+                      Container(width: 8, height: isWide ? 26 : 20, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
+                      Container(width: 8, height: isWide ? 42 : 32, decoration: BoxDecoration(color: const Color(0xFF6EE7B7), borderRadius: BorderRadius.circular(2))),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-
-          // 5. Right Analytics Card (Constellation Node Graph)
           Positioned(
-            right: 14,
-            top: 55,
+            right: isWide ? 22 : 14,
+            top: isWide ? 65 : 55,
             child: Container(
-              width: 82,
-              height: 64,
+              width: isWide ? 100 : 82,
+              height: isWide ? 76 : 64,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.4),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                    blurRadius: 10,
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                    blurRadius: 12,
                   ),
                 ],
               ),
               child: CustomPaint(
-                size: const Size(66, 48),
+                size: Size(isWide ? 84 : 66, isWide ? 60 : 48),
                 painter: _ConstellationNodePainter(),
               ),
             ),
           ),
-
-          // 6. Bottom 3 Workstations (Students with Headsets at Desktop Monitors)
           Positioned(
-            bottom: 8,
+            bottom: isWide ? 12 : 8,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(3, (i) => _buildStudentWorkstationNode()),
+              children: List.generate(3, (i) => _buildStudentWorkstationNode(isWide)),
             ),
           ),
         ],
@@ -2507,52 +2509,49 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     );
   }
 
-  Widget _buildStudentWorkstationNode() {
+  Widget _buildStudentWorkstationNode(bool isWide) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Monitor Screen Card
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: isWide ? 7 : 5),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.2),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.4),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                blurRadius: 8,
+                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                blurRadius: 10,
               ),
             ],
           ),
           child: Column(
             children: [
-              Container(height: 3, width: 26, color: const Color(0xFF34D399)),
+              Container(height: 3, width: isWide ? 32 : 26, color: const Color(0xFF34D399)),
               const SizedBox(height: 3),
-              Container(height: 3, width: 18, color: const Color(0xFF6EE7B7)),
+              Container(height: 3, width: isWide ? 22 : 18, color: const Color(0xFF6EE7B7)),
             ],
           ),
         ),
-        // Monitor Stand
-        Container(width: 4, height: 4, color: const Color(0xFF34D399)),
-        Container(width: 14, height: 2, color: const Color(0xFF34D399)),
-        const SizedBox(height: 3),
-        // Student Avatar with Headset Icon
+        Container(width: 5, height: 5, color: const Color(0xFF34D399)),
+        Container(width: 16, height: 2, color: const Color(0xFF34D399)),
+        const SizedBox(height: 4),
         Stack(
           alignment: Alignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(isWide ? 6 : 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                color: const Color(0xFF10B981).withValues(alpha: 0.25),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF34D399), width: 1.2),
+                border: Border.all(color: const Color(0xFF34D399), width: 1.4),
               ),
-              child: const Icon(Icons.person_rounded, color: Color(0xFF6EE7B7), size: 16),
+              child: Icon(Icons.person_rounded, color: const Color(0xFF6EE7B7), size: isWide ? 20 : 16),
             ),
-            const Positioned(
+            Positioned(
               top: 0,
-              child: Icon(Icons.headset_rounded, color: Color(0xFF34D399), size: 13),
+              child: Icon(Icons.headset_rounded, color: const Color(0xFF34D399), size: isWide ? 16 : 13),
             ),
           ],
         ),
@@ -2564,18 +2563,19 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     required IconData icon,
     required String title,
     required String desc,
+    required bool isWide,
   }) {
     return Container(
-      width: 150,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      width: isWide ? 210 : 160,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 18 : 12, vertical: isWide ? 14 : 10),
       decoration: BoxDecoration(
-        color: widget.theme.isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.4),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.6),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.18),
-            blurRadius: 10,
+            color: const Color(0xFF10B981).withValues(alpha: 0.25),
+            blurRadius: 14,
           ),
         ],
       ),
@@ -2584,18 +2584,18 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: const Color(0xFF10B981), size: 22),
-          const SizedBox(height: 6),
+          Icon(icon, color: const Color(0xFF34D399), size: isWide ? 28 : 22),
+          const SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+            style: _ts(fontSize: isWide ? 15 : 12, fontWeight: FontWeight.bold, color: Colors.white),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             desc,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: 11, color: widget.theme.subtextColor),
+            style: _ts(fontSize: isWide ? 13 : 11, color: Colors.white.withValues(alpha: 0.85)),
           ),
         ],
       ),
