@@ -2252,255 +2252,198 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         ),
       );
     } else {
-      // Slide 3: 24/7 AI Assistant & Neural Network Classroom Hub (Scaled Up)
+      // Slide 3: Learn & Earn From Anywhere (Matching 2nd & 3rd Images - Center Aligned)
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: isWide ? 40 : 20, vertical: 16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(isWide ? 12 : 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
+            // Top Badge Tag (Image 3)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 22 : 16, vertical: isWide ? 8 : 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.7), width: 1.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                    blurRadius: 12,
                   ),
-                  child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: isWide ? 28 : 22),
+                ],
+              ),
+              child: Text(
+                L.t('لائیو آن لائن اسکلز اکیڈمی AI کے ساتھ', 'Live Online Skills Academy with AI'),
+                textAlign: TextAlign.center,
+                style: _ts(
+                  fontSize: isWide ? 16 : 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF34D399),
                 ),
-                const SizedBox(width: 12),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Main Headline (Image 3)
+            Column(
+              children: [
                 Text(
-                  L.t('AI لرننگ اسسٹنٹ 24/7', '24/7 AI Learning Assistant'),
-                  style: _ts(fontSize: isWide ? 24 : 18, fontWeight: FontWeight.w900, color: Colors.white),
+                  L.t('سیکھیں، کمائیں —', 'Learn, Earn —'),
+                  textAlign: TextAlign.center,
+                  style: _ts(
+                    fontSize: isWide ? 38 : 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.3,
+                  ),
+                ),
+                Text(
+                  L.t('کہیں سے بھی —', 'From Anywhere —'),
+                  textAlign: TextAlign.center,
+                  style: _ts(
+                    fontSize: isWide ? 40 : 30,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF34D399),
+                    height: 1.3,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 12),
+
+            // Body Subtext (Image 2 & 3)
             Text(
-              L.t('کلاس کے بعد سوالات پوچھے، کوڈ پریکٹس کرے اور پروجیکٹس مکمل کریں۔', 'Ask questions after class, practice code, and complete projects.'),
+              L.t(
+                'ماہرین سے فری لانسنگ اور آن-ڈیمانڈ ڈیجیٹل اسکلز لائیو سیکھیں — دور ہوں، مصروف ہوں یا بیرونِ ملک — اور AI کی مدد سے آن لائن کمائی کی طرف بڑھیں۔',
+                'Learn freelancing and on-demand digital skills live from experts — whether distant, busy, or overseas — and move towards online earnings with the help of AI.',
+              ),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: isWide ? 14 : 12, color: Colors.white.withValues(alpha: 0.9)),
+              style: _ts(
+                fontSize: isWide ? 16 : 13,
+                color: Colors.white.withValues(alpha: 0.95),
+                height: 1.7,
+              ),
             ),
-            const SizedBox(height: 14),
-            _buildAINeuralClassroomGraphic(isWide),
+            const SizedBox(height: 22),
+
+            // Action Buttons Row (Image 2)
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (widget.isLoggedIn) {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      widget.onNavigateToSignUp();
+                    }
+                  },
+                  icon: Icon(Icons.flash_on_rounded, size: isWide ? 22 : 18),
+                  label: Text(
+                    L.t('7 دن کی مفت ٹرائل شروع کریں', 'Start 7-Day Free Trial'),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 32 : 22, vertical: isWide ? 16 : 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    elevation: 10,
+                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.6),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: widget.onScrollToHowItWorks,
+                  icon: Icon(Icons.explore_outlined, size: isWide ? 22 : 18, color: Colors.white),
+                  label: Text(
+                    L.t('طریقہ دیکھیں', 'See How It Works'),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 2.0),
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20, vertical: isWide ? 16 : 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Social Proof Bottom Bar (Image 2)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildAvatarStack(isWide),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    L.t('دنیا بھر میں سیکھنے والے — کراچی سے دبئی اور ٹورنٹو تک۔', 'Learners worldwide — from Karachi to Dubai and Toronto.'),
+                    textAlign: TextAlign.center,
+                    style: _ts(
+                      fontSize: isWide ? 14 : 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
     }
   }
 
-  // --- AI NEURAL CLASSROOM NETWORK GRAPHIC (SCALED UP FOR DESKTOP & MOBILE) ---
-  Widget _buildAINeuralClassroomGraphic(bool isWide) {
-    return Container(
-      height: isWide ? 290 : 250,
-      width: double.infinity,
-      constraints: BoxConstraints(maxWidth: isWide ? 780 : 620),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF070F1E).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.8),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            blurRadius: 28,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+  Widget _buildAvatarStack(bool isWide) {
+    final letters = ['A', 'S', 'M', '+'];
+    final colors = [const Color(0xFF10B981), const Color(0xFF2563EB), const Color(0xFF059669), const Color(0xFF34D399)];
+    final size = isWide ? 28.0 : 24.0;
+
+    return SizedBox(
+      height: size,
+      width: (letters.length * (size - 10)) + 10,
       child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _GridNetworkPainter(),
-            ),
-          ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _NeuralRaysPainter(),
-            ),
-          ),
-          Positioned(
-            top: isWide ? 12 : 8,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(7, (i) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: isWide ? 7 : 5,
-                    height: isWide ? 7 : 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF34D399),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF34D399).withValues(alpha: 0.9),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                  )),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  width: isWide ? 66 : 56,
-                  height: isWide ? 66 : 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF059669), Color(0xFF0284C7)],
-                    ),
-                    border: Border.all(color: const Color(0xFF6EE7B7), width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.6),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'AI',
-                    style: TextStyle(
-                      fontSize: isWide ? 24 : 20,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: isWide ? 22 : 14,
-            top: isWide ? 65 : 55,
+        children: List.generate(letters.length, (i) {
+          return Positioned(
+            left: i * (size - 10),
             child: Container(
-              width: isWide ? 100 : 82,
-              height: isWide ? 76 : 64,
-              padding: const EdgeInsets.all(8),
+              width: size,
+              height: size,
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.4),
+                color: colors[i],
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                    blurRadius: 12,
+                    color: colors[i].withValues(alpha: 0.4),
+                    blurRadius: 6,
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(height: 4, width: 38, color: const Color(0xFF34D399)),
-                  const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Container(width: 8, height: isWide ? 22 : 16, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 8, height: isWide ? 36 : 28, decoration: BoxDecoration(color: const Color(0xFF34D399), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 8, height: isWide ? 26 : 20, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(2))),
-                      Container(width: 8, height: isWide ? 42 : 32, decoration: BoxDecoration(color: const Color(0xFF6EE7B7), borderRadius: BorderRadius.circular(2))),
-                    ],
-                  ),
-                ],
+              alignment: Alignment.center,
+              child: Text(
+                letters[i],
+                style: TextStyle(
+                  fontSize: isWide ? 12 : 10,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            right: isWide ? 22 : 14,
-            top: isWide ? 65 : 55,
-            child: Container(
-              width: isWide ? 100 : 82,
-              height: isWide ? 76 : 64,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6), width: 1.4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                    blurRadius: 12,
-                  ),
-                ],
-              ),
-              child: CustomPaint(
-                size: Size(isWide ? 84 : 66, isWide ? 60 : 48),
-                painter: _ConstellationNodePainter(),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: isWide ? 12 : 8,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(3, (i) => _buildStudentWorkstationNode(isWide)),
-            ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildStudentWorkstationNode(bool isWide) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: isWide ? 7 : 5),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.4),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(height: 3, width: isWide ? 32 : 26, color: const Color(0xFF34D399)),
-              const SizedBox(height: 3),
-              Container(height: 3, width: isWide ? 22 : 18, color: const Color(0xFF6EE7B7)),
-            ],
-          ),
-        ),
-        Container(width: 5, height: 5, color: const Color(0xFF34D399)),
-        Container(width: 16, height: 2, color: const Color(0xFF34D399)),
-        const SizedBox(height: 4),
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(isWide ? 6 : 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF34D399), width: 1.4),
-              ),
-              child: Icon(Icons.person_rounded, color: const Color(0xFF6EE7B7), size: isWide ? 20 : 16),
-            ),
-            Positioned(
-              top: 0,
-              child: Icon(Icons.headset_rounded, color: const Color(0xFF34D399), size: isWide ? 16 : 13),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildMiniTechCard({
     required IconData icon,
@@ -2682,94 +2625,4 @@ class _Floating3DAIEmojiWidgetState extends State<Floating3DAIEmojiWidget>
   }
 }
 
-// --- CUSTOM PAINTERS FOR AI NEURAL CLASSROOM NETWORK (MATCHING USER SCREENSHOT) ---
-class _GridNetworkPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.08)
-      ..strokeWidth = 1.0;
 
-    const step = 26.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _NeuralRaysPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF34D399).withValues(alpha: 0.6)
-      ..strokeWidth = 1.8
-      ..style = PaintingStyle.stroke;
-
-    final topCenter = Offset(size.width / 2, 70);
-    final targets = [
-      Offset(size.width * 0.2, size.height - 52),
-      Offset(size.width * 0.5, size.height - 52),
-      Offset(size.width * 0.8, size.height - 52),
-    ];
-
-    for (final target in targets) {
-      _drawDashedLine(canvas, topCenter, target, paint);
-    }
-  }
-
-  void _drawDashedLine(Canvas canvas, Offset p1, Offset p2, Paint paint) {
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-    final distance = (p2 - p1).distance;
-    final dx = (p2.dx - p1.dx) / distance;
-    final dy = (p2.dy - p1.dy) / distance;
-
-    double current = 0;
-    while (current < distance) {
-      final start = Offset(p1.dx + dx * current, p1.dy + dy * current);
-      current += dashWidth;
-      final end = Offset(p1.dx + dx * current, p1.dy + dy * current);
-      canvas.drawLine(start, end, paint);
-      current += dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ConstellationNodePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = const Color(0xFF34D399).withValues(alpha: 0.8)
-      ..strokeWidth = 1.6;
-
-    final dotPaint = Paint()
-      ..color = const Color(0xFF6EE7B7)
-      ..style = PaintingStyle.fill;
-
-    final p1 = Offset(size.width * 0.15, size.height * 0.8);
-    final p2 = Offset(size.width * 0.45, size.height * 0.3);
-    final p3 = Offset(size.width * 0.8, size.height * 0.25);
-    final p4 = Offset(size.width * 0.88, size.height * 0.7);
-
-    canvas.drawLine(p1, p2, linePaint);
-    canvas.drawLine(p2, p3, linePaint);
-    canvas.drawLine(p3, p4, linePaint);
-
-    canvas.drawCircle(p1, 3.5, dotPaint);
-    canvas.drawCircle(p2, 4.0, dotPaint);
-    canvas.drawCircle(p3, 3.5, dotPaint);
-    canvas.drawCircle(p4, 3.0, dotPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
