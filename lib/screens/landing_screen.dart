@@ -1925,7 +1925,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
-      color: color ?? widget.theme.textColor,
+      color: color ?? Colors.white,
       height: height ?? (AppLang.ur ? 1.8 : 1.5),
       fontFamily: AppLang.ur ? 'NotoNastaliqUrdu' : null,
     );
@@ -1972,15 +1972,8 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                         decoration: BoxDecoration(
-                          color: widget.theme.cardColor.withValues(alpha: 0.9),
+                          color: Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: widget.theme.isDark ? 0.35 : 0.05),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
                         ),
                         child: _buildSlideContent(index),
                       ),
@@ -2046,16 +2039,16 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: widget.theme.primaryColor.withValues(alpha: 0.15),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: widget.theme.primaryColor.withValues(alpha: 0.4)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
               ),
               child: Text(
                 L.t('آپ کی نئی اسکل منتظر ہے 🚀', 'Your New Skill Awaits 🚀'),
                 style: _ts(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: widget.theme.primaryColor,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -2066,7 +2059,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               style: _ts(
                 fontSize: 26,
                 fontWeight: FontWeight.w900,
-                color: widget.theme.textColor,
+                color: Colors.white,
                 height: 1.5,
               ),
             ),
@@ -2076,7 +2069,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
               textAlign: TextAlign.center,
               style: _ts(
                 fontSize: 14,
-                color: widget.theme.subtextColor,
+                color: Colors.white.withValues(alpha: 0.9),
                 height: 1.7,
               ),
             ),
@@ -2102,23 +2095,23 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
                     style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.theme.primaryColor,
+                    backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     elevation: 8,
-                    shadowColor: widget.theme.primaryColor.withValues(alpha: 0.5),
+                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.5),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: widget.onScrollToHowItWorks,
-                  icon: Icon(Icons.explore_outlined, size: 18, color: widget.theme.primaryColor),
+                  icon: const Icon(Icons.explore_outlined, size: 18, color: Colors.white),
                   label: Text(
                     L.t('طریقہ کار', 'How It Works'),
-                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: widget.theme.primaryColor, width: 1.6),
+                    side: const BorderSide(color: Colors.white, width: 1.6),
                     padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
