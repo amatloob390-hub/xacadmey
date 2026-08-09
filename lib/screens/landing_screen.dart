@@ -2179,7 +2179,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
                 _buildMiniTechCard(
                   icon: Icons.code_rounded,
                   title: 'Python for AI',
-                  desc: 'ماشین لرننگ کورس',
+                  desc: 'مشین لرننگ',
                   isWide: isWide,
                 ),
                 _buildMiniTechCard(
@@ -2566,36 +2566,41 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     required bool isWide,
   }) {
     return Container(
-      width: isWide ? 145 : 120,
-      padding: EdgeInsets.symmetric(horizontal: isWide ? 10 : 8, vertical: isWide ? 22 : 16),
+      width: isWide ? 220 : 180,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 18 : 14, vertical: isWide ? 12 : 10),
       decoration: BoxDecoration(
         color: const Color(0xFF10B981),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF10B981).withValues(alpha: 0.5),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.white, size: isWide ? 28 : 22),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 14 : 11, fontWeight: FontWeight.w900, color: Colors.white),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            desc,
-            textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 12 : 10, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.95)),
+          Icon(icon, color: Colors.white, size: isWide ? 26 : 22),
+          const SizedBox(width: 10),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                style: _ts(fontSize: isWide ? 14 : 12, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                desc,
+                style: _ts(fontSize: isWide ? 12 : 10, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.95)),
+              ),
+            ],
           ),
         ],
       ),
