@@ -2063,7 +2063,7 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
             ),
             const SizedBox(height: 16),
             Text(
-              L.t('آپ کی نئی اسکل بس ایک ٹیپ کی دوری پرہے۔', 'Your New Skill Is Just A Tap Away.'),
+              L.t('آپ کی نئی اسکل بس ایک کلک کی دوری پر ہے۔', 'Your New Skill Is Just A Click Away.'),
               textAlign: TextAlign.center,
               style: _ts(
                 fontSize: isWide ? 38 : 28,
@@ -2566,11 +2566,11 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
     required bool isWide,
   }) {
     return Container(
-      width: isWide ? 220 : 165,
-      padding: EdgeInsets.symmetric(horizontal: isWide ? 20 : 14, vertical: isWide ? 14 : 10),
+      width: isWide ? 175 : 140,
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: isWide ? 22 : 16),
       decoration: BoxDecoration(
         color: const Color(0xFF10B981),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF10B981).withValues(alpha: 0.5),
@@ -2585,13 +2585,13 @@ class _Hero3DSliderState extends State<Hero3DSlider> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white, size: isWide ? 28 : 22),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: _ts(fontSize: isWide ? 16 : 13, fontWeight: FontWeight.w900, color: Colors.white),
+            style: _ts(fontSize: isWide ? 15 : 12, fontWeight: FontWeight.w900, color: Colors.white),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             desc,
             textAlign: TextAlign.center,
