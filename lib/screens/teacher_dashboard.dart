@@ -1,0 +1,399 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../app_lang.dart';
+import '../services/teacher_service.dart';
+import '../widgets/create_class_dialog.dart';
+import '../widgets/add_student_dialog.dart';
+import '../widgets/logout_button.dart';
+import '../widgets/landing_button.dart';
+import '../widgets/user_banner.dart';
+import '../widgets/theme_selector.dart';
+import 'profile_screen.dart';
+import 'social_links_screen.dart';
+import 'student_approvals.dart';
+import 'attendance_report.dart';
+import 'pending_payments.dart';
+import 'pending_students.dart';
+import 'manage_roles.dart';
+
+class TeacherDashboard extends StatefulWidget {
+  /// 'teacher' | 'admin' | 'manager'
+  final String role;
+  const TeacherDashboard({super.key, this.role = 'teacher'});
+
+  @override
+  State<TeacherDashboard> createState() => _TeacherDashboardState();
+}
+
+class _TeacherDashboardState extends State<TeacherDashboard> {
+  final TeacherService _service = TeacherService();
+
+  // teacher/admin کلاسز بنا/ایڈٹ کر سکتے اور رول دے سکتے ہیں؛ manager نہیں۔
+  bool get _canManageClasses =>
+      widget.role == 'teacher' || widget.role == 'admin';
+  bool get _canAssignRoles =>
+      widget.role == 'teacher' || widget.role == 'admin';
+
+  List<Map<String, dynamic>> _classes = [];
+  bool _loading = true;
+  bool _error = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = false;
+    });
+    try {
+      final rows = await _service.myClasses();
+      if (!mounted) return;
+      setState(() {
+        _classes = rows;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = true;
+      });
+    }
+  }
+
+  Future<void> _toggle(int index, bool active) async {
+    final id = _classes[index]['id'] as String;
+    setState(() => _classes[index]['is_active'] = active);
+    try {
+      await _service.setActive(id, active);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _classes[index]['is_active'] = !active);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('تبدیلی محفوظ نہیں ہوئی، دوبارہ کوشش کریں۔',
+              'Change not saved, please try again.'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(L.t('ٹیچر ڈیش بورڈ', 'Teacher Dashboard')),
+        actions: [
+          const LandingButton(),
+          const LanguageToggle(),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: L.t('تازہ کریں', 'Refresh'),
+            onPressed: _load,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1, color: Colors.teal),
+            tooltip: L.t('اسٹوڈنٹ شامل کریں', 'Add Student'),
+            onPressed: _openAddStudentDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.how_to_reg, color: Colors.green),
+            tooltip: L.t('نئی تصدیقیں', 'Student Approvals'),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const StudentApprovalsScreen())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.payments_outlined),
+            tooltip: L.t('ادائیگیاں', 'Payments'),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PendingPayments())),
+          ),
+          IconButton(
+            icon: const Icon(Icons.timelapse),
+            tooltip: L.t('زیرِ التوا فیس', 'Pending Fees'),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PendingStudents())),
+          ),
+          if (_canAssignRoles)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Color(0xFFB9B2FF)),
+              tooltip: L.t('رول اور مینیجرز', 'Roles & Managers'),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => ManageRolesScreen(
+                          isAdmin: widget.role == 'admin'))),
+            ),
+          if (_canAssignRoles)
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: L.t('سوشل میڈیا لنکس', 'Social links'),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SocialLinksScreen())),
+            ),
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: L.t('پروفائل', 'Profile'),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          ),
+          const LanguageToggle(),
+          const ThemeSelectorButton(),
+          const LogoutButton(),
+        ],
+      ),
+      floatingActionButton: _canManageClasses
+          ? FloatingActionButton.extended(
+              onPressed: _openCreateDialog,
+              icon: const Icon(Icons.add),
+              label: Text(L.t('نئی کلاس', 'New Class')),
+            )
+          : null,
+      body: Column(
+        children: [
+          const UserBanner(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: _buildBody(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error) {
+      return _messageList(L.t('ڈیٹا لوڈ نہیں ہو سکا — نیچے کھینچ کر دوبارہ کوشش کریں۔',
+          'Could not load data — pull down to retry.'));
+    }
+    if (_classes.isEmpty) {
+      return _messageList(_canManageClasses
+          ? L.t('ابھی کوئی کلاس نہیں — نئی کلاس بنائیں۔', 'No classes yet — create one.')
+          : L.t('اوپر بٹنوں سے اسٹوڈنٹ شامل/تصدیق اور ادائیگیاں دیکھیں۔',
+              'Use the buttons above to add/verify students and view payments.'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _classes.length,
+      itemBuilder: (context, i) => _ClassCard(
+        data: _classes[i],
+        onToggle: (active) => _toggle(i, active),
+        onEdit: () => _openEditDialog(_classes[i]),
+        onDelete: () => _confirmDelete(_classes[i]['id']),
+      ),
+    );
+  }
+
+  Widget _messageList(String msg) => ListView(
+        children: [
+          const SizedBox(height: 120),
+          Center(
+              child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(msg, textAlign: TextAlign.center),
+          )),
+        ],
+      );
+
+  Future<void> _openAddStudentDialog() async {
+    await showDialog(
+      context: context,
+      builder: (_) => const AddStudentDialog(),
+    );
+  }
+
+  Future<void> _openCreateDialog() async {
+    await showDialog(
+      context: context,
+      builder: (_) => CreateClassDialog(service: _service),
+    );
+    _load();
+  }
+
+  Future<void> _openEditDialog(Map<String, dynamic> existing) async {
+    await showDialog(
+      context: context,
+      builder: (_) => CreateClassDialog(service: _service, existing: existing),
+    );
+    _load();
+  }
+
+  Future<void> _confirmDelete(String classId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(L.t('کلاس ڈیلیٹ کریں؟', 'Delete class?')),
+        content: Text(L.t('یہ عمل واپس نہیں ہو سکتا۔', 'This cannot be undone.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(L.t('منسوخ', 'Cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(L.t('ڈیلیٹ', 'Delete'),
+                style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await _service.deleteClass(classId);
+      _load();
+    }
+  }
+}
+
+class _ClassCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _ClassCard({
+    required this.data,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isActive = data['is_active'] as bool? ?? false;
+    final title = data['title'] as String? ?? '—';
+    final scheduled = DateTime.tryParse(data['scheduled_at'] ?? '');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive
+              ? const Color(0xFF10B981).withValues(alpha: 0.6)
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: isActive ? 2.0 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isActive
+                ? const Color(0xFF10B981).withValues(alpha: 0.18)
+                : Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.cast_for_education_rounded, color: Color(0xFF10B981), size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (scheduled != null)
+                      Text(
+                        '${L.t('وقت', 'Time')}: ${scheduled.day}/${scheduled.month} ${scheduled.hour}:${scheduled.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isActive ? L.t('لائیو', 'Live') : L.t('بند', 'Off'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isActive ? const Color(0xFF10B981) : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Switch(
+                    value: isActive,
+                    onChanged: onToggle,
+                    activeTrackColor: const Color(0xFF10B981).withValues(alpha: 0.4),
+                    activeThumbColor: const Color(0xFF10B981),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.link, color: Color(0xFF10B981)),
+                tooltip: L.t('کلاس کا لنک کاپی کریں', 'Copy class link'),
+                onPressed: () {
+                  final link = '${Uri.base.origin}/?class=${data['id']}';
+                  Clipboard.setData(ClipboardData(text: link));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(L.t(
+                        'کلاس کا لنک کاپی ہو گیا — طلبہ کو بھیجیں۔',
+                        'Class link copied — share it with students.')),
+                    backgroundColor: const Color(0xFF059669),
+                  ));
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.people_outline, color: Colors.blueAccent),
+                tooltip: L.t('حاضری رپورٹ', 'Attendance'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AttendanceReport(
+                      classId: data['id'],
+                      classTitle: data['title'] ?? 'Class',
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_note_rounded, color: Colors.orange),
+                tooltip: L.t('ایڈٹ کریں', 'Edit'),
+                onPressed: onEdit,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                tooltip: L.t('ڈیلیٹ', 'Delete'),
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
