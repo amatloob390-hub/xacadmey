@@ -560,23 +560,20 @@ class _LandingScreenState extends State<LandingScreen> {
       return Container(
         padding: const EdgeInsets.all(26),
         decoration: BoxDecoration(
-          color: theme.isDark ? const Color(0xFF111827) : theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: theme.isDark
-                ? [const Color(0xFF10B981).withValues(alpha: 0.1), const Color(0xFF2563EB).withValues(alpha: 0.1)]
-                : [const Color(0xFF10B981).withValues(alpha: 0.05), const Color(0xFF2563EB).withValues(alpha: 0.05)],
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF2563EB)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             width: 1.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.18),
-              blurRadius: 18,
+              color: const Color(0xFF10B981).withValues(alpha: 0.35),
+              blurRadius: 20,
               offset: const Offset(0, 6),
             ),
           ],
@@ -585,43 +582,36 @@ class _LandingScreenState extends State<LandingScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                    blurRadius: 10,
-                  ),
-                ],
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
               ),
               child: Icon(
                 c['icon'] as IconData,
                 color: Colors.white,
-                size: 26,
+                size: 28,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(
               L.t(c['titleUrdu'] as String, c['titleEn'] as String),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: theme.textColor,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               L.t(c['descUrdu'] as String, c['descEn'] as String),
               textAlign: TextAlign.center,
               style: _ts(
                 fontSize: 14,
-                color: theme.subtextColor,
-                height: 1.8,
+                color: Colors.white.withValues(alpha: 0.9),
+                height: 1.7,
               ),
             ),
           ],
@@ -733,23 +723,20 @@ class _LandingScreenState extends State<LandingScreen> {
       return Container(
         padding: const EdgeInsets.all(26),
         decoration: BoxDecoration(
-          color: theme.isDark ? const Color(0xFF111827) : theme.cardColor,
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: theme.isDark
-                ? [const Color(0xFF10B981).withValues(alpha: 0.1), const Color(0xFF2563EB).withValues(alpha: 0.1)]
-                : [const Color(0xFF10B981).withValues(alpha: 0.05), const Color(0xFF2563EB).withValues(alpha: 0.05)],
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF2563EB)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             width: 1.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.18),
-              blurRadius: 18,
+              color: const Color(0xFF10B981).withValues(alpha: 0.35),
+              blurRadius: 20,
               offset: const Offset(0, 6),
             ),
           ],
@@ -762,12 +749,11 @@ class _LandingScreenState extends State<LandingScreen> {
               height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-                ),
+                color: Colors.white.withValues(alpha: 0.2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                    color: Colors.white.withValues(alpha: 0.2),
                     blurRadius: 12,
                   ),
                 ],
@@ -782,24 +768,24 @@ class _LandingScreenState extends State<LandingScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text(
               L.t(s['titleUrdu'] as String, s['titleEn'] as String),
               textAlign: TextAlign.center,
               style: _ts(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: theme.textColor,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               L.t(s['descUrdu'] as String, s['descEn'] as String),
               textAlign: TextAlign.center,
               style: _ts(
                 fontSize: 14,
-                color: theme.subtextColor,
-                height: 1.8,
+                color: Colors.white.withValues(alpha: 0.9),
+                height: 1.7,
               ),
             ),
           ],
@@ -1123,25 +1109,20 @@ class _LandingScreenState extends State<LandingScreen> {
         width: isWide ? 340 : double.infinity,
         padding: const EdgeInsets.all(26),
         decoration: BoxDecoration(
-          color: theme.isDark ? const Color(0xFF111827) : theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            colors: isPop
-                ? [const Color(0xFF10B981).withValues(alpha: 0.18), const Color(0xFF2563EB).withValues(alpha: 0.18)]
-                : (theme.isDark
-                    ? [const Color(0xFF10B981).withValues(alpha: 0.08), const Color(0xFF2563EB).withValues(alpha: 0.08)]
-                    : [const Color(0xFF10B981).withValues(alpha: 0.04), const Color(0xFF2563EB).withValues(alpha: 0.04)]),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF2563EB)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           border: Border.all(
-            color: isPop ? const Color(0xFF10B981) : const Color(0xFF10B981).withValues(alpha: 0.5),
-            width: isPop ? 2.5 : 1.6,
+            color: Colors.white.withValues(alpha: 0.6),
+            width: isPop ? 2.5 : 1.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: isPop ? 0.3 : 0.12),
-              blurRadius: isPop ? 24 : 16,
+              color: const Color(0xFF10B981).withValues(alpha: isPop ? 0.45 : 0.3),
+              blurRadius: isPop ? 26 : 18,
               offset: const Offset(0, 6),
             ),
           ],
@@ -1159,17 +1140,15 @@ class _LandingScreenState extends State<LandingScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 4),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-                            ),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             L.t('سب سے مقبول', 'MOST POPULAR'),
                             style: _ts(
                                 fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF059669)),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -1180,8 +1159,8 @@ class _LandingScreenState extends State<LandingScreen> {
                   textAlign: TextAlign.center,
                   style: _ts(
                     fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1190,8 +1169,8 @@ class _LandingScreenState extends State<LandingScreen> {
                   textAlign: TextAlign.center,
                   style: _ts(
                     fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF10B981),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF6EE7B7),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1200,20 +1179,20 @@ class _LandingScreenState extends State<LandingScreen> {
                   textAlign: TextAlign.center,
                   style: _ts(
                     fontSize: 13,
-                    color: theme.subtextColor,
+                    color: Colors.white.withValues(alpha: 0.9),
                     height: 1.6,
                   ),
                 ),
                 Divider(
                     height: 28,
-                    color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                    color: Colors.white.withValues(alpha: 0.3)),
                 ...feats.map((f) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.check_circle_rounded,
-                            color: Color(0xFF10B981),
+                            color: Color(0xFF6EE7B7),
                             size: 18,
                           ),
                           const SizedBox(width: 10),
@@ -1222,7 +1201,7 @@ class _LandingScreenState extends State<LandingScreen> {
                               f,
                               style: _ts(
                                 fontSize: 14,
-                                color: theme.subtextColor,
+                                color: Colors.white.withValues(alpha: 0.95),
                                 height: 1.6,
                               ),
                             ),
@@ -1235,70 +1214,34 @@ class _LandingScreenState extends State<LandingScreen> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: isPop
-                  ? Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.4),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (isLoggedIn) {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            }
-                          } else {
-                            _navigateToAuth(isSignUp: true);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                        ),
-                        child: Text(
-                          L.t(p['btnText'] as String, 'Enroll Now'),
-                          style: _ts(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
-                      ),
-                    )
-                  : OutlinedButton(
-                      onPressed: () {
-                        if (isLoggedIn) {
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          }
-                        } else {
-                          _navigateToAuth(isSignUp: true);
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF10B981), width: 1.6),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                      ),
-                      child: Text(
-                        L.t(p['btnText'] as String, 'Get Started'),
-                        style: _ts(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: theme.textColor),
-                      ),
-                    ),
+              child: ElevatedButton(
+                onPressed: () {
+                  if (isLoggedIn) {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  } else {
+                    _navigateToAuth(isSignUp: true);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isPop ? const Color(0xFF0F172A) : Colors.white,
+                  foregroundColor: isPop ? Colors.white : const Color(0xFF059669),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 6,
+                ),
+                child: Text(
+                  p['btnText'] as String,
+                  style: _ts(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isPop ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
