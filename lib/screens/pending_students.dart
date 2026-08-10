@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/pending_student_service.dart';
+import 'pending_payments.dart';
 
 class PendingStudents extends StatefulWidget {
   const PendingStudents({super.key});
@@ -96,7 +97,18 @@ class _PendingStudentsState extends State<PendingStudents> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Text(L.t('زیرِ التوا فیس والے اسٹوڈنٹس', 'Students with Pending Fees'))),
+        title: Text(L.t('زیرِ التوا فیس والے اسٹوڈنٹس', 'Students with Pending Fees')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.payments_outlined, color: Colors.greenAccent),
+            tooltip: L.t('فیس کی درخواستیں دیکھیں', 'View Submitted Payments'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PendingPayments()),
+            ),
+          ),
+        ],
+      ),
       body: FutureBuilder<List<PendingStudent>>(
         future: _future,
         builder: (context, snapshot) {
@@ -143,8 +155,26 @@ class _PendingStudentsState extends State<PendingStudents> {
         ),
         trailing: PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
-          onSelected: (choice) => _daysDialog(s, isExtend: choice == 'extend'),
+          onSelected: (choice) {
+            if (choice == 'payments') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PendingPayments()),
+              );
+            } else {
+              _daysDialog(s, isExtend: choice == 'extend');
+            }
+          },
           itemBuilder: (_) => [
+            PopupMenuItem(
+                value: 'payments',
+                child: Row(
+                  children: [
+                    const Icon(Icons.payments_outlined, color: Colors.green, size: 20),
+                    const SizedBox(width: 8),
+                    Text(L.t('فیس درخواست اور تصدیق', 'View & Approve Payment')),
+                  ],
+                )),
             PopupMenuItem(
                 value: 'extend',
                 child: Text(L.t('مہلت بڑھائیں (+ دن)', 'Extend grace (+ days)'))),
