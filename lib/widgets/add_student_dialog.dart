@@ -3,7 +3,7 @@ import '../app_lang.dart';
 import '../services/staff_service.dart';
 
 /// ٹیچر/مینیجر: اسٹوڈنٹ کو کلاس میں اینرول کرے یا ای میل سے شامل کرے۔
-///  • سائن اپ شدہ اسٹوڈنٹ کو منتخب کلاس میں اینرول کرے
+///  • سائن اپ شدہ اسٹوڈنٹس تلاش (نام / ای میل) اور کلاس میں اینرول کرے
 ///  • نیا اسٹوڈنٹ ای میل سے شامل کرے
 class AddStudentDialog extends StatefulWidget {
   const AddStudentDialog({super.key});
@@ -17,14 +17,16 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _searchCtrl = TextEditingController();
 
-  int _mode = 0; // 0: سائن اپ شدہ اسٹوڈنٹ اینرول کریں, 1: ای میل سے نیا دعوت نامہ
+  int _mode = 0; // 0: سائن اپ شدہ اسٹوڈنٹ شامل کریں, 1: نیا ای میل دعوتی
 
   List<Map<String, dynamic>> _registeredStudents = [];
   List<Map<String, dynamic>> _classes = [];
 
   String? _selectedStudentId;
   String? _classId;
+  String _searchQuery = '';
 
   bool _loadingData = true;
   bool _busy = false;
@@ -63,6 +65,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   void dispose() {
     _emailCtrl.dispose();
     _nameCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -99,8 +102,8 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(L.t(
-          '$sName کو کامیابی سے کلاس میں اینرول کر دیا گیا۔',
-          '$sName successfully enrolled in class.',
+          '$sName کو کامیابی سے کلاس میں شامل کر دیا گیا۔',
+          '$sName successfully added to class.',
         )),
         backgroundColor: Colors.green.shade700,
       ));
@@ -108,7 +111,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(L.t('اینرول نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not enroll, please try again.')),
+        content: Text(L.t('شامل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not add, please try again.')),
         backgroundColor: Colors.red.shade700,
       ));
     }
@@ -151,12 +154,19 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredStudents = _registeredStudents.where((s) {
+      if (_searchQuery.isEmpty) return true;
+      final name = (s['full_name'] ?? '').toString().toLowerCase();
+      final email = (s['email'] ?? '').toString().toLowerCase();
+      return name.contains(_searchQuery) || email.contains(_searchQuery);
+    }).toList();
+
     return AlertDialog(
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(L.t('اسٹوڈنٹ اینرول / شامل کریں', 'Enroll / Add Student')),
+          Text(L.t('اسٹوڈنٹ شامل کریں', 'Add Student')),
           const SizedBox(height: 12),
           // Toggle Tabs between Registered Student vs New Email Invite
           Container(
@@ -179,7 +189,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        L.t('سائن اپ شدہ اسٹوڈنٹ', 'Registered Student'),
+                        L.t('سائن اپ شدہ اسٹوڈنٹ شامل کریں', 'Add Registered Student'),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -226,24 +236,57 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                 ? Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_registeredStudents.isEmpty)
+                      // SEARCH FIELD FOR NAME / EMAIL
+                      TextFormField(
+                        controller: _searchCtrl,
+                        decoration: InputDecoration(
+                          labelText: L.t('نام یا ای میل سے تلاش کریں...', 'Search by name or email...'),
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    _searchCtrl.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onChanged: (q) => setState(() => _searchQuery = q.trim().toLowerCase()),
+                      ),
+                      const SizedBox(height: 14),
+
+                      if (filteredStudents.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(12),
-                          child: Text(
-                            L.t('کوئی نیا سائن اپ شدہ اسٹوڈنٹ نہیں ملا۔', 'No registered students found.'),
-                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                          child: Column(
+                            children: [
+                              Text(
+                                L.t('کوئی اسٹوڈنٹ نہیں ملا۔', 'No matching student found.'),
+                                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                              ),
+                              const SizedBox(height: 6),
+                              TextButton.icon(
+                                icon: const Icon(Icons.person_add_alt_1, size: 16),
+                                label: Text(L.t('ای میل سے نیا اسٹوڈنٹ شامل کریں', 'Invite new student via email')),
+                                onPressed: () => setState(() => _mode = 1),
+                              ),
+                            ],
                           ),
                         )
                       else
                         DropdownButtonFormField<String>(
-                          initialValue: _selectedStudentId,
+                          initialValue: filteredStudents.any((s) => s['id'] == _selectedStudentId)
+                              ? _selectedStudentId
+                              : (filteredStudents.first['id'] as String?),
                           isExpanded: true,
                           decoration: InputDecoration(
-                            labelText: L.t('سائن اپ شدہ اسٹوڈنٹ منتخب کریں', 'Select Registered Student'),
+                            labelText: L.t('اسٹوڈنٹ منتخب کریں', 'Select Student'),
                             prefixIcon: const Icon(Icons.person_pin_outlined),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          items: _registeredStudents.map((s) {
+                          items: filteredStudents.map((s) {
                             final name = s['full_name']?.toString() ?? 'اسٹوڈنٹ';
                             final email = s['email']?.toString() ?? '';
                             return DropdownMenuItem<String>(
@@ -262,7 +305,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                           initialValue: _classId,
                           isExpanded: true,
                           decoration: InputDecoration(
-                            labelText: L.t('کس کلاس میں اینرول کریں؟', 'Select Class to Enroll'),
+                            labelText: L.t('کلاس میں شامل کریں', 'Select Class to Enroll'),
                             prefixIcon: const Icon(Icons.class_outlined),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -345,7 +388,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : Text(_mode == 0
-                  ? L.t('کلاس میں اینرول کریں', 'Enroll in Class')
+                  ? L.t('کلاس میں شامل کریں', 'Add to Class')
                   : L.t('دعوت بھیجیں', 'Send Invite')),
         ),
       ],

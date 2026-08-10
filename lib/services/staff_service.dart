@@ -64,20 +64,83 @@ class StaffService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  /// تمام سائن اپ شدہ / رجسٹرڈ اسٹوڈنٹس کی فہرست
+  /// تمام سائن اپ شدہ / رجسٹرڈ اسٹوڈنٹس کی فہرست (profiles, payments, RPCs سے)
   Future<List<Map<String, dynamic>>> getRegisteredStudents() async {
+    Map<String, Map<String, dynamic>> studentMap = {};
+
+    // 1. Fetch profiles
     try {
       final rows = await _supabase
           .from('profiles')
-          .select('id, full_name, email, role')
-          .order('full_name', ascending: true);
-      return (rows as List)
-          .cast<Map<String, dynamic>>()
-          .where((p) => (p['role'] == null || p['role'] == 'student' || p['role'] == ''))
-          .toList();
-    } catch (_) {
-      return [];
+          .select('id, full_name, email, role');
+      if (rows is List) {
+        for (var r in rows) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['id']?.toString() ?? '';
+          final role = m['role']?.toString().toLowerCase() ?? '';
+          if (id.isNotEmpty && role != 'teacher' && role != 'admin' && role != 'manager') {
+            studentMap[id] = {
+              'id': id,
+              'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
+              'email': m['email']?.toString() ?? '',
+            };
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fetch payments to find any additional student IDs
+    try {
+      final pRows = await _supabase.from('payments').select('student_id');
+      if (pRows is List) {
+        final sIds = pRows.map((r) => r['student_id']?.toString()).whereType<String>().toSet();
+        if (sIds.isNotEmpty) {
+          final missing = sIds.where((id) => !studentMap.containsKey(id)).toList();
+          if (missing.isNotEmpty) {
+            try {
+              final pr = await _supabase.from('profiles').select('id, full_name, email').inFilter('id', missing);
+              if (pr is List) {
+                for (var r in pr) {
+                  final m = Map<String, dynamic>.from(r as Map);
+                  final id = m['id']?.toString() ?? '';
+                  if (id.isNotEmpty) {
+                    studentMap[id] = {
+                      'id': id,
+                      'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
+                      'email': m['email']?.toString() ?? '',
+                    };
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 3. Fallback: RPC calls if profiles table direct query was blocked or returned empty
+    if (studentMap.isEmpty) {
+      try {
+        final rpcRows = await _supabase.rpc('list_pending_students') as List?;
+        if (rpcRows != null) {
+          for (var r in rpcRows) {
+            final m = Map<String, dynamic>.from(r as Map);
+            final id = m['id']?.toString() ?? m['user_id']?.toString() ?? m['student_id']?.toString() ?? '';
+            if (id.isNotEmpty) {
+              studentMap[id] = {
+                'id': id,
+                'full_name': m['full_name']?.toString() ?? m['student_name']?.toString() ?? 'اسٹوڈنٹ',
+                'email': m['email']?.toString() ?? '',
+              };
+            }
+          }
+        }
+      } catch (_) {}
     }
+
+    final list = studentMap.values.toList();
+    list.sort((a, b) => (a['full_name'] as String).compareTo(b['full_name'] as String));
+    return list;
   }
 
   /// رجسٹرڈ اسٹوڈنٹ کو منتخب کلاس میں اینرول اور فعال کریں
