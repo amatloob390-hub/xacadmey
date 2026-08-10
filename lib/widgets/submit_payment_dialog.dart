@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../app_lang.dart';
@@ -39,15 +40,16 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
   }
 
   Future<void> _pickReceiptImage() async {
+    // 1) Primary Method: FilePicker (Works reliably on Web, Desktop, Mobile)
     try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
       );
-      if (image != null) {
-        final bytes = await image.readAsBytes();
-        if (bytes.isNotEmpty) {
+      if (result != null && result.files.isNotEmpty) {
+        final bytes = result.files.single.bytes;
+        if (bytes != null && bytes.isNotEmpty) {
           setState(() {
             _imageBytes = bytes;
           });
@@ -55,12 +57,36 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
         }
       }
     } catch (e) {
-      debugPrint('ImagePicker info: $e');
+      debugPrint('FilePicker image pick info: $e');
     }
 
+    // 2) Mobile Gallery Fallback
+    if (!kIsWeb) {
+      try {
+        final picker = ImagePicker();
+        final XFile? image = await picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        if (image != null) {
+          final bytes = await image.readAsBytes();
+          if (bytes.isNotEmpty) {
+            setState(() {
+              _imageBytes = bytes;
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint('ImagePicker info: $e');
+      }
+    }
+
+    // 3) Any File Fallback
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,
+        allowMultiple: false,
         withData: true,
       );
       if (result != null && result.files.isNotEmpty) {
@@ -72,7 +98,7 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
         }
       }
     } catch (e) {
-      debugPrint('FilePicker info: $e');
+      debugPrint('FilePicker any info: $e');
     }
   }
 
@@ -224,72 +250,80 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- RECEIPT IMAGE UPLOAD SECTION ---
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: inputFill,
+                  // --- RECEIPT IMAGE UPLOAD SECTION (FULLY CLICKABLE) ---
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _pickReceiptImage,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        if (_imageBytes != null) ...[
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.memory(
-                              _imageBytes!,
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle,
-                                  color: Color(0xFF10B981), size: 18),
-                              const SizedBox(width: 6),
-                              Text(
-                                L.t('رسید کی تصویر منتخب ہو گئی ✅',
-                                    'Receipt Image Selected ✅'),
-                                style: _ts(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF10B981),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                        ],
-                        OutlinedButton.icon(
-                          onPressed: _pickReceiptImage,
-                          icon: Icon(Icons.add_a_photo_outlined, size: 20, color: theme.primaryColor),
-                          label: Text(
-                            _imageBytes == null
-                                ? L.t('رسید / اسکرین شاٹ اپ لوڈ کریں',
-                                    'Upload Receipt / Screenshot')
-                                : L.t('تصویر تبدیل کریں', 'Change Photo'),
-                            style: _ts(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: theme.primaryColor,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.primaryColor,
-                            side: BorderSide(color: theme.primaryColor, width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: theme.isDark ? const Color(0xFF34D399).withValues(alpha: 0.7) : const Color(0xFF10B981).withValues(alpha: 0.7),
+                            width: 1.5,
                           ),
                         ),
-                      ],
+                        child: Column(
+                          children: [
+                            if (_imageBytes != null) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.memory(
+                                  _imageBytes!,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.check_circle,
+                                      color: Color(0xFF10B981), size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    L.t('رسید کی تصویر منتخب ہو گئی ✅',
+                                        'Receipt Image Selected ✅'),
+                                    style: _ts(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                            OutlinedButton.icon(
+                              onPressed: _pickReceiptImage,
+                              icon: Icon(Icons.add_a_photo_outlined, size: 20, color: theme.primaryColor),
+                              label: Text(
+                                _imageBytes == null
+                                    ? L.t('رسید / اسکرین شاٹ اپ لوڈ کریں',
+                                        'Upload Receipt / Screenshot')
+                                    : L.t('تصویر تبدیل کریں', 'Change Photo'),
+                                style: _ts(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.primaryColor,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.primaryColor,
+                                side: BorderSide(color: theme.primaryColor, width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
