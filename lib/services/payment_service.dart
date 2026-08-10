@@ -154,9 +154,85 @@ class PaymentService {
     return [];
   }
 
-  Future<void> approve(String paymentId) =>
-      _supabase.rpc('approve_payment', params: {'p_payment_id': paymentId});
+  Future<void> approve(String paymentId) async {
+    if (paymentId.startsWith('enrollment_')) {
+      final parts = paymentId.split('_');
+      if (parts.length >= 3) {
+        final studentId = parts[1];
+        final classId = parts[2];
+        try {
+          await _supabase.rpc('verify_student', params: {'p_student_id': studentId});
+        } catch (_) {}
+        try {
+          await _supabase
+              .from('profiles')
+              .update({'is_verified': true})
+              .eq('id', studentId);
+        } catch (_) {}
+        try {
+          await _supabase
+              .from('class_enrollments')
+              .update({'status': 'approved'})
+              .eq('student_id', studentId)
+              .eq('class_id', classId);
+        } catch (_) {}
+        return;
+      }
+    }
 
-  Future<void> reject(String paymentId) =>
-      _supabase.rpc('reject_payment', params: {'p_payment_id': paymentId});
+    try {
+      await _supabase.rpc('approve_payment', params: {'p_payment_id': paymentId});
+    } catch (_) {}
+
+    try {
+      await _supabase
+          .from('payments')
+          .update({'status': 'approved'})
+          .eq('id', paymentId);
+    } catch (_) {}
+  }
+
+  Future<void> reject(String paymentId) async {
+    if (paymentId.startsWith('enrollment_')) {
+      final parts = paymentId.split('_');
+      if (parts.length >= 3) {
+        final studentId = parts[1];
+        final classId = parts[2];
+
+        try {
+          await _supabase
+              .from('class_enrollments')
+              .delete()
+              .eq('student_id', studentId)
+              .eq('class_id', classId);
+        } catch (_) {
+          await _supabase
+              .from('class_enrollments')
+              .update({'status': 'rejected'})
+              .eq('student_id', studentId)
+              .eq('class_id', classId);
+        }
+
+        try {
+          await _supabase
+              .from('payments')
+              .update({'status': 'rejected'})
+              .eq('student_id', studentId)
+              .eq('class_id', classId);
+        } catch (_) {}
+        return;
+      }
+    }
+
+    try {
+      await _supabase.rpc('reject_payment', params: {'p_payment_id': paymentId});
+    } catch (_) {}
+
+    try {
+      await _supabase
+          .from('payments')
+          .update({'status': 'rejected'})
+          .eq('id', paymentId);
+    } catch (_) {}
+  }
 }

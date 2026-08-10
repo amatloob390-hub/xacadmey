@@ -25,17 +25,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
 
   Future<void> _act(String id, bool approve) async {
     try {
-      if (id.startsWith('enrollment_')) {
-        final parts = id.split('_');
-        if (parts.length >= 3) {
-          final studentId = parts[1];
-          if (approve) {
-            await _service.approve(studentId);
-          }
-        }
-      } else {
-        approve ? await _service.approve(id) : await _service.reject(id);
-      }
+      approve ? await _service.approve(id) : await _service.reject(id);
     } catch (_) {}
 
     if (mounted) {
