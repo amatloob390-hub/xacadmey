@@ -83,16 +83,16 @@ class RadialGaugeCard extends StatelessWidget {
                   children: [
                     Icon(icon, size: 16, color: primaryColor),
                     const SizedBox(width: 6),
-                    Flexible(
+                    Expanded(
                       child: Text(
                         title,
                         textAlign: TextAlign.center,
+                        maxLines: 2,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: subtextColor,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

@@ -206,11 +206,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
                     child: RadialGaugeCard(
-                      title: L.t('کل کلاس کے گھنٹے', 'Total Class Hours'),
+                      title: L.t('پڑھایا گیا وقت', 'Total Conducted Time'),
                       valueText: '14.5 hrs',
                       subtext: L.t('کامیابی سے پڑھایا گیا وقت', 'Total Conducted Time'),
                       progress: 0.82,
-                      primaryColor: Colors.blueAccent,
+                      primaryColor: const Color(0xFF10B981),
                       icon: Icons.video_call_outlined,
                     ),
                   ),

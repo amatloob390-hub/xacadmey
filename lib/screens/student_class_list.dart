@@ -232,17 +232,17 @@ class _StudentClassListState extends State<StudentClassList> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.purple.withValues(alpha: 0.12),
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: Colors.purple.shade300),
+                                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.timelapse, size: 14, color: Colors.purple),
+                                      const Icon(Icons.timelapse, size: 14, color: Color(0xFF10B981)),
                                       const SizedBox(width: 4),
                                       Text(
                                         L.t('ہفتہ وار جائزہ', 'Weekly View'),
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.purple.shade700),
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
                                       ),
                                     ],
                                   ),
@@ -259,18 +259,18 @@ class _StudentClassListState extends State<StudentClassList> {
                                 SizedBox(
                                   width: 260,
                                   child: RadialGaugeCard(
-                                    title: L.t('کلاس ٹائم (Class Time)', 'Class Time'),
+                                    title: L.t('کلاس وقت', 'Class Time'),
                                     valueText: '2.5 hrs',
-                                    subtext: L.t('اس سمسٹر کا کل: 12 hrs', 'Total This Semester: 12 hrs'),
+                                    subtext: L.t('کل وقت: 12 hrs', 'Total Time: 12 hrs'),
                                     progress: 0.65,
-                                    primaryColor: Colors.purple,
+                                    primaryColor: const Color(0xFF10B981),
                                     icon: Icons.timer_outlined,
                                   ),
                                 ),
                                 SizedBox(
                                   width: 260,
                                   child: RadialGaugeCard(
-                                    title: L.t('حاضری (Attendance)', 'Attendance Rate'),
+                                    title: L.t('حاضری کا تناسب', 'Attendance Rate'),
                                     valueText: '95%',
                                     subtext: L.t('19 میں سے 20 کلاسز', '19 out of 20 classes'),
                                     progress: 0.95,
