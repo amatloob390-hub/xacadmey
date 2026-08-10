@@ -2,17 +2,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PendingPayment {
   final String paymentId, studentName, classTitle, method, txnReference;
+  final String? receiptUrl;
   final num amount;
   final DateTime createdAt;
 
   PendingPayment.fromMap(Map<String, dynamic> m)
-      : paymentId = m['payment_id'],
-        studentName = m['student_name'],
-        classTitle = m['class_title'],
-        method = m['method'],
-        txnReference = m['txn_reference'],
-        amount = m['amount'],
-        createdAt = DateTime.parse(m['created_at']);
+      : paymentId = m['payment_id'] ?? m['id'] ?? '',
+        studentName = m['student_name'] ?? 'اسٹوڈنٹ',
+        classTitle = m['class_title'] ?? 'کلاس',
+        method = m['method'] ?? 'JazzCash',
+        txnReference = m['txn_reference'] ?? '',
+        receiptUrl = m['receipt_url'] ?? m['receipt_image'],
+        amount = m['amount'] ?? 0,
+        createdAt = DateTime.tryParse(m['created_at'] ?? '') ?? DateTime.now();
 }
 
 class PaymentService {
@@ -24,16 +26,23 @@ class PaymentService {
     required double amount,
     required String method,
     required String txnReference,
+    String? receiptImage,
   }) async {
     final studentId = _supabase.auth.currentUser!.id;
-    await _supabase.from('payments').insert({
+    final Map<String, dynamic> payload = {
       'student_id': studentId,
       'class_id': classId,
       'amount': amount,
       'method': method,
       'txn_reference': txnReference,
       'status': 'pending',
-    });
+    };
+
+    if (receiptImage != null && receiptImage.isNotEmpty) {
+      payload['receipt_url'] = receiptImage;
+    }
+
+    await _supabase.from('payments').insert(payload);
   }
 
   Future<List<PendingPayment>> getPending() async {
@@ -52,7 +61,7 @@ class PaymentService {
       final rows = await _supabase
           .from('payments')
           .select(
-              'id, amount, method, txn_reference, created_at, status, profiles(full_name), classes(title)')
+              'id, amount, method, txn_reference, receipt_url, created_at, status, profiles(full_name), classes(title)')
           .or('status.eq.pending,status.is.null')
           .order('created_at', ascending: true);
 
@@ -67,6 +76,7 @@ class PaymentService {
             'class_title': cls?['title'] ?? 'کلاس',
             'method': m['method'] ?? 'JazzCash',
             'txn_reference': m['txn_reference'] ?? 'TXN-12345',
+            'receipt_url': m['receipt_url'],
             'amount': m['amount'] ?? 1500,
             'created_at': m['created_at'] ?? DateTime.now().toIso8601String(),
           });

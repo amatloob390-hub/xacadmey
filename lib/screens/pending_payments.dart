@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
@@ -45,6 +46,132 @@ class _PendingPaymentsState extends State<PendingPayments> {
             : L.t('ادائیگی رد ہو گئی', 'Payment rejected')),
       ));
     }
+  }
+
+  void _showReceiptDialog(PendingPayment p, ThemePreset theme) {
+    Widget contentWidget;
+    if (p.receiptUrl != null && p.receiptUrl!.trim().isNotEmpty) {
+      try {
+        final str = p.receiptUrl!.trim();
+        if (str.startsWith('http://') || str.startsWith('https://')) {
+          contentWidget = Image.network(
+            str,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => _errorImage(theme),
+          );
+        } else {
+          final cleanBase64 = str.contains(',') ? str.split(',').last : str;
+          final bytes = base64Decode(cleanBase64.trim());
+          contentWidget = Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => _errorImage(theme),
+          );
+        }
+      } catch (_) {
+        contentWidget = _errorImage(theme);
+      }
+    } else {
+      contentWidget = Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.receipt_long_rounded, size: 54, color: Color(0xFF10B981)),
+            const SizedBox(height: 14),
+            Text(
+              L.t('اسٹوڈنٹ نے ٹرانزیکشن آئی ڈی سے فیس جمع کروائی ہے',
+                  'Student submitted fee with Transaction ID'),
+              textAlign: TextAlign.center,
+              style: _ts(fontSize: 15, fontWeight: FontWeight.bold, theme: theme),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${L.t('ٹرانزیکشن آئی ڈی / رسید نمبر', 'Txn ID')}: ${p.txnReference}',
+                style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: theme.primaryColor),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${L.t('رسید / اسکرین شاٹ', 'Receipt Screenshot')}: ${p.studentName}',
+                      style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: contentWidget,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    L.t('بند کریں', 'Close'),
+                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  }
+
+  Widget _errorImage(ThemePreset theme) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      alignment: Alignment.center,
+      color: theme.isDark ? Colors.black26 : Colors.grey.shade100,
+      child: Text(
+        L.t('تصویر لوڈ نہیں ہو سکی', 'Could not load image'),
+        style: _ts(fontSize: 14, theme: theme),
+      ),
+    );
   }
 
   TextStyle _ts({
@@ -301,13 +428,43 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                     Icon(Icons.receipt_long_rounded,
                                         size: 16, color: theme.subtextColor),
                                     const SizedBox(width: 6),
-                                    Text(
-                                      '${L.t('رسید / Txn ID', 'Txn ID')}: ${p.txnReference}',
-                                      style: _ts(fontSize: 13, color: theme.subtextColor),
+                                    Expanded(
+                                      child: Text(
+                                        '${L.t('رسید / Txn ID', 'Txn ID')}: ${p.txnReference}',
+                                        style: _ts(fontSize: 13, color: theme.subtextColor),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
+
+                                // VIEW RECEIPT / SCREENSHOT BUTTON
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showReceiptDialog(p, theme),
+                                    icon: const Icon(Icons.image_outlined, size: 18),
+                                    label: Text(
+                                      L.t('🖼️ رسید / اسکرین شاٹ دیکھیں', 'View Receipt Screenshot'),
+                                      style: _ts(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.primaryColor,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: theme.primaryColor,
+                                      side: BorderSide(color: theme.primaryColor, width: 1.4),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [

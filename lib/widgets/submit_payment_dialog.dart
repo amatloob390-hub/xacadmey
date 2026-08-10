@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -98,11 +99,17 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
+      String? receiptBase64;
+      if (_imageBytes != null && _imageBytes!.isNotEmpty) {
+        receiptBase64 = base64Encode(_imageBytes!);
+      }
+
       await PaymentService().submitPayment(
         classId: widget.classId,
         amount: double.parse(_amountCtrl.text.trim()),
         method: _method,
         txnReference: _txnCtrl.text.trim(),
+        receiptImage: receiptBase64,
       );
       if (mounted) {
         Navigator.pop(context);
