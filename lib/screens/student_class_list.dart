@@ -77,12 +77,17 @@ class _StudentClassListState extends State<StudentClassList> {
               return _messageList(L.t('آپ ابھی کسی کلاس میں انرول نہیں ہیں۔',
                   'You are not enrolled in any class yet.'));
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: classes.length,
-              itemBuilder: (_, i) => _StudentClassCard(
-                item: classes[i],
-                onChanged: _refresh,
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  itemCount: classes.length,
+                  itemBuilder: (_, i) => _StudentClassCard(
+                    item: classes[i],
+                    onChanged: _refresh,
+                  ),
+                ),
               ),
             );
           },
@@ -97,7 +102,12 @@ class _StudentClassListState extends State<StudentClassList> {
   Widget _messageList(String msg) => ListView(
         children: [
           const SizedBox(height: 120),
-          Center(child: Text(msg)),
+          Center(
+            child: Text(
+              msg,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       );
 }
@@ -109,97 +119,119 @@ class _StudentClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: item.isActive
-              ? const Color(0xFF10B981).withValues(alpha: 0.6)
-              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          width: item.isActive ? 2.0 : 1.2,
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 2.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: item.isActive
-                ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.school_rounded, color: Color(0xFF10B981), size: 22),
+          // Top Status Badge (Live Tag)
+          if (item.isActive)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF34D399), width: 1.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    blurRadius: 10,
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF34D399),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    L.t('لائیو', 'Live'),
+                    style: const TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // School Icon Header
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+            ),
+            child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 14),
+
+          // Class Title (Centered)
+          Text(
+            item.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Time & Duration (Centered)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.access_time_rounded, size: 18, color: Color(0xFF6EE7B7)),
+              const SizedBox(width: 8),
+              Flexible(
                 child: Text(
-                  item.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                  '${L.t('وقت', 'Time')}: ${_fmt(item.scheduledAt)}  •  ${item.durationMin} ${L.t('منٹ', 'min')}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.95),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              if (item.isActive)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF10B981), width: 1.2),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        L.t('لائیو', 'Live'),
-                        style: const TextStyle(
-                          color: Color(0xFF10B981),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.access_time_rounded, size: 16, color: Colors.grey.shade500),
-              const SizedBox(width: 6),
-              Text(
-                '${L.t('وقت', 'Time')}: ${_fmt(item.scheduledAt)}  •  ${item.durationMin} ${L.t('منٹ', 'min')}',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          // Actions & Grace Information (Centered)
           _buildAction(context),
         ],
       ),
@@ -209,18 +241,22 @@ class _StudentClassCard extends StatelessWidget {
   Widget _buildAction(BuildContext context) {
     if (item.isBlocked) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.red.shade900.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
             ),
             child: Text(
-                L.t('🔒 رسائی بند — مہلت ختم ہو گئی', '🔒 Access closed — grace expired'),
-                style: const TextStyle(color: Colors.red)),
+              L.t('🔒 رسائی بند — مہلت ختم ہو گئی', '🔒 Access closed — grace expired'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _submitPaymentButton(context),
         ],
       );
@@ -230,36 +266,61 @@ class _StudentClassCard extends StatelessWidget {
       final days = item.graceLeft.inDays;
       final hours = item.graceLeft.inHours % 24;
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-              L.t('⏳ مفت مہلت: $days دن $hours گھنٹے باقی',
-                  '⏳ Free grace: $days d $hours h left'),
-              style: const TextStyle(color: Colors.orange)),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade900.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.amber.shade300, width: 1.2),
+            ),
+            child: Text(
+              L.t('⏳ مفت مہلت: $days دن $hours گھنٹے باقی', '⏳ Free grace: $days d $hours h left'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
+          const SizedBox(height: 14),
           if (item.canJoin)
             JoinClassButton(classId: item.id)
           else
-            Text(L.t('کلاس ابھی شروع نہیں ہوئی', 'Class has not started yet')),
-          const SizedBox(height: 8),
+            Text(
+              L.t('کلاس ابھی شروع نہیں ہوئی', 'Class has not started yet'),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w600),
+            ),
+          const SizedBox(height: 12),
           _submitPaymentButton(context),
         ],
       );
     }
 
     if (!item.isActive) {
-      return Text(L.t('کلاس ابھی شروع نہیں ہوئی', 'Class has not started yet'));
+      return Text(
+        L.t('کلاس ابھی شروع نہیں ہوئی', 'Class has not started yet'),
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w600),
+      );
     }
     return JoinClassButton(classId: item.id);
   }
 
   Widget _submitPaymentButton(BuildContext context) => OutlinedButton.icon(
-        icon: const Icon(Icons.receipt_long),
-        label: Text(L.t('فیس جمع کروائیں', 'Submit Fee')),
+        icon: const Icon(Icons.receipt_long, color: Colors.white),
+        label: Text(
+          L.t('فیس جمع کروائیں', 'Submit Fee'),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.white, width: 1.8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
         onPressed: () async {
           await showDialog(
             context: context,
-            builder: (_) =>
-                SubmitPaymentDialog(classId: item.id, classTitle: item.title),
+            builder: (_) => SubmitPaymentDialog(classId: item.id, classTitle: item.title),
           );
           onChanged();
         },
