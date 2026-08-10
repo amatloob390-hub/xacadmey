@@ -159,7 +159,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               onRefresh: _load,
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
+                  constraints: const BoxConstraints(maxWidth: 580),
                   child: _buildBody(),
                 ),
               ),
