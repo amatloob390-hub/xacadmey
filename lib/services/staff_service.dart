@@ -64,6 +64,59 @@ class StaffService {
     return List<Map<String, dynamic>>.from(rows);
   }
 
+  /// تمام سائن اپ شدہ / رجسٹرڈ اسٹوڈنٹس کی فہرست
+  Future<List<Map<String, dynamic>>> getRegisteredStudents() async {
+    try {
+      final rows = await _supabase
+          .from('profiles')
+          .select('id, full_name, email, role')
+          .order('full_name', ascending: true);
+      return (rows as List)
+          .cast<Map<String, dynamic>>()
+          .where((p) => (p['role'] == null || p['role'] == 'student' || p['role'] == ''))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// رجسٹرڈ اسٹوڈنٹ کو منتخب کلاس میں اینرول اور فعال کریں
+  Future<void> enrollStudentInClass({
+    required String studentId,
+    required String classId,
+  }) async {
+    // 1. class_enrollments میں فعال داخلہ
+    try {
+      await _supabase.from('class_enrollments').upsert({
+        'student_id': studentId,
+        'class_id': classId,
+        'status': 'approved',
+      }, onConflict: 'student_id,class_id');
+    } catch (_) {}
+
+    // 2. enrollments میں بھی سٹیٹس
+    try {
+      await _supabase.from('enrollments').upsert({
+        'student_id': studentId,
+        'class_id': classId,
+        'payment_status': 'paid',
+      }, onConflict: 'student_id,class_id');
+    } catch (_) {}
+
+    // 3. پروفائل کی تصدیق
+    try {
+      await _supabase
+          .from('profiles')
+          .update({'is_verified': true})
+          .eq('id', studentId);
+    } catch (_) {}
+
+    // 4. RPCs
+    try {
+      await _supabase.rpc('staff_verify_student', params: {'p_student_id': studentId});
+    } catch (_) {}
+  }
+
   /// ٹیچر کی اپنی کلاسز (Add-Student ڈائیلاگ میں کلاس منتخب کرنے کیلئے)
   Future<List<Map<String, dynamic>>> myClassesLite() async {
     final teacherId = _supabase.auth.currentUser!.id;

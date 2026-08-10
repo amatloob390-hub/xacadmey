@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/staff_service.dart';
 
-/// ٹیچر/مینیجر: نیا اسٹوڈنٹ ای میل سے شامل کرے۔
-///  • اگر ای میل پہلے سے رجسٹرڈ ہو → فوراً verify + enroll
-///  • ورنہ دعوت محفوظ ہو، signup پر خودکار فعال
+/// ٹیچر/مینیجر: اسٹوڈنٹ کو کلاس میں اینرول کرے یا ای میل سے شامل کرے۔
+///  • سائن اپ شدہ اسٹوڈنٹ کو منتخب کلاس میں اینرول کرے
+///  • نیا اسٹوڈنٹ ای میل سے شامل کرے
 class AddStudentDialog extends StatefulWidget {
   const AddStudentDialog({super.key});
 
@@ -18,27 +18,44 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   final _emailCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
 
+  int _mode = 0; // 0: سائن اپ شدہ اسٹوڈنٹ اینرول کریں, 1: ای میل سے نیا دعوت نامہ
+
+  List<Map<String, dynamic>> _registeredStudents = [];
   List<Map<String, dynamic>> _classes = [];
-  String? _classId; // منتخب کلاس (اختیاری)
-  bool _loadingClasses = true;
+
+  String? _selectedStudentId;
+  String? _classId;
+
+  bool _loadingData = true;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _loadClasses();
+    _loadData();
   }
 
-  Future<void> _loadClasses() async {
+  Future<void> _loadData() async {
     try {
-      final rows = await _service.myClassesLite();
+      final results = await Future.wait([
+        _service.getRegisteredStudents(),
+        _service.myClassesLite(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _classes = rows;
-        _loadingClasses = false;
+        _registeredStudents = results[0];
+        _classes = results[1];
+
+        if (_registeredStudents.isNotEmpty) {
+          _selectedStudentId = _registeredStudents.first['id'] as String?;
+        }
+        if (_classes.isNotEmpty) {
+          _classId = _classes.first['id'] as String?;
+        }
+        _loadingData = false;
       });
     } catch (_) {
-      if (mounted) setState(() => _loadingClasses = false);
+      if (mounted) setState(() => _loadingData = false);
     }
   }
 
@@ -49,7 +66,55 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submitEnrollExisting() async {
+    if (_selectedStudentId == null || _selectedStudentId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('برائے کرم اسٹوڈنٹ منتخب کریں', 'Please select a student')),
+        backgroundColor: Colors.orange.shade800,
+      ));
+      return;
+    }
+    if (_classId == null || _classId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('برائے کرم کلاس منتخب کریں', 'Please select a class')),
+        backgroundColor: Colors.orange.shade800,
+      ));
+      return;
+    }
+
+    setState(() => _busy = true);
+    try {
+      await _service.enrollStudentInClass(
+        studentId: _selectedStudentId!,
+        classId: _classId!,
+      );
+      if (!mounted) return;
+      Navigator.pop(context, true);
+
+      final studentMap = _registeredStudents.firstWhere(
+        (s) => s['id'] == _selectedStudentId,
+        orElse: () => {'full_name': 'اسٹوڈنٹ'},
+      );
+      final sName = studentMap['full_name'] ?? studentMap['email'] ?? 'اسٹوڈنٹ';
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t(
+          '$sName کو کامیابی سے کلاس میں اینرول کر دیا گیا۔',
+          '$sName successfully enrolled in class.',
+        )),
+        backgroundColor: Colors.green.shade700,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('اینرول نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not enroll, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
+    }
+  }
+
+  Future<void> _submitInviteNew() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
@@ -61,10 +126,11 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
       if (!mounted) return;
       Navigator.pop(context, true);
       final msg = result == 'EXISTING_VERIFIED'
-          ? L.t('اسٹوڈنٹ شامل اور تصدیق ہو گیا۔',
-              'Student added and verified.')
-          : L.t('دعوت بھیج دی گئی — جب یہ ای میل رجسٹر ہوگی تو خودکار فعال ہو جائے گی۔',
-              'Invite saved — the student is auto-activated when they register with this email.');
+          ? L.t('اسٹوڈنٹ شامل اور تصدیق ہو گیا۔', 'Student added and verified.')
+          : L.t(
+              'دعوت بھیج دی گئی — جب یہ ای میل رجسٹر ہوگی تو خودکار فعال ہو جائے گی۔',
+              'Invite saved — the student is auto-activated when they register with this email.',
+            );
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg),
         backgroundColor: Colors.green.shade700,
@@ -75,8 +141,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
       final raw = e.toString();
       final msg = raw.contains('NOT_ALLOWED')
           ? L.t('آپ کو اجازت نہیں۔', 'You are not allowed.')
-          : L.t('شامل نہیں ہو سکا، دوبارہ کوشش کریں۔',
-              'Could not add, please try again.');
+          : L.t('شامل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not add, please try again.');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg),
         backgroundColor: Colors.red.shade700,
@@ -87,63 +152,179 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(L.t('نیا اسٹوڈنٹ شامل کریں', 'Add Student')),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: L.t('اسٹوڈنٹ ای میل', 'Student email'),
-                prefixIcon: const Icon(Icons.email_outlined),
-              ),
-              validator: (v) => (v == null || !v.contains('@'))
-                  ? L.t('درست ای میل درج کریں', 'Enter a valid email')
-                  : null,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(L.t('اسٹوڈنٹ اینرول / شامل کریں', 'Enroll / Add Student')),
+          const SizedBox(height: 12),
+          // Toggle Tabs between Registered Student vs New Email Invite
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.teal.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _nameCtrl,
-              decoration: InputDecoration(
-                labelText: L.t('نام (اختیاری)', 'Name (optional)'),
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_loadingClasses)
-              const Padding(
-                padding: EdgeInsets.all(8),
-                child: SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2)),
-              )
-            else if (_classes.isNotEmpty)
-              DropdownButtonFormField<String>(
-                initialValue: _classId,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: L.t('کلاس (اختیاری)', 'Class (optional)'),
-                  prefixIcon: const Icon(Icons.class_outlined),
-                ),
-                items: [
-                  DropdownMenuItem<String>(
-                    value: null,
-                    child: Text(L.t('کوئی کلاس نہیں', 'No class')),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _mode = 0),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _mode == 0 ? Colors.teal : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        L.t('سائن اپ شدہ اسٹوڈنٹ', 'Registered Student'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _mode == 0 ? Colors.white : Colors.teal.shade900,
+                        ),
+                      ),
+                    ),
                   ),
-                  ..._classes.map((c) => DropdownMenuItem<String>(
-                        value: c['id'] as String,
-                        child: Text(c['title'] as String? ?? '—',
-                            overflow: TextOverflow.ellipsis),
-                      )),
-                ],
-                onChanged: (v) => setState(() => _classId = v),
-              ),
-          ],
-        ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _mode = 1),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _mode == 1 ? Colors.teal : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        L.t('نیا ای میل دعوتی', 'New Email Invite'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: _mode == 1 ? Colors.white : Colors.teal.shade900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: _loadingData
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : _mode == 0
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_registeredStudents.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            L.t('کوئی نیا سائن اپ شدہ اسٹوڈنٹ نہیں ملا۔', 'No registered students found.'),
+                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                          ),
+                        )
+                      else
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedStudentId,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: L.t('سائن اپ شدہ اسٹوڈنٹ منتخب کریں', 'Select Registered Student'),
+                            prefixIcon: const Icon(Icons.person_pin_outlined),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          items: _registeredStudents.map((s) {
+                            final name = s['full_name']?.toString() ?? 'اسٹوڈنٹ';
+                            final email = s['email']?.toString() ?? '';
+                            return DropdownMenuItem<String>(
+                              value: s['id'] as String,
+                              child: Text(
+                                email.isNotEmpty ? '$name ($email)' : name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (v) => setState(() => _selectedStudentId = v),
+                        ),
+                      const SizedBox(height: 14),
+                      if (_classes.isNotEmpty)
+                        DropdownButtonFormField<String>(
+                          initialValue: _classId,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: L.t('کس کلاس میں اینرول کریں؟', 'Select Class to Enroll'),
+                            prefixIcon: const Icon(Icons.class_outlined),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          items: _classes.map((c) => DropdownMenuItem<String>(
+                                value: c['id'] as String,
+                                child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
+                              )).toList(),
+                          onChanged: (v) => setState(() => _classId = v),
+                        ),
+                    ],
+                  )
+                : Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            labelText: L.t('اسٹوڈنٹ ای میل', 'Student email'),
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          validator: (v) => (v == null || !v.contains('@'))
+                              ? L.t('درست ای میل درج کریں', 'Enter a valid email')
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _nameCtrl,
+                          decoration: InputDecoration(
+                            labelText: L.t('نام (اختیاری)', 'Name (optional)'),
+                            prefixIcon: const Icon(Icons.person_outline),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_classes.isNotEmpty)
+                          DropdownButtonFormField<String>(
+                            initialValue: _classId,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: L.t('کلاس (اختیاری)', 'Class (optional)'),
+                              prefixIcon: const Icon(Icons.class_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            items: [
+                              DropdownMenuItem<String>(
+                                value: null,
+                                child: Text(L.t('کوئی کلاس نہیں', 'No class')),
+                              ),
+                              ..._classes.map((c) => DropdownMenuItem<String>(
+                                    value: c['id'] as String,
+                                    child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
+                                  )),
+                            ],
+                            onChanged: (v) => setState(() => _classId = v),
+                          ),
+                      ],
+                    ),
+                  ),
       ),
       actions: [
         TextButton(
@@ -151,14 +332,21 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
           child: Text(L.t('منسوخ', 'Cancel')),
         ),
         ElevatedButton(
-          onPressed: _busy ? null : _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: _busy ? null : (_mode == 0 ? _submitEnrollExisting : _submitInviteNew),
           child: _busy
               ? const SizedBox(
                   height: 18,
                   width: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-              : Text(L.t('شامل کریں', 'Add')),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Text(_mode == 0
+                  ? L.t('کلاس میں اینرول کریں', 'Enroll in Class')
+                  : L.t('دعوت بھیجیں', 'Send Invite')),
         ),
       ],
     );
