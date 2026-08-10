@@ -7,6 +7,10 @@ import '../app_lang.dart';
 import '../app_theme.dart';
 import '../services/payment_service.dart';
 
+// Conditional import: on web use dart:html directly, on native use stub
+import '../utils/web_file_picker_stub.dart'
+    if (dart.library.html) '../utils/web_file_picker.dart';
+
 class SubmitPaymentDialog extends StatefulWidget {
   final String classId, classTitle;
   const SubmitPaymentDialog(
@@ -39,66 +43,54 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
     super.dispose();
   }
 
-  Future<void> _pickReceiptImage() async {
-    // 1) Primary Method: FilePicker with explicit image extensions (100% works on Web, Desktop, Mobile)
+  /// Called from onTap — must stay synchronous on web so the browser's
+  /// user-gesture chain remains unbroken before the file dialog opens.
+  void _onPickTap() {
+    if (kIsWeb) {
+      // Web: use dart:html <input type="file"> — opens synchronously in same gesture
+      pickFileOnWeb().then((bytes) {
+        if (bytes != null && bytes.isNotEmpty && mounted) {
+          setState(() => _imageBytes = bytes);
+        }
+      });
+    } else {
+      _pickNative();
+    }
+  }
+
+  Future<void> _pickNative() async {
+    // Native: try FilePicker first, then ImagePicker
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+        type: FileType.image,
         allowMultiple: false,
         withData: true,
       );
       if (result != null && result.files.isNotEmpty) {
         final bytes = result.files.first.bytes;
         if (bytes != null && bytes.isNotEmpty) {
-          setState(() {
-            _imageBytes = bytes;
-          });
+          if (mounted) setState(() => _imageBytes = bytes);
           return;
         }
       }
     } catch (e) {
-      debugPrint('FilePicker custom pick info: $e');
+      debugPrint('FilePicker info: $e');
     }
 
-    // 2) Fallback: FilePicker without extension filter
     try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
-        withData: true,
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
       );
-      if (result != null && result.files.isNotEmpty) {
-        final bytes = result.files.first.bytes;
-        if (bytes != null && bytes.isNotEmpty) {
-          setState(() {
-            _imageBytes = bytes;
-          });
-          return;
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        if (bytes.isNotEmpty && mounted) {
+          setState(() => _imageBytes = bytes);
         }
       }
     } catch (e) {
-      debugPrint('FilePicker fallback info: $e');
-    }
-
-    // 3) Mobile Native Gallery Fallback
-    if (!kIsWeb) {
-      try {
-        final picker = ImagePicker();
-        final XFile? image = await picker.pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 85,
-        );
-        if (image != null) {
-          final bytes = await image.readAsBytes();
-          if (bytes.isNotEmpty) {
-            setState(() {
-              _imageBytes = bytes;
-            });
-          }
-        }
-      } catch (e) {
-        debugPrint('ImagePicker info: $e');
-      }
+      debugPrint('ImagePicker info: $e');
     }
   }
 
@@ -250,90 +242,61 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- RECEIPT IMAGE UPLOAD SECTION (CLICKABLE CONTAINER) ---
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _pickReceiptImage,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
+                  // --- RECEIPT UPLOAD: SizedBox wrapping ElevatedButton for full-width click ---
+                  if (_imageBytes != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        _imageBytes!,
+                        height: 120,
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: inputFill,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: theme.isDark
-                                ? const Color(0xFF34D399)
-                                : const Color(0xFF10B981),
-                            width: 1.8,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_circle_rounded,
+                            color: Color(0xFF10B981), size: 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          L.t('رسید کی تصویر منتخب ہو گئی ✅',
+                              'Receipt Image Selected ✅'),
+                          style: _ts(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF10B981),
                           ),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_imageBytes != null) ...[
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.memory(
-                                  _imageBytes!,
-                                  height: 120,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.check_circle_rounded,
-                                      color: Color(0xFF10B981), size: 20),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    L.t('رسید کی تصویر منتخب ہو گئی ✅',
-                                        'Receipt Image Selected ✅'),
-                                    style: _ts(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF10B981),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: theme.primaryColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                    color: theme.primaryColor, width: 1.5),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_a_photo_outlined,
-                                      size: 20, color: theme.primaryColor),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _imageBytes == null
-                                        ? L.t('رسید / اسکرین شاٹ اپ لوڈ کریں',
-                                            'Upload Receipt / Screenshot')
-                                        : L.t('تصویر تبدیل کریں', 'Change Photo'),
-                                    style: _ts(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _onPickTap,
+                      icon: const Icon(Icons.add_a_photo_outlined, size: 20),
+                      label: Text(
+                        _imageBytes == null
+                            ? L.t('رسید / اسکرین شاٹ اپ لوڈ کریں',
+                                'Upload Receipt / Screenshot')
+                            : L.t('تصویر تبدیل کریں', 'Change Photo'),
+                        style: _ts(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),
