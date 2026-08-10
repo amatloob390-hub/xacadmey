@@ -303,44 +303,68 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           'Could not load data — pull down to retry.'));
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildAnalyticsSection(),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 650;
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
           children: [
-            Text(
-              L.t('آپ کی فعال کلاسز', 'Your Active Classes'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            _buildAnalyticsSection(),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  L.t('آپ کی فعال کلاسز', 'Your Active Classes'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                if (_canManageClasses)
+                  TextButton.icon(
+                    onPressed: _openCreateDialog,
+                    icon: const Icon(Icons.add_circle_outline, color: Colors.teal),
+                    label: Text(L.t('نئی کلاس بنائیں', 'Create Class'), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+                  ),
+              ],
             ),
-            if (_canManageClasses)
-              TextButton.icon(
-                onPressed: _openCreateDialog,
-                icon: const Icon(Icons.add_circle_outline, color: Colors.teal),
-                label: Text(L.t('نئی کلاس بنائیں', 'Create Class'), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
-              ),
+            const SizedBox(height: 12),
+            if (_classes.isEmpty)
+              _messageList(_canManageClasses
+                  ? L.t('ابھی کوئی کلاس نہیں — نئی کلاس بنائیں۔', 'No classes yet — create one.')
+                  : L.t('اوپر بٹنوں سے اسٹوڈنٹ شامل/تصدیق اور ادائیگیاں دیکھیں۔',
+                      'Use the buttons above to add/verify students and view payments.'))
+            else if (isWide)
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 2.1,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                ),
+                itemCount: _classes.length,
+                itemBuilder: (context, i) => _ClassCard(
+                  data: _classes[i],
+                  onToggle: (active) => _toggle(i, active),
+                  onEdit: () => _openEditDialog(_classes[i]),
+                  onDelete: () => _confirmDelete(_classes[i]['id']),
+                ),
+              )
+            else
+              ..._classes.asMap().entries.map((entry) {
+                final i = entry.key;
+                final item = entry.value;
+                return _ClassCard(
+                  data: item,
+                  onToggle: (active) => _toggle(i, active),
+                  onEdit: () => _openEditDialog(item),
+                  onDelete: () => _confirmDelete(item['id']),
+                );
+              }),
           ],
-        ),
-        const SizedBox(height: 12),
-        if (_classes.isEmpty)
-          _messageList(_canManageClasses
-              ? L.t('ابھی کوئی کلاس نہیں — نئی کلاس بنائیں۔', 'No classes yet — create one.')
-              : L.t('اوپر بٹنوں سے اسٹوڈنٹ شامل/تصدیق اور ادائیگیاں دیکھیں۔',
-                  'Use the buttons above to add/verify students and view payments.'))
-        else
-          ..._classes.asMap().entries.map((entry) {
-            final i = entry.key;
-            final item = entry.value;
-            return _ClassCard(
-              data: item,
-              onToggle: (active) => _toggle(i, active),
-              onEdit: () => _openEditDialog(item),
-              onDelete: () => _confirmDelete(item['id']),
-            );
-          }),
-      ],
+        );
+      },
     );
   }
 
@@ -420,22 +444,28 @@ class _ClassCard extends StatelessWidget {
     final scheduled = DateTime.tryParse(data['scheduled_at'] ?? '');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0C2738), const Color(0xFF132A4B)]
+              : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isActive
-              ? const Color(0xFF10B981).withValues(alpha: 0.6)
-              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          width: isActive ? 2.0 : 1.2,
+              ? const Color(0xFF10B981)
+              : (isDark ? const Color(0xFF2563EB).withValues(alpha: 0.5) : const Color(0xFF93C5FD)),
+          width: isActive ? 2.0 : 1.4,
         ),
         boxShadow: [
           BoxShadow(
             color: isActive
-                ? const Color(0xFF10B981).withValues(alpha: 0.18)
-                : Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                ? const Color(0xFF10B981).withValues(alpha: 0.22)
+                : const Color(0xFF2563EB).withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 5),
           ),

@@ -23,63 +23,73 @@ class RadialGaugeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subtextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final subtextColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0D2838), const Color(0xFF132B4F)]
+              : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: primaryColor.withValues(alpha: 0.5),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: primaryColor.withValues(alpha: 0.15),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Circular Progress Meter
           SizedBox(
-            width: 72,
-            height: 72,
+            width: 68,
+            height: 68,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CustomPaint(
-                  size: const Size(72, 72),
+                  size: const Size(68, 68),
                   painter: _RadialPainter(
                     progress: progress,
                     color: primaryColor,
-                    trackColor: primaryColor.withValues(alpha: 0.15),
+                    trackColor: primaryColor.withValues(alpha: 0.2),
                   ),
                 ),
-                Icon(icon, size: 26, color: primaryColor),
+                Icon(icon, size: 24, color: primaryColor),
               ],
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(icon, size: 16, color: primaryColor),
                     const SizedBox(width: 6),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         title,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           color: subtextColor,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -87,22 +97,25 @@ class RadialGaugeCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   valueText,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
                     color: textColor,
                   ),
                 ),
                 if (subtext.isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtext,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 11,
-                      color: subtextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: subtextColor.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
@@ -128,7 +141,7 @@ class _RadialPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = 8.0;
+    final strokeWidth = 7.5;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
