@@ -80,42 +80,62 @@ class _SocialLinksScreenState extends State<SocialLinksScreen> {
       appBar: AppBar(title: Text(L.t('سوشل میڈیا لنکس', 'Social media links'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(18),
-              children: [
-                Text(
-                  L.t('یہ لنکس آپ کے landing page کے footer میں دکھائے جائیں گے۔ خالی چھوڑیں تو وہ آئیکن چھپ جائے گا۔',
-                      'These links show in your landing page footer. Leave blank to hide that icon.'),
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 18),
-                for (final p in SiteSettingsService.platforms) ...[
-                  TextField(
-                    controller: _ctrls[p],
-                    keyboardType: TextInputType.url,
-                    decoration: InputDecoration(
-                      labelText: _meta[p]!.$1,
-                      prefixIcon: Icon(_meta[p]!.$2),
-                      hintText: _meta[p]!.$3,
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  children: [
+                    Text(
+                      L.t('یہ لنکس آپ کے landing page کے footer میں دکھائے جائیں گے۔ خالی چھوڑیں تو وہ آئیکن چھپ جائے گا۔',
+                          'These links show in your landing page footer. Leave blank to hide that icon.'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-                const SizedBox(height: 6),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.save),
-                  label: Text(_saving
-                      ? L.t('محفوظ ہو رہا ہے...', 'Saving...')
-                      : L.t('محفوظ کریں', 'Save')),
+                    const SizedBox(height: 20),
+                    for (final p in SiteSettingsService.platforms) ...[
+                      TextField(
+                        controller: _ctrls[p],
+                        keyboardType: TextInputType.url,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          labelText: _meta[p]!.$1,
+                          prefixIcon: Icon(_meta[p]!.$2),
+                          hintText: _meta[p]!.$3,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _saving ? null : _save,
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.save),
+                        label: Text(
+                          _saving
+                              ? L.t('محفوظ ہو رہا ہے...', 'Saving...')
+                              : L.t('محفوظ کریں', 'Save'),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
   }
