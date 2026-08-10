@@ -40,11 +40,14 @@ class _PendingPaymentsState extends State<PendingPayments> {
     }
 
     try {
-      approve ? await _service.approve(id) : await _service.reject(id);
+      if (approve) {
+        await _service.approve(id);
+      } else {
+        await _service.reject(id);
+      }
     } catch (_) {}
 
     if (mounted) {
-      // Refresh from server to confirm
       _refresh();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(approve

@@ -41,6 +41,9 @@ class PendingPayment {
 class PaymentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  // Track processed/dismissed IDs locally in memory to guarantee immediate filtering
+  static final Set<String> _dismissedKeys = {};
+
   /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (تصویر کے ساتھ محفوظ ریسیٹ ہینڈلنگ)
   Future<void> submitPayment({
     required String classId,
@@ -94,22 +97,26 @@ class PaymentService {
   }
 
   Future<List<PendingPayment>> getPending() async {
-    // 1. Primary: Direct Table Query on payments (کوڈ سے براہ راست تصویری ڈیٹا اور پروفائل لیتا ہے)
+    List<PendingPayment> result = [];
+
+    // 1. Primary: Direct Table Query on payments
     try {
       final rows = await _supabase
           .from('payments')
           .select(
-              'id, amount, method, txn_reference, receipt_url, created_at, status, profiles(full_name), classes(title)')
+              'id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status, profiles(full_name), classes(title)')
           .or('status.eq.pending,status.is.null')
           .order('created_at', ascending: true);
 
       if ((rows as List).isNotEmpty) {
-        return (rows).map((r) {
+        result = (rows).map((r) {
           final m = Map<String, dynamic>.from(r as Map);
           final profile = m['profiles'] as Map<String, dynamic>?;
           final cls = m['classes'] as Map<String, dynamic>?;
           return PendingPayment.fromMap({
             'payment_id': m['id'],
+            'student_id': m['student_id'],
+            'class_id': m['class_id'],
             'student_name': profile?['full_name'] ?? 'اسٹوڈنٹ',
             'class_title': cls?['title'] ?? 'کلاس',
             'method': m['method'] ?? 'JazzCash',
@@ -122,130 +129,193 @@ class PaymentService {
       }
     } catch (_) {}
 
-    // 2. Secondary: RPC Call
-    try {
-      final rows = await _supabase.rpc('get_pending_payments') as List?;
-      if (rows != null && rows.isNotEmpty) {
-        return rows
-            .map((r) => PendingPayment.fromMap(r as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (_) {}
+    // 2. Secondary: RPC Call if direct query yielded empty
+    if (result.isEmpty) {
+      try {
+        final rows = await _supabase.rpc('get_pending_payments') as List?;
+        if (rows != null && rows.isNotEmpty) {
+          result = rows
+              .map((r) => PendingPayment.fromMap(r as Map<String, dynamic>))
+              .toList();
+        }
+      } catch (_) {}
+    }
 
     // 3. Fallback: Check pending enrollments if no payment record exists yet
-    try {
-      final rows = await _supabase.rpc('get_pending_students') as List?;
-      if (rows != null && rows.isNotEmpty) {
-        return rows.map((r) {
-          final m = Map<String, dynamic>.from(r as Map);
-          return PendingPayment.fromMap({
-            'payment_id': 'enrollment_${m['student_id']}_${m['class_id']}',
-            'student_name': m['student_name'] ?? 'اسٹوڈنٹ',
-            'class_title': m['class_title'] ?? 'کلاس',
-            'method': 'JazzCash / EasyPaisa',
-            'txn_reference': 'درخواست جمع ہو گئی',
-            'amount': 1500,
-            'created_at': DateTime.now().toIso8601String(),
-          });
-        }).toList();
-      }
-    } catch (_) {}
+    if (result.isEmpty) {
+      try {
+        final rows = await _supabase.rpc('get_pending_students') as List?;
+        if (rows != null && rows.isNotEmpty) {
+          result = rows.map((r) {
+            final m = Map<String, dynamic>.from(r as Map);
+            final sId = m['student_id'] ?? m['user_id'] ?? m['id'] ?? '';
+            final cId = m['class_id'] ?? '';
+            return PendingPayment.fromMap({
+              'payment_id': 'enrollment_${sId}_$cId',
+              'student_id': sId,
+              'class_id': cId,
+              'student_name': m['student_name'] ?? m['full_name'] ?? 'اسٹوڈنٹ',
+              'class_title': m['class_title'] ?? m['title'] ?? 'کلاس',
+              'method': 'JazzCash / EasyPaisa',
+              'txn_reference': 'درخواست جمع ہو گئی',
+              'amount': 1500,
+              'created_at': DateTime.now().toIso8601String(),
+            });
+          }).toList();
+        }
+      } catch (_) {}
+    }
 
-    return [];
+    // Filter out locally dismissed items
+    return result.where((p) {
+      if (_dismissedKeys.contains(p.paymentId)) return false;
+      if (p.paymentId.startsWith('enrollment_')) {
+        final parts = p.paymentId.split('_');
+        if (parts.length >= 3) {
+          final sId = parts[1];
+          if (_dismissedKeys.contains(sId)) return false;
+        }
+      }
+      return true;
+    }).toList();
   }
 
   Future<void> approve(String paymentId) async {
+    _dismissedKeys.add(paymentId);
+
+    String? studentId;
+    String? classId;
+
     if (paymentId.startsWith('enrollment_')) {
       final parts = paymentId.split('_');
       if (parts.length >= 3) {
-        final studentId = parts[1];
-        final classId = parts[2];
-        try {
-          await _supabase.rpc('verify_student', params: {'p_student_id': studentId});
-        } catch (_) {}
-        try {
-          await _supabase
-              .from('profiles')
-              .update({'is_verified': true})
-              .eq('id', studentId);
-        } catch (_) {}
-        try {
-          await _supabase
-              .from('class_enrollments')
-              .update({'status': 'approved'})
-              .eq('student_id', studentId)
-              .eq('class_id', classId);
-        } catch (_) {}
-        return;
+        studentId = parts[1];
+        classId = parts[2];
+        _dismissedKeys.add(studentId);
       }
-    }
-
-    try {
-      await _supabase.rpc('approve_payment', params: {'p_payment_id': paymentId});
-    } catch (_) {}
-
-    try {
-      await _supabase
-          .from('payments')
-          .update({'status': 'approved'})
-          .eq('id', paymentId);
-    } catch (_) {}
-  }
-
-  Future<void> reject(String paymentId) async {
-    if (paymentId.startsWith('enrollment_')) {
-      final parts = paymentId.split('_');
-      if (parts.length >= 3) {
-        final studentId = parts[1];
-        final classId = parts[2];
-        // enrollment کو delete کریں
-        try {
-          await _supabase
-              .from('class_enrollments')
-              .delete()
-              .eq('student_id', studentId)
-              .eq('class_id', classId);
-        } catch (e) {
-          // delete نہ ہو تو status rejected کریں
-          try {
-            await _supabase
-                .from('class_enrollments')
-                .update({'status': 'rejected'})
-                .eq('student_id', studentId)
-                .eq('class_id', classId);
-          } catch (_) {}
+    } else {
+      // Try fetching student_id & class_id from payment record
+      try {
+        final res = await _supabase
+            .from('payments')
+            .select('student_id, class_id')
+            .eq('id', paymentId)
+            .maybeSingle();
+        if (res != null) {
+          studentId = res['student_id']?.toString();
+          classId = res['class_id']?.toString();
+          if (studentId != null) _dismissedKeys.add(studentId);
         }
-        // payment record بھی delete کریں
-        try {
-          await _supabase
-              .from('payments')
-              .delete()
-              .eq('student_id', studentId)
-              .eq('class_id', classId)
-              .neq('status', 'approved');
-        } catch (_) {}
-        return;
-      }
+      } catch (_) {}
     }
 
-    // Normal payment record: پہلے delete کریں
-    bool deleted = false;
-    try {
-      await _supabase
-          .from('payments')
-          .delete()
-          .eq('id', paymentId)
-          .neq('status', 'approved');
-      deleted = true;
-    } catch (_) {}
-
-    // delete نہ ہو تو status rejected کریں
-    if (!deleted) {
+    // Update payments table
+    if (!paymentId.startsWith('enrollment_')) {
+      try {
+        await _supabase.rpc('approve_payment', params: {'p_payment_id': paymentId});
+      } catch (_) {}
       try {
         await _supabase
             .from('payments')
-            .update({'status': 'rejected'})
+            .update({'status': 'approved'})
             .eq('id', paymentId);
+      } catch (_) {}
+    }
+
+    // Update class_enrollments and profiles if studentId is known
+    if (studentId != null && studentId.isNotEmpty) {
+      try {
+        await _supabase.rpc('verify_student', params: {'p_student_id': studentId});
+      } catch (_) {}
+      try {
+        await _supabase
+            .from('profiles')
+            .update({'is_verified': true})
+            .eq('id', studentId);
+      } catch (_) {}
+      try {
+        var query = _supabase.from('class_enrollments').update({'status': 'approved'}).eq('student_id', studentId);
+        if (classId != null && classId.isNotEmpty) {
+          query = query.eq('class_id', classId);
+        }
+        await query;
+      } catch (_) {}
+    }
+  }
+
+  Future<void> reject(String paymentId) async {
+    _dismissedKeys.add(paymentId);
+
+    String? studentId;
+    String? classId;
+
+    if (paymentId.startsWith('enrollment_')) {
+      final parts = paymentId.split('_');
+      if (parts.length >= 3) {
+        studentId = parts[1];
+        classId = parts[2];
+        _dismissedKeys.add(studentId);
+      }
+    } else {
+      // Fetch student_id & class_id from payments table before deleting
+      try {
+        final res = await _supabase
+            .from('payments')
+            .select('student_id, class_id')
+            .eq('id', paymentId)
+            .maybeSingle();
+        if (res != null) {
+          studentId = res['student_id']?.toString();
+          classId = res['class_id']?.toString();
+          if (studentId != null) _dismissedKeys.add(studentId);
+        }
+      } catch (_) {}
+    }
+
+    // 1. Delete/Update payments table
+    if (!paymentId.startsWith('enrollment_')) {
+      try {
+        await _supabase.rpc('reject_payment', params: {'p_payment_id': paymentId});
+      } catch (_) {}
+      try {
+        await _supabase.from('payments').delete().eq('id', paymentId);
+      } catch (_) {
+        try {
+          await _supabase.from('payments').update({'status': 'rejected'}).eq('id', paymentId);
+        } catch (_) {}
+      }
+    }
+
+    // Also delete/update payments by studentId/classId if available
+    if (studentId != null && studentId.isNotEmpty) {
+      try {
+        var q = _supabase.from('payments').delete().eq('student_id', studentId);
+        if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+        await q;
+      } catch (_) {
+        try {
+          var q = _supabase.from('payments').update({'status': 'rejected'}).eq('student_id', studentId);
+          if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+          await q;
+        } catch (_) {}
+      }
+
+      // 2. CRITICAL: Delete/Update class_enrollments table so student enrollment is rejected as well
+      try {
+        var q = _supabase.from('class_enrollments').delete().eq('student_id', studentId);
+        if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+        await q;
+      } catch (_) {
+        try {
+          var q = _supabase.from('class_enrollments').update({'status': 'rejected'}).eq('student_id', studentId);
+          if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+          await q;
+        } catch (_) {}
+      }
+
+      // Try RPC calls if available
+      try {
+        await _supabase.rpc('reject_student', params: {'p_student_id': studentId});
       } catch (_) {}
     }
   }
