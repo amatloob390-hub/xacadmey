@@ -92,3 +92,56 @@ class LanguageToggle extends StatelessWidget {
     );
   }
 }
+
+/// Compact icon-only language toggle for mobile headers
+class CompactLanguageToggle extends StatelessWidget {
+  const CompactLanguageToggle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppLang.isUrdu,
+      builder: (context, isUrdu, _) {
+        return ValueListenableBuilder<ThemePreset>(
+          valueListenable: AppTheme.currentTheme,
+          builder: (context, theme, _) {
+            return InkWell(
+              onTap: () => AppLang.toggle(),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: theme.isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.language_rounded, size: 16, color: theme.textColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      isUrdu ? 'EN' : 'اردو',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textColor,
+                        fontFamily: isUrdu ? null : 'NotoNastaliqUrdu',
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+

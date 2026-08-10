@@ -151,9 +151,24 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
               color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
             ),
           ),
-          title: Text(
-            '${L.t('فیس جمع کروائیں', 'Submit Fee')}: ${widget.classTitle}',
-            style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                L.t('فیس جمع کروائیں', 'Submit Fee'),
+                style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
+              ),
+              Text(
+                widget.classTitle,
+                style: _ts(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: theme.primaryColor,
+                  theme: theme,
+                ),
+              ),
+            ],
           ),
           content: SingleChildScrollView(
             child: Form(

@@ -89,7 +89,7 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // --- BRAND LOGO ---
-  Widget _buildBrandLogo({required ThemePreset theme}) {
+  Widget _buildBrandLogo({required ThemePreset theme, bool compact = false}) {
     return InkWell(
       onTap: () {
         _scrollController.animateTo(
@@ -103,7 +103,7 @@ class _LandingScreenState extends State<LandingScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -111,7 +111,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   theme.secondaryColor,
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
                   color: theme.primaryColor.withValues(alpha: 0.3),
@@ -120,35 +120,37 @@ class _LandingScreenState extends State<LandingScreen> {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school_rounded,
               color: Colors.white,
-              size: 24,
+              size: compact ? 20 : 24,
             ),
           ),
-          const SizedBox(width: 12),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'X ',
-                  style: _ts(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: theme.textColor,
+          if (!compact) ...[
+            const SizedBox(width: 10),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'X ',
+                    style: _ts(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textColor,
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: 'ACADEMY',
-                  style: _ts(
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
+                  TextSpan(
+                    text: 'ACADEMY',
+                    style: _ts(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: theme.primaryColor,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -169,7 +171,7 @@ class _LandingScreenState extends State<LandingScreen> {
             return Scaffold(
               backgroundColor: theme.bgColor,
               appBar: PreferredSize(
-                preferredSize: const Size.fromHeight(75),
+                preferredSize: Size.fromHeight(isWide ? 75 : 62),
                 child: Container(
                   decoration: BoxDecoration(
                     color: theme.cardColor,
@@ -183,15 +185,18 @@ class _LandingScreenState extends State<LandingScreen> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWide ? 24 : 14,
+                        vertical: isWide ? 10 : 8,
+                      ),
                       child: Row(
                         children: [
-                          // 1. Logo
-                          _buildBrandLogo(theme: theme),
+                          // 1. Logo — full on wide, icon-only on mobile
+                          _buildBrandLogo(theme: theme, compact: !isWide),
 
                           const Spacer(),
 
-                          // 2. Navigation Menu Links (Clickable Scroll Links)
+                          // 2. Navigation Menu Links (wide screens only)
                           if (isWide) ...[
                             _buildHeaderLink(
                               theme: theme,
@@ -219,13 +224,16 @@ class _LandingScreenState extends State<LandingScreen> {
                             const SizedBox(width: 20),
                           ],
 
-                          // 3. Language Switcher & Theme Selector
-                          const LanguageToggle(),
-                          const SizedBox(width: 8),
+                          // 3. Language Switcher (compact icon-only on mobile)
+                          if (isWide)
+                            const LanguageToggle()
+                          else
+                            const CompactLanguageToggle(),
+                          const SizedBox(width: 6),
                           const ThemeSelectorButton(),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
 
-                          // 4. Action Buttons (Login / Register / Dashboard)
+                          // 4. Action Button
                           if (isLoggedIn) ...[
                             ElevatedButton.icon(
                               onPressed: () {
@@ -233,11 +241,11 @@ class _LandingScreenState extends State<LandingScreen> {
                                   Navigator.of(context).pop();
                                 }
                               },
-                              icon: const Icon(Icons.dashboard_rounded, size: 18),
+                              icon: Icon(Icons.dashboard_rounded, size: isWide ? 18 : 16),
                               label: Text(
-                                L.t('ڈیش بورڈ', 'Dashboard'),
+                                L.t('ڈیش بورڈ', isWide ? 'Dashboard' : 'Dash'),
                                 style: _ts(
-                                  fontSize: 14,
+                                  fontSize: isWide ? 14 : 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
@@ -245,9 +253,9 @@ class _LandingScreenState extends State<LandingScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 12,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 18 : 10,
+                                  vertical: isWide ? 12 : 8,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
@@ -255,22 +263,23 @@ class _LandingScreenState extends State<LandingScreen> {
                               ),
                             ),
                           ] else ...[
-                            TextButton(
-                              onPressed: () => _navigateToAuth(isSignUp: false),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.textColor,
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              ),
-                              child: Text(
-                                L.t('لاگ اِن', 'Login'),
-                                style: _ts(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.textColor,
+                            if (isWide)
+                              TextButton(
+                                onPressed: () => _navigateToAuth(isSignUp: false),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: theme.textColor,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                ),
+                                child: Text(
+                                  L.t('لاگ اِن', 'Login'),
+                                  style: _ts(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.textColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
+                            if (isWide) const SizedBox(width: 8),
                             ElevatedButton(
                               onPressed: () => _navigateToAuth(isSignUp: true),
                               style: ElevatedButton.styleFrom(
@@ -278,18 +287,18 @@ class _LandingScreenState extends State<LandingScreen> {
                                 foregroundColor: Colors.white,
                                 elevation: 4,
                                 shadowColor: theme.primaryColor.withValues(alpha: 0.4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 14,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isWide ? 22 : 14,
+                                  vertical: isWide ? 14 : 8,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
                               child: Text(
-                                L.t('مفت ٹرائل شروع کریں', 'Start Free Trial'),
+                                L.t('مفت ٹرائل', isWide ? 'Start Free Trial' : 'Sign Up'),
                                 style: _ts(
-                                  fontSize: 15,
+                                  fontSize: isWide ? 15 : 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
