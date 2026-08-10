@@ -52,13 +52,16 @@ class PaymentService {
     required String txnReference,
     String? receiptImage,
   }) async {
-    final studentId = _supabase.auth.currentUser!.id;
+    final currentUser = _supabase.auth.currentUser;
+    if (currentUser == null) return;
+    final studentId = currentUser.id;
+
     final cleanTxn = txnReference.trim();
     final formattedTxn = (receiptImage != null && receiptImage.isNotEmpty)
         ? '$cleanTxn||RECEIPT:$receiptImage'
         : cleanTxn;
 
-    final Map<String, dynamic> payload = {
+    final Map<String, dynamic> payloadFull = {
       'student_id': studentId,
       'class_id': classId,
       'amount': amount,
@@ -69,10 +72,20 @@ class PaymentService {
     };
 
     if (receiptImage != null && receiptImage.isNotEmpty) {
-      payload['receipt_url'] = receiptImage;
+      payloadFull['receipt_url'] = receiptImage;
     }
 
-    // 1. پچھلی ردی (rejected) یا التوا (pending) فیس کی ریکارڈ ہٹائیں تاکہ ڈپلیکیٹ ایرر نہ آئے
+    final Map<String, dynamic> payloadSafe = {
+      'student_id': studentId,
+      'class_id': classId,
+      'amount': amount,
+      'method': method,
+      'txn_reference': formattedTxn,
+      'status': 'pending',
+      'created_at': DateTime.now().toIso8601String(),
+    };
+
+    // 1. پچھلی ردی یا التوا فیس ہٹائیں
     try {
       await _supabase
           .from('payments')
@@ -82,18 +95,57 @@ class PaymentService {
           .neq('status', 'approved');
     } catch (_) {}
 
-    // 2. نئی درخواست insert کریں
+    // 2. نئی درخواست insert کریں (پہلے receipt_url کے ساتھ، ورنہ محفوظ کالمز کے ساتھ)
+    bool inserted = false;
     try {
-      await _supabase.from('payments').insert(payload);
-    } catch (_) {
-      // 3. اگر insert میں کوئی مسلہ آئے تو سابقہ ریکارڈ اپڈیٹ کریں
-      await _supabase
-          .from('payments')
-          .update(payload)
-          .eq('student_id', studentId)
-          .eq('class_id', classId)
-          .neq('status', 'approved');
+      await _supabase.from('payments').insert(payloadFull);
+      inserted = true;
+    } catch (_) {}
+
+    if (!inserted) {
+      try {
+        await _supabase.from('payments').insert(payloadSafe);
+        inserted = true;
+      } catch (_) {}
     }
+
+    // 3. اگر insert نہ ہو سکے (مثلاً ڈپلیکیٹ کی یا RLS کی وجہ سے)، تو update کریں
+    if (!inserted) {
+      try {
+        await _supabase
+            .from('payments')
+            .update(payloadFull)
+            .eq('student_id', studentId)
+            .eq('class_id', classId)
+            .neq('status', 'approved');
+      } catch (_) {
+        try {
+          await _supabase
+              .from('payments')
+              .update(payloadSafe)
+              .eq('student_id', studentId)
+              .eq('class_id', classId)
+              .neq('status', 'approved');
+        } catch (_) {}
+      }
+    }
+
+    // 4. class_enrollments اور enrollments میں بھی سٹیٹس التوا رکھیں تاکہ ٹیچر پینل کو فوراً ڈیٹا ملے
+    try {
+      await _supabase.from('class_enrollments').upsert({
+        'student_id': studentId,
+        'class_id': classId,
+        'status': 'pending',
+      }, onConflict: 'student_id,class_id');
+    } catch (_) {}
+
+    try {
+      await _supabase.from('enrollments').upsert({
+        'student_id': studentId,
+        'class_id': classId,
+        'payment_status': 'pending',
+      }, onConflict: 'student_id,class_id');
+    } catch (_) {}
   }
 
   Future<List<PendingPayment>> getPending() async {
