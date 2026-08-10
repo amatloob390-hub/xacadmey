@@ -198,41 +198,55 @@ class PaymentService {
       if (parts.length >= 3) {
         final studentId = parts[1];
         final classId = parts[2];
-
+        // enrollment کو delete کریں
         try {
           await _supabase
               .from('class_enrollments')
               .delete()
               .eq('student_id', studentId)
               .eq('class_id', classId);
-        } catch (_) {
-          await _supabase
-              .from('class_enrollments')
-              .update({'status': 'rejected'})
-              .eq('student_id', studentId)
-              .eq('class_id', classId);
+        } catch (e) {
+          // delete نہ ہو تو status rejected کریں
+          try {
+            await _supabase
+                .from('class_enrollments')
+                .update({'status': 'rejected'})
+                .eq('student_id', studentId)
+                .eq('class_id', classId);
+          } catch (_) {}
         }
-
+        // payment record بھی delete کریں
         try {
           await _supabase
               .from('payments')
-              .update({'status': 'rejected'})
+              .delete()
               .eq('student_id', studentId)
-              .eq('class_id', classId);
+              .eq('class_id', classId)
+              .neq('status', 'approved');
         } catch (_) {}
         return;
       }
     }
 
-    try {
-      await _supabase.rpc('reject_payment', params: {'p_payment_id': paymentId});
-    } catch (_) {}
-
+    // Normal payment record: پہلے delete کریں
+    bool deleted = false;
     try {
       await _supabase
           .from('payments')
-          .update({'status': 'rejected'})
-          .eq('id', paymentId);
+          .delete()
+          .eq('id', paymentId)
+          .neq('status', 'approved');
+      deleted = true;
     } catch (_) {}
+
+    // delete نہ ہو تو status rejected کریں
+    if (!deleted) {
+      try {
+        await _supabase
+            .from('payments')
+            .update({'status': 'rejected'})
+            .eq('id', paymentId);
+      } catch (_) {}
+    }
   }
 }

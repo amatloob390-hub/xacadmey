@@ -14,21 +14,37 @@ class PendingPayments extends StatefulWidget {
 class _PendingPaymentsState extends State<PendingPayments> {
   final PaymentService _service = PaymentService();
   late Future<List<PendingPayment>> _future;
+  List<PendingPayment>? _localList; // local cached list for instant UI
 
   @override
   void initState() {
     super.initState();
-    _future = _service.getPending();
+    _future = _loadPayments();
   }
 
-  void _refresh() => setState(() => _future = _service.getPending());
+  Future<List<PendingPayment>> _loadPayments() async {
+    final list = await _service.getPending();
+    _localList = List<PendingPayment>.from(list);
+    return _localList!;
+  }
+
+  void _refresh() => setState(() => _future = _loadPayments());
 
   Future<void> _act(String id, bool approve) async {
+    // Instantly remove from local list so UI updates immediately
+    if (_localList != null) {
+      setState(() {
+        _localList!.removeWhere((p) => p.paymentId == id);
+        _future = Future.value(List<PendingPayment>.from(_localList!));
+      });
+    }
+
     try {
       approve ? await _service.approve(id) : await _service.reject(id);
     } catch (_) {}
 
     if (mounted) {
+      // Refresh from server to confirm
       _refresh();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(approve
