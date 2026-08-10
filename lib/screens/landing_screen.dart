@@ -361,7 +361,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       const SizedBox(height: 80),
 
                       // 6. CALL TO ACTION BANNER
-                      _buildCtaBanner(theme, isLoggedIn),
+                      _buildCtaBanner(theme, isLoggedIn, isWide),
 
                       const SizedBox(height: 60),
 
@@ -1052,9 +1052,164 @@ class _LandingScreenState extends State<LandingScreen> {
                         ))
                     .toList(),
               ),
+            const SizedBox(height: 36),
+            _buildAIMentorBanner(theme, isWide),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAIMentorBanner(ThemePreset theme, bool isWide) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isWide ? 28 : 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 2.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: isWide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _buildAIChatGraphicMockup(isWide),
+                ),
+                const SizedBox(width: 28),
+                Expanded(
+                  flex: 6,
+                  child: _buildAIMentorTextContent(isWide),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildAIMentorTextContent(isWide),
+                const SizedBox(height: 20),
+                _buildAIChatGraphicMockup(isWide),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildAIMentorTextContent(bool isWide) {
+    return Column(
+      crossAxisAlignment: isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Text(
+          L.t('کبھی اکیلے نہ اٹکیں', 'Never Get Stuck Alone'),
+          style: _ts(
+            fontSize: isWide ? 18 : 15,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF34D399),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          L.t('ایک AI مینٹور جو آپ کی زبان بولے۔', 'An AI Mentor That Speaks Your Language —'),
+          textAlign: isWide ? TextAlign.left : TextAlign.center,
+          style: _ts(
+            fontSize: isWide ? 30 : 22,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          L.t(
+            'کلاس میں کوئی بات رہ گئی یا آدھی رات پریکٹس کر رہے ہیں؟ سادہ اردو یا انگریزی میں پوچھیں اور واضح، مرحلہ وار رہنمائی پائیں۔ تاکہ آپ کہیں رکیں نہیں۔',
+            'Missed something in class or practicing at midnight? Ask in simple Urdu or English and get clear step-by-step guidance — so you never get stuck.',
+          ),
+          textAlign: isWide ? TextAlign.left : TextAlign.center,
+          style: _ts(
+            fontSize: isWide ? 14 : 12,
+            color: Colors.white.withValues(alpha: 0.95),
+            height: 1.7,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAIChatGraphicMockup(bool isWide) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              L.t('سر، Fiverr پر پہلا gig کیسے بناؤں؟', 'Sir, how do I make my first Gig on Fiverr?'),
+              style: _ts(fontSize: isWide ? 13 : 11, color: Colors.white),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Text(
+              L.t(
+                'پہلے اپنی skill چنیں، پھر ایک واضح title اور 3 packages بنائیں۔ آئیے آپ کے gig کا title لکھتے ہیں۔۔۔',
+                'First select your skill, then create a clear title and 3 packages. Let\'s write your gig title...',
+              ),
+              style: _ts(fontSize: isWide ? 13 : 11, fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              L.t('کلائنٹ کو proposal لکھنے میں مدد کریں؟', 'Can you help write a proposal for the client?'),
+              style: _ts(fontSize: isWide ? 13 : 11, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1273,11 +1428,21 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              L.t('سبسکرپشن اور سائن اپ پلانز', 'Subscription & Enrollment Plans'),
+              L.t('مفت شروع کریں۔ ضرورت پر اپ گریڈ —', 'Start Free. Upgrade When Needed —'),
               style: _ts(
                 fontSize: isWide ? 34 : 24,
                 fontWeight: FontWeight.w900,
                 color: theme.textColor,
+                height: 1.8,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              L.t('ادائیگی سے پہلے آزمائیں۔ پھر اپنے مقصد کے مطابق پیج چنیں۔', 'Try before paying. Then choose the package according to your goal.'),
+              style: _ts(
+                fontSize: 16,
+                color: theme.subtextColor,
                 height: 1.8,
               ),
               textAlign: TextAlign.center,
@@ -1313,19 +1478,25 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   // --- 6. CTA BANNER ---
-  Widget _buildCtaBanner(ThemePreset theme, bool isLoggedIn) {
+  Widget _buildCtaBanner(ThemePreset theme, bool isLoggedIn, bool isWide) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+      padding: EdgeInsets.symmetric(horizontal: isWide ? 40 : 20, vertical: isWide ? 42 : 30),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.primaryColor, theme.secondaryColor],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 2.0,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.primaryColor.withValues(alpha: 0.3),
-            blurRadius: 20,
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
@@ -1334,49 +1505,103 @@ class _LandingScreenState extends State<LandingScreen> {
         constraints: const BoxConstraints(maxWidth: 900),
         child: Column(
           children: [
+            // Top Small Tag (Mint Green)
             Text(
-              L.t('کیا آپ آن لائن لرننگ شروع کرنے کے لیے تیار ہیں؟', 'Ready to Start Your Learning Journey?'),
+              L.t('آپ کی نئی اسکل منتظر ہے', 'Your New Skill Awaits'),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: 26,
+                fontSize: isWide ? 20 : 16,
                 fontWeight: FontWeight.bold,
+                color: const Color(0xFF34D399),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Main Headline (2 lines)
+            Text(
+              L.t('آپ کی نئی اسکل بس', 'Your new skill is just'),
+              textAlign: TextAlign.center,
+              style: _ts(
+                fontSize: isWide ? 36 : 26,
+                fontWeight: FontWeight.w900,
                 color: Colors.white,
-                height: 1.8,
+                height: 1.3,
+              ),
+            ),
+            Text(
+              L.t('ایک بٹن کی دوری پر —', 'One button press away —'),
+              textAlign: TextAlign.center,
+              style: _ts(
+                fontSize: isWide ? 38 : 28,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                height: 1.3,
               ),
             ),
             const SizedBox(height: 14),
+
+            // Subtext
             Text(
-              L.t('ابھی ایکس اکیڈمی پورٹل پر اکاؤنٹ بنائیں اور لائیو کلاسز کا حصہ بنیں۔', 'Create your Xacademy account today and join live online sessions.'),
+              L.t(
+                'دنیا میں کہیں بھی ہوں، سیکھنا آج شروع کریں۔ 7 دن کی مفت ٹرائل لیں۔',
+                'Wherever you are in the world, start learning today. Get a 7-day free trial.',
+              ),
               textAlign: TextAlign.center,
-              style: _ts(fontSize: 15, color: Colors.white70, height: 1.7),
+              style: _ts(
+                fontSize: isWide ? 16 : 14,
+                color: Colors.white.withValues(alpha: 0.95),
+                height: 1.7,
+              ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                if (isLoggedIn) {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                } else {
-                  _navigateToAuth(isSignUp: true);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.cardColor,
-                foregroundColor: theme.primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+            const SizedBox(height: 26),
+
+            // Buttons Row (Primary & Secondary Outlined)
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (isLoggedIn) {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      _navigateToAuth(isSignUp: true);
+                    }
+                  },
+                  icon: Icon(Icons.flash_on_rounded, size: isWide ? 20 : 18),
+                  label: Text(
+                    isLoggedIn
+                        ? L.t('ڈیش بورڈ پر جائیں', 'Go to Dashboard')
+                        : L.t('7 دن کی مفت ٹرائل شروع کریں', 'Start 7-Day Free Trial'),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 32 : 22, vertical: isWide ? 16 : 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    elevation: 10,
+                    shadowColor: const Color(0xFF10B981).withValues(alpha: 0.6),
+                  ),
                 ),
-              ),
-              child: Text(
-                isLoggedIn ? L.t('ڈیش بورڈ پر جائیں', 'Go to Dashboard') : L.t('ابھی سائن اپ کریں', 'Sign Up Now'),
-                style: _ts(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: theme.primaryColor,
+                OutlinedButton.icon(
+                  onPressed: () => _scrollToSection(_howItWorksKey),
+                  icon: Icon(Icons.explore_outlined, size: isWide ? 20 : 18, color: Colors.white),
+                  label: Text(
+                    L.t('طریقہ کار', 'How It Works'),
+                    style: _ts(fontSize: isWide ? 16 : 14, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 2.0),
+                    padding: EdgeInsets.symmetric(horizontal: isWide ? 28 : 20, vertical: isWide ? 16 : 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
