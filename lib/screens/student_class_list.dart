@@ -200,34 +200,35 @@ class _StudentClassListState extends State<StudentClassList> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refresh,
-              child: FutureBuilder<List<StudentClass>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return _messageList(
-                        L.t('کلاسز لوڈ نہیں ہو سکیں۔', 'Could not load classes.'));
-                  }
-                  final classes = snapshot.data ?? [];
-
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 850;
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 580),
+                  child: FutureBuilder<List<StudentClass>>(
+                    future: _future,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return _messageList(
+                            L.t('کلاسز لوڈ نہیں ہو سکیں۔', 'Could not load classes.'));
+                      }
+                      final classes = snapshot.data ?? [];
 
                       final analyticsWidget = Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   L.t('ڈیش بورڈ اینالیٹکس', 'Dashboard Analytics'),
+                                  textAlign: TextAlign.center,
                                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
+                                const SizedBox(width: 12),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                   decoration: BoxDecoration(
@@ -253,9 +254,10 @@ class _StudentClassListState extends State<StudentClassList> {
                             Wrap(
                               spacing: 12,
                               runSpacing: 12,
+                              alignment: WrapAlignment.center,
                               children: [
                                 SizedBox(
-                                  width: isWide ? (constraints.maxWidth * 0.45 - 20) : constraints.maxWidth,
+                                  width: 260,
                                   child: RadialGaugeCard(
                                     title: L.t('کلاس ٹائم (Class Time)', 'Class Time'),
                                     valueText: '2.5 hrs',
@@ -266,7 +268,7 @@ class _StudentClassListState extends State<StudentClassList> {
                                   ),
                                 ),
                                 SizedBox(
-                                  width: isWide ? (constraints.maxWidth * 0.45 - 20) : constraints.maxWidth,
+                                  width: 260,
                                   child: RadialGaugeCard(
                                     title: L.t('حاضری (Attendance)', 'Attendance Rate'),
                                     valueText: '95%',
@@ -292,37 +294,6 @@ class _StudentClassListState extends State<StudentClassList> {
                         );
                       }
 
-                      if (isWide) {
-                        return ListView(
-                          padding: const EdgeInsets.all(20),
-                          children: [
-                            analyticsWidget,
-                            const SizedBox(height: 20),
-                            Text(
-                              L.t('میری کلاسز اور لیکچرز', 'My Classes & Lectures'),
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 14),
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 1.35,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
-                              itemCount: classes.length,
-                              itemBuilder: (_, i) => _StudentClassCard(
-                                item: classes[i],
-                                onChanged: _refresh,
-                                onOpenAi: _openAiOverlay,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
                       return ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
@@ -330,6 +301,7 @@ class _StudentClassListState extends State<StudentClassList> {
                           const SizedBox(height: 16),
                           Text(
                             L.t('میری کلاسز اور لیکچرز', 'My Classes & Lectures'),
+                            textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 14),
@@ -341,8 +313,8 @@ class _StudentClassListState extends State<StudentClassList> {
                         ],
                       );
                     },
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           ),
@@ -455,14 +427,14 @@ class _StudentClassCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Top Status Badge (Live Tag)
-              if (item.isActive)
+              if (item.isActive) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
@@ -493,6 +465,8 @@ class _StudentClassCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 10),
+              ],
 
               // AI Teaching Assistant Floating Action Overlay
               InkWell(
@@ -521,9 +495,10 @@ class _StudentClassCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
@@ -537,10 +512,12 @@ class _StudentClassCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       item.title,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -550,11 +527,13 @@ class _StudentClassCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF6EE7B7)),
                         const SizedBox(width: 6),
                         Text(
                           '${L.t('وقت', 'Time')}: ${_fmt(item.scheduledAt)}  •  ${item.durationMin} ${L.t('منٹ', 'min')}',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.95),
                             fontSize: 13,
