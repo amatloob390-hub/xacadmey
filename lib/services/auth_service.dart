@@ -46,8 +46,28 @@ class AuthService {
         });
       } catch (_) {}
 
-      // link سے آیا ہو تو اُسی class میں enroll کر دیں (access تصدیق کے بعد)
+      // link سے آیا ہو تو اُسی class میں enroll کر دیں
       if (classId != null && classId.isNotEmpty) {
+        try {
+          await _supabase.from('enrollments').upsert({
+            'student_id': user.id,
+            'user_id': user.id,
+            'class_id': classId,
+            'grace_until': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+            'payment_status': 'pending',
+          }, onConflict: 'student_id,class_id');
+        } catch (_) {}
+
+        try {
+          await _supabase.from('class_enrollments').upsert({
+            'student_id': user.id,
+            'user_id': user.id,
+            'class_id': classId,
+            'status': 'pending',
+            'created_at': DateTime.now().toIso8601String(),
+          }, onConflict: 'student_id,class_id');
+        } catch (_) {}
+
         try {
           await _supabase.rpc('enroll_in_class', params: {'p_class_id': classId});
         } catch (_) {}

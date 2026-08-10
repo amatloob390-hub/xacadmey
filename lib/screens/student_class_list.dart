@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
+import '../pending_class.dart';
 import '../services/student_service.dart';
 import '../widgets/join_class_button.dart';
 import '../widgets/logout_button.dart';
@@ -24,7 +25,19 @@ class _StudentClassListState extends State<StudentClassList> {
   @override
   void initState() {
     super.initState();
+    _checkPendingClassAndLoad();
+  }
+
+  Future<void> _checkPendingClassAndLoad() async {
+    final pId = PendingClass.id;
+    if (pId != null && pId.isNotEmpty) {
+      PendingClass.id = null;
+      try {
+        await _service.enroll(pId);
+      } catch (_) {}
+    }
     _future = _service.getMyClasses();
+    if (mounted) setState(() {});
   }
 
   Future<void> _refresh() async {
@@ -63,39 +76,98 @@ class _StudentClassListState extends State<StudentClassList> {
             child: RefreshIndicator(
               onRefresh: _refresh,
               child: FutureBuilder<List<StudentClass>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return _messageList(
-                  L.t('کلاسز لوڈ نہیں ہو سکیں۔', 'Could not load classes.'));
-            }
-            final classes = snapshot.data ?? [];
-            if (classes.isEmpty) {
-              return _messageList(L.t('آپ ابھی کسی کلاس میں انرول نہیں ہیں۔',
-                  'You are not enrolled in any class yet.'));
-            }
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                  itemCount: classes.length,
-                  itemBuilder: (_, i) => _StudentClassCard(
-                    item: classes[i],
-                    onChanged: _refresh,
-                  ),
-                ),
-              ),
-            );
-          },
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return _messageList(
+                        L.t('کلاسز لوڈ نہیں ہو سکیں۔', 'Could not load classes.'));
+                  }
+                  final classes = snapshot.data ?? [];
+                  if (classes.isEmpty) {
+                    return _emptyState();
+                  }
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                        itemCount: classes.length,
+                        itemBuilder: (_, i) => _StudentClassCard(
+                          item: classes[i],
+                          onChanged: _refresh,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _emptyState() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 40),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.school_outlined, size: 56, color: Color(0xFF10B981)),
+                  const SizedBox(height: 16),
+                  Text(
+                    L.t('آپ ابھی کسی کلاس میں انرول نہیں ہیں۔',
+                        'You are not enrolled in any class yet.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    L.t('دوبارہ لوڈ کرنے کے لیے نیچے بٹن دبائیں۔',
+                        'Press the button below to reload.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(L.t('کلاسز دوبارہ لوڈ کریں', 'Reload Classes')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
