@@ -156,7 +156,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _load,
-              child: _buildBody(),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 850),
+                  child: _buildBody(),
+                ),
+              ),
             ),
           ),
         ],

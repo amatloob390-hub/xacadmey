@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
+import '../app_theme.dart';
 
 class StudentApprovalsScreen extends StatefulWidget {
   const StudentApprovalsScreen({super.key});
@@ -23,8 +24,6 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
   Future<void> _loadPendingStudents() async {
     setState(() => _loading = true);
     try {
-      // SECURITY DEFINER RPC — RLS سے بالاتر ہو کر staff کو زیرِ التوا
-      // students لوٹاتا ہے (سیدھی profiles query RLS کی وجہ سے خالی آتی تھی)۔
       final res = await _supabase.rpc('list_pending_students');
 
       if (mounted) {
@@ -38,7 +37,6 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     }
   }
 
-  /// "منظوری دیں" پر منظوری کی قسم پوچھیں: فیس سلپ (مکمل) یا 7 دن ٹرائل۔
   Future<void> _chooseApproval(String userId, String studentEmail) async {
     final choice = await showDialog<String>(
       context: context,
@@ -66,8 +64,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                 Icon(Icons.timelapse, color: Colors.blue.shade700),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(L.t('7 دن کی ٹرائل کلاسز',
-                      '7-day trial classes')),
+                  child: Text(L.t('7 دن کی ٹرائل کلاسز', '7-day trial classes')),
                 ),
               ],
             ),
@@ -86,7 +83,6 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
   Future<void> _approveStudent(String userId, String studentEmail,
       {required bool trial}) async {
     try {
-      // staff RPC — teacher/admin/manager سب تصدیق کر سکتے ہیں (RLS محفوظ)
       await _supabase.rpc(
         trial ? 'staff_verify_student_trial' : 'staff_verify_student_paid',
         params: trial
@@ -166,131 +162,201 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     }
   }
 
+  TextStyle _ts({
+    required double fontSize,
+    FontWeight fontWeight = FontWeight.normal,
+    Color? color,
+    ThemePreset? theme,
+  }) {
+    final defaultColor = theme != null ? theme.textColor : const Color(0xFF0F172A);
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color ?? defaultColor,
+      height: AppLang.ur ? 1.8 : 1.5,
+      fontFamily: AppLang.ur ? 'NotoNastaliqUrdu' : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(L.t(
-          'نئے اسٹوڈنٹس کی تصدیق',
-          'Student Approvals',
-        )),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadPendingStudents,
+    return ValueListenableBuilder<ThemePreset>(
+      valueListenable: AppTheme.currentTheme,
+      builder: (context, theme, _) {
+        return Scaffold(
+          backgroundColor: theme.bgColor,
+          appBar: AppBar(
+            backgroundColor: theme.cardColor,
+            elevation: 2,
+            title: Text(
+              L.t('نئے اسٹوڈنٹس کی تصدیق', 'Student Approvals'),
+              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadPendingStudents,
+              ),
+            ],
           ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _pendingStudents.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.check_circle_outline,
-                            size: 64, color: Colors.green),
-                        const SizedBox(height: 16),
-                        Text(
-                          L.t(
-                            'کوئی اسٹوڈنٹ تصدیق کے لیے التوا میں نہیں۔',
-                            'No pending student approvals.',
-                          ),
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: _pendingStudents.length,
-                  itemBuilder: (context, i) {
-                    final item = _pendingStudents[i];
-                    final name = item['full_name'] ?? '—';
-                    final email = item['email'] ?? '—';
-                    final id = item['id'] as String;
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Colors.indigo.shade100,
-                                  child: const Icon(Icons.person,
-                                      color: Colors.indigo),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _pendingStudents.isEmpty
+                      ? Center(
+                          child: Container(
+                            margin: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: theme.cardColor,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle_outline_rounded,
+                                    size: 48,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  L.t('کوئی اسٹوڈنٹ التوا میں نہیں', 'No Pending Approvals'),
+                                  style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  L.t('تمام نئے اسٹوڈنٹس کی تصدیق مکمل ہو چکی ہے۔',
+                                      'All new student registrations are verified.'),
+                                  textAlign: TextAlign.center,
+                                  style: _ts(fontSize: 14, color: theme.subtextColor),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          itemCount: _pendingStudents.length,
+                          itemBuilder: (context, i) {
+                            final item = _pendingStudents[i];
+                            final name = item['full_name'] ?? '—';
+                            final email = item['email'] ?? '—';
+                            final id = item['id'] as String;
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Row(
                                     children: [
-                                      Text(
-                                        name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16),
+                                      CircleAvatar(
+                                        backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
+                                        child: Icon(Icons.person_rounded, color: theme.primaryColor),
                                       ),
-                                      Text(email,
-                                          style: TextStyle(
-                                              color: Colors.grey.shade700,
-                                              fontSize: 13)),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              name,
+                                              style: _ts(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                theme: theme,
+                                              ),
+                                            ),
+                                            Text(
+                                              email,
+                                              style: _ts(fontSize: 13, color: theme.subtextColor),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green.shade700,
-                                    foregroundColor: Colors.white,
-                                    visualDensity: VisualDensity.compact,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 6),
-                                    textStyle: const TextStyle(fontSize: 13),
-                                    minimumSize: const Size(0, 34),
+                                  const SizedBox(height: 14),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.red,
+                                          side: const BorderSide(color: Colors.red),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                        ),
+                                        icon: const Icon(Icons.cancel_outlined, size: 16),
+                                        label: Text(L.t('منسوخ', 'Reject'),
+                                            style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
+                                        onPressed: () => _rejectStudent(id, email),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF10B981),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        ),
+                                        icon: const Icon(Icons.verified_rounded, size: 16),
+                                        label: Text(
+                                          L.t('منظوری دیں', 'Approve'),
+                                          style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                                        ),
+                                        onPressed: () => _chooseApproval(id, email),
+                                      ),
+                                    ],
                                   ),
-                                  icon: const Icon(Icons.verified, size: 16),
-                                  label: Text(L.t('منظوری دیں', 'Approve')),
-                                  onPressed: () => _chooseApproval(id, email),
-                                ),
-                                const SizedBox(width: 10),
-                                OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.red.shade700,
-                                    side:
-                                        BorderSide(color: Colors.red.shade300),
-                                    visualDensity: VisualDensity.compact,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 6),
-                                    textStyle: const TextStyle(fontSize: 13),
-                                    minimumSize: const Size(0, 34),
-                                  ),
-                                  icon: const Icon(Icons.cancel_outlined,
-                                      size: 16),
-                                  label: Text(L.t('منسوخ', 'Reject')),
-                                  onPressed: () => _rejectStudent(id, email),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

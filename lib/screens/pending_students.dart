@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
+import '../app_theme.dart';
 import '../services/pending_student_service.dart';
 import 'pending_payments.dart';
 
@@ -93,68 +94,247 @@ class _PendingStudentsState extends State<PendingStudents> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(L.t('زیرِ التوا فیس والے اسٹوڈنٹس', 'Students with Pending Fees')),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.payments_outlined, color: Colors.greenAccent),
-            tooltip: L.t('فیس کی درخواستیں دیکھیں', 'View Submitted Payments'),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PendingPayments()),
-            ),
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<PendingStudent>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final list = snapshot.data ?? [];
-          if (list.isEmpty) {
-            return Center(
-                child: Text(L.t('کسی اسٹوڈنٹ کی فیس زیرِ التوا نہیں۔',
-                    'No students have pending fees.')));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: list.length,
-            itemBuilder: (_, i) => _card(list[i]),
-          );
-        },
-      ),
+  TextStyle _ts({
+    required double fontSize,
+    FontWeight fontWeight = FontWeight.normal,
+    Color? color,
+    ThemePreset? theme,
+  }) {
+    final defaultColor = theme != null ? theme.textColor : const Color(0xFF0F172A);
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color ?? defaultColor,
+      height: AppLang.ur ? 1.8 : 1.5,
+      fontFamily: AppLang.ur ? 'NotoNastaliqUrdu' : null,
     );
   }
 
-  Widget _card(PendingStudent s) {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemePreset>(
+      valueListenable: AppTheme.currentTheme,
+      builder: (context, theme, _) {
+        return Scaffold(
+          backgroundColor: theme.bgColor,
+          appBar: AppBar(
+            backgroundColor: theme.cardColor,
+            elevation: 2,
+            title: Text(
+              L.t('زیرِ التوا فیس والے اسٹوڈنٹس', 'Students with Pending Fees'),
+              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.payments_outlined, color: Color(0xFF10B981)),
+                tooltip: L.t('فیس کی درخواستیں دیکھیں', 'View Submitted Payments'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PendingPayments()),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: L.t('تازہ کریں', 'Refresh'),
+                onPressed: _refresh,
+              ),
+            ],
+          ),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: FutureBuilder<List<PendingStudent>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final list = snapshot.data ?? [];
+                  if (list.isEmpty) {
+                    return Center(
+                      child: Container(
+                        margin: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.primaryColor.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.sentiment_satisfied_alt_rounded,
+                                size: 48,
+                                color: theme.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              L.t('کسی اسٹوڈنٹ کی فیس زیرِ التوا نہیں', 'No Pending Fees'),
+                              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              L.t('تمام اسٹوڈنٹس کی فیس ادا شدہ یا فعال ہے۔',
+                                  'All students are up-to-date with fee requirements.'),
+                              textAlign: TextAlign.center,
+                              style: _ts(fontSize: 14, color: theme.subtextColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    children: [
+                      // Top Banner
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0D9488).withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    L.t('مہلت کی مانیٹرنگ', 'Grace Period Monitoring'),
+                                    style: _ts(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    L.t('${list.length} اسٹوڈنٹس کی مہلت باقی ہے',
+                                        '${list.length} student(s) with grace time'),
+                                    style: _ts(
+                                      fontSize: 13,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      ...list.map((s) => _card(s, theme)),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _card(PendingStudent s, ThemePreset theme) {
     final blocked = s.isBlocked;
     final label = blocked
         ? L.t('🔒 بلاک (مہلت ختم)', '🔒 Blocked (grace expired)')
         : L.t('⏳ ${s.remaining.inDays} دن ${s.remaining.inHours % 24} گھنٹے باقی',
             '⏳ ${s.remaining.inDays}d ${s.remaining.inHours % 24}h left');
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ListTile(
-        title: Text(s.studentName,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          s.studentName,
+          style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${L.t('کلاس', 'Class')}: ${s.classTitle}'),
-            Text(label,
-                style: TextStyle(
-                    color: blocked ? Colors.red : Colors.orange,
-                    fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              '${L.t('کلاس', 'Class')}: ${s.classTitle}',
+              style: _ts(fontSize: 14, color: theme.subtextColor),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: (blocked ? Colors.red : Colors.orange).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: blocked ? Colors.red : Colors.orange,
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                label,
+                style: _ts(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: blocked ? Colors.red : Colors.orange,
+                ),
+              ),
+            ),
           ],
         ),
         trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
+          icon: Icon(Icons.more_vert, color: theme.textColor),
+          color: theme.cardColor,
           onSelected: (choice) {
             if (choice == 'payments') {
               Navigator.push(
@@ -167,19 +347,26 @@ class _PendingStudentsState extends State<PendingStudents> {
           },
           itemBuilder: (_) => [
             PopupMenuItem(
-                value: 'payments',
-                child: Row(
-                  children: [
-                    const Icon(Icons.payments_outlined, color: Colors.green, size: 20),
-                    const SizedBox(width: 8),
-                    Text(L.t('فیس درخواست اور تصدیق', 'View & Approve Payment')),
-                  ],
-                )),
+              value: 'payments',
+              child: Row(
+                children: [
+                  const Icon(Icons.payments_outlined, color: Color(0xFF10B981), size: 20),
+                  const SizedBox(width: 8),
+                  Text(L.t('فیس درخواست اور تصدیق', 'View & Approve Payment'),
+                      style: _ts(fontSize: 14, theme: theme)),
+                ],
+              ),
+            ),
             PopupMenuItem(
-                value: 'extend',
-                child: Text(L.t('مہلت بڑھائیں (+ دن)', 'Extend grace (+ days)'))),
+              value: 'extend',
+              child: Text(L.t('مہلت بڑھائیں (+ دن)', 'Extend grace (+ days)'),
+                  style: _ts(fontSize: 14, theme: theme)),
+            ),
             PopupMenuItem(
-                value: 'set', child: Text(L.t('نئی مہلت مقرر کریں', 'Set new grace'))),
+              value: 'set',
+              child: Text(L.t('نئی مہلت مقرر کریں', 'Set new grace'),
+                  style: _ts(fontSize: 14, theme: theme)),
+            ),
           ],
         ),
       ),
