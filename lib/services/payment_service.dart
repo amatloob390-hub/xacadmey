@@ -16,8 +16,14 @@ class PendingPayment {
         method = m['method'] ?? 'JazzCash',
         txnReference = _parseTxn(m['txn_reference']),
         receiptUrl = m['receipt_url'] ?? m['receipt_image'] ?? _parseReceipt(m['txn_reference']),
-        amount = m['amount'] ?? 0,
+        amount = _parseNum(m['amount']),
         createdAt = DateTime.tryParse(m['created_at'] ?? '') ?? DateTime.now();
+
+  static num _parseNum(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v;
+    return num.tryParse(v.toString()) ?? 0;
+  }
 
   static String _parseTxn(dynamic raw) {
     if (raw == null) return '';
@@ -221,7 +227,7 @@ class PaymentService {
             'method': m['method'] ?? 'JazzCash',
             'txn_reference': m['txn_reference'] ?? '',
             'receipt_url': m['receipt_url'],
-            'amount': m['amount'] ?? 1500,
+            'amount': m['amount'],
             'created_at': m['created_at'] ?? DateTime.now().toIso8601String(),
           });
         }).toList();
@@ -257,7 +263,7 @@ class PaymentService {
               'class_title': m['class_title'] ?? m['title'] ?? 'کلاس',
               'method': 'JazzCash / EasyPaisa',
               'txn_reference': 'درخواست جمع ہو گئی',
-              'amount': 1500,
+              'amount': m['amount'],
               'created_at': DateTime.now().toIso8601String(),
             });
           }).toList();

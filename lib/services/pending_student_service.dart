@@ -51,4 +51,42 @@ class PendingStudentService {
       'p_days': days,
     });
   }
+
+  /// ٹرائل ختم ہونے پر اسٹوڈنٹ کو لسٹ اور کلاس سے ہٹائے
+  Future<void> removeStudent({
+    required String studentId,
+    required String classId,
+  }) async {
+    // 1. Delete from class_enrollments
+    try {
+      await _supabase
+          .from('class_enrollments')
+          .delete()
+          .eq('student_id', studentId)
+          .eq('class_id', classId);
+    } catch (_) {}
+
+    // 2. Delete from enrollments
+    try {
+      await _supabase
+          .from('enrollments')
+          .delete()
+          .eq('student_id', studentId)
+          .eq('class_id', classId);
+    } catch (_) {}
+
+    // 3. Delete from payments
+    try {
+      await _supabase
+          .from('payments')
+          .delete()
+          .eq('student_id', studentId)
+          .eq('class_id', classId);
+    } catch (_) {}
+
+    // 4. Try calling RPC if available
+    try {
+      await _supabase.rpc('staff_reject_student', params: {'p_student_id': studentId});
+    } catch (_) {}
+  }
 }

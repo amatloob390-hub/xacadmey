@@ -94,6 +94,41 @@ class _PendingStudentsState extends State<PendingStudents> {
     }
   }
 
+  Future<void> _confirmRemoveStudent(PendingStudent s) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(L.t('اسٹوڈنٹ کو لسٹ سے ہٹائیں؟', 'Remove Student?')),
+        content: Text(L.t(
+          'کیا آپ ${s.studentName} کو اس کلاس سے ہٹانا چاہتے ہیں؟',
+          'Do you want to remove ${s.studentName} from this class?',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(L.t('منسوخ', 'Cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(L.t('ہٹائیں', 'Remove')),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true) {
+      await _service.removeStudent(studentId: s.studentId, classId: s.classId);
+      if (mounted) {
+        _refresh();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('${s.studentName} کو کامیابی سے ہٹا دیا گیا۔',
+              '${s.studentName} removed successfully.')),
+        ));
+      }
+    }
+  }
+
   TextStyle _ts({
     required double fontSize,
     FontWeight fontWeight = FontWeight.normal,
@@ -311,24 +346,54 @@ class _PendingStudentsState extends State<PendingStudents> {
               style: _ts(fontSize: 14, color: theme.subtextColor),
             ),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: (blocked ? Colors.red : Colors.orange).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: blocked ? Colors.red : Colors.orange,
-                  width: 1,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (blocked ? Colors.red : Colors.orange).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: blocked ? Colors.red : Colors.orange,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: _ts(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: blocked ? Colors.red : Colors.orange,
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                label,
-                style: _ts(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: blocked ? Colors.red : Colors.orange,
-                ),
-              ),
+                if (blocked) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _confirmRemoveStudent(s),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade400),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.delete_outline, color: Colors.red, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
+                            style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -341,6 +406,8 @@ class _PendingStudentsState extends State<PendingStudents> {
                 context,
                 MaterialPageRoute(builder: (_) => const PendingPayments()),
               );
+            } else if (choice == 'remove') {
+              _confirmRemoveStudent(s);
             } else {
               _daysDialog(s, isExtend: choice == 'extend');
             }
@@ -366,6 +433,17 @@ class _PendingStudentsState extends State<PendingStudents> {
               value: 'set',
               child: Text(L.t('نئی مہلت مقرر کریں', 'Set new grace'),
                   style: _ts(fontSize: 14, theme: theme)),
+            ),
+            PopupMenuItem(
+              value: 'remove',
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
+                  Text(L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
+                      style: _ts(fontSize: 14, color: Colors.red, theme: theme)),
+                ],
+              ),
             ),
           ],
         ),
