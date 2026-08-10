@@ -32,14 +32,47 @@ class PaymentService {
       'amount': amount,
       'method': method,
       'txn_reference': txnReference,
+      'status': 'pending',
     });
   }
 
   Future<List<PendingPayment>> getPending() async {
-    final rows = await _supabase.rpc('get_pending_payments') as List;
-    return rows
-        .map((r) => PendingPayment.fromMap(r as Map<String, dynamic>))
-        .toList();
+    // 1. Primary: RPC Call
+    try {
+      final rows = await _supabase.rpc('get_pending_payments') as List?;
+      if (rows != null && rows.isNotEmpty) {
+        return rows
+            .map((r) => PendingPayment.fromMap(r as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+
+    // 2. Fallback: Direct Table Query
+    try {
+      final rows = await _supabase
+          .from('payments')
+          .select(
+              'id, amount, method, txn_reference, created_at, status, profiles(full_name), classes(title)')
+          .or('status.eq.pending,status.is.null')
+          .order('created_at', ascending: true);
+
+      return (rows as List).map((r) {
+        final m = Map<String, dynamic>.from(r as Map);
+        final profile = m['profiles'] as Map<String, dynamic>?;
+        final cls = m['classes'] as Map<String, dynamic>?;
+        return PendingPayment.fromMap({
+          'payment_id': m['id'],
+          'student_name': profile?['full_name'] ?? 'اسٹوڈنٹ',
+          'class_title': cls?['title'] ?? 'کلاس',
+          'method': m['method'] ?? '',
+          'txn_reference': m['txn_reference'] ?? '',
+          'amount': m['amount'] ?? 0,
+          'created_at': m['created_at'] ?? DateTime.now().toIso8601String(),
+        });
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> approve(String paymentId) =>
