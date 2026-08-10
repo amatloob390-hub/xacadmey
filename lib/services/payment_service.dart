@@ -1,13 +1,16 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PendingPayment {
-  final String paymentId, studentName, classTitle, method, txnReference;
+  final String paymentId, studentId, classId, studentName, classTitle, method, txnReference;
   final String? receiptUrl;
   final num amount;
   final DateTime createdAt;
 
   PendingPayment.fromMap(Map<String, dynamic> m)
       : paymentId = m['payment_id'] ?? m['id'] ?? '',
+        studentId = m['student_id'] ?? '',
+        classId = m['class_id'] ?? '',
         studentName = m['student_name'] ?? 'اسٹوڈنٹ',
         classTitle = m['class_title'] ?? 'کلاس',
         method = m['method'] ?? 'JazzCash',
@@ -151,26 +154,70 @@ class PaymentService {
   Future<List<PendingPayment>> getPending() async {
     List<PendingPayment> result = [];
 
-    // 1. Primary: Direct Table Query on payments
+    // 1. Primary: Direct Table Query on payments (کوئی بھی کالم مس ہونے سے کیوری فیل نہیں ہوتی)
     try {
       final rows = await _supabase
           .from('payments')
-          .select(
-              'id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status, profiles(full_name), classes(title)')
+          .select('id, student_id, class_id, amount, method, txn_reference, created_at, status')
           .or('status.eq.pending,status.is.null')
           .order('created_at', ascending: true);
 
       if ((rows as List).isNotEmpty) {
-        result = (rows).map((r) {
+        final paymentList = rows as List;
+        final studentIds = paymentList
+            .map((r) => r['student_id']?.toString())
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toSet();
+        final classIds = paymentList
+            .map((r) => r['class_id']?.toString())
+            .whereType<String>()
+            .where((c) => c.isNotEmpty)
+            .toSet();
+
+        Map<String, String> profileNames = {};
+        Map<String, String> classTitles = {};
+
+        if (studentIds.isNotEmpty) {
+          try {
+            final pRows = await _supabase
+                .from('profiles')
+                .select('id, full_name')
+                .inFilter('id', studentIds.toList());
+            for (var pr in (pRows as List)) {
+              if (pr['id'] != null) {
+                profileNames[pr['id'].toString()] =
+                    pr['full_name']?.toString() ?? 'اسٹوڈنٹ';
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (classIds.isNotEmpty) {
+          try {
+            final cRows = await _supabase
+                .from('classes')
+                .select('id, title')
+                .inFilter('id', classIds.toList());
+            for (var cr in (cRows as List)) {
+              if (cr['id'] != null) {
+                classTitles[cr['id'].toString()] =
+                    cr['title']?.toString() ?? 'کلاس';
+              }
+            }
+          } catch (_) {}
+        }
+
+        result = paymentList.map((r) {
           final m = Map<String, dynamic>.from(r as Map);
-          final profile = m['profiles'] as Map<String, dynamic>?;
-          final cls = m['classes'] as Map<String, dynamic>?;
+          final sId = m['student_id']?.toString() ?? '';
+          final cId = m['class_id']?.toString() ?? '';
           return PendingPayment.fromMap({
             'payment_id': m['id'],
-            'student_id': m['student_id'],
-            'class_id': m['class_id'],
-            'student_name': profile?['full_name'] ?? 'اسٹوڈنٹ',
-            'class_title': cls?['title'] ?? 'کلاس',
+            'student_id': sId,
+            'class_id': cId,
+            'student_name': profileNames[sId] ?? 'اسٹوڈنٹ',
+            'class_title': classTitles[cId] ?? 'کلاس',
             'method': m['method'] ?? 'JazzCash',
             'txn_reference': m['txn_reference'] ?? '',
             'receipt_url': m['receipt_url'],
@@ -216,6 +263,41 @@ class PaymentService {
           }).toList();
         }
       } catch (_) {}
+    }
+
+    // 4. Auto-Enrich payment info (receipt screenshot, txn_reference) for any student record lacking receipt image
+    for (int i = 0; i < result.length; i++) {
+      final item = result[i];
+      if (item.studentId.isNotEmpty &&
+          (item.txnReference == 'درخواست جمع ہو گئی' || item.receiptUrl == null)) {
+        try {
+          final pRows = await _supabase
+              .from('payments')
+              .select('id, method, txn_reference, amount, receipt_url')
+              .eq('student_id', item.studentId)
+              .order('created_at', ascending: false)
+              .limit(1);
+
+          if ((pRows as List).isNotEmpty) {
+            final pRow = (pRows).first as Map;
+            final txn = pRow['txn_reference']?.toString() ?? '';
+            if (txn.isNotEmpty) {
+              result[i] = PendingPayment.fromMap({
+                'payment_id': pRow['id']?.toString() ?? item.paymentId,
+                'student_id': item.studentId,
+                'class_id': item.classId,
+                'student_name': item.studentName,
+                'class_title': item.classTitle,
+                'method': pRow['method']?.toString() ?? item.method,
+                'txn_reference': txn,
+                'receipt_url': pRow['receipt_url'],
+                'amount': pRow['amount'] ?? item.amount,
+                'created_at': item.createdAt.toIso8601String(),
+              });
+            }
+          }
+        } catch (_) {}
+      }
     }
 
     // Filter out locally dismissed items
