@@ -192,7 +192,7 @@ class _PendingStudentsState extends State<PendingStudents> {
           ),
           body: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: FutureBuilder<List<PendingStudent>>(
                 future: _future,
                 builder: (context, snapshot) {
