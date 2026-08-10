@@ -1001,11 +1001,27 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              L.t('ایکس اکیڈمی کی نمایاں خصوصیات', 'Core Features of Xacademy'),
+              L.t(
+                'صرف ویڈیو کال نہیں — مکمل سیکھنے کا تجربہ —',
+                'Not just video calls — a complete learning experience —',
+              ),
               style: _ts(
                 fontSize: isWide ? 34 : 24,
                 fontWeight: FontWeight.w900,
                 color: theme.textColor,
+                height: 1.8,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              L.t(
+                'ہر خصوصیت آپ کو اسکل سیکھنے اور آن لائن کمانے کے قریب لے جاتی ہے۔',
+                'Every feature brings you closer to learning skills and earning online.',
+              ),
+              style: _ts(
+                fontSize: 16,
+                color: theme.subtextColor,
                 height: 1.8,
               ),
               textAlign: TextAlign.center,
@@ -1052,7 +1068,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         ))
                     .toList(),
               ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 64),
             _buildAIMentorBanner(theme, isWide),
           ],
         ),
@@ -1505,42 +1521,60 @@ class _LandingScreenState extends State<LandingScreen> {
         constraints: const BoxConstraints(maxWidth: 900),
         child: Column(
           children: [
-            // Top Small Tag (Mint Green)
-            Text(
-              L.t('آپ کی نئی اسکل منتظر ہے', 'Your New Skill Awaits'),
-              textAlign: TextAlign.center,
-              style: _ts(
-                fontSize: isWide ? 20 : 16,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF34D399),
+            // Top Small Tag (Mint Green Pill Container)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 22 : 16, vertical: isWide ? 8 : 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.8), width: 1.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Text(
+                L.t('آپ کی نئی اسکل منتظر ہے', 'Your New Skill Awaits'),
+                textAlign: TextAlign.center,
+                style: _ts(
+                  fontSize: isWide ? 18 : 14,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF34D399),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 18),
 
-            // Main Headline (2 lines)
-            Text(
-              L.t('آپ کی نئی اسکل بس', 'Your new skill is just'),
-              textAlign: TextAlign.center,
-              style: _ts(
-                fontSize: isWide ? 36 : 26,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                height: 1.3,
-              ),
+            // Main Headline (2 lines with clean spacing)
+            Column(
+              children: [
+                Text(
+                  L.t('آپ کی نئی اسکل بس', 'Your new skill is just'),
+                  textAlign: TextAlign.center,
+                  style: _ts(
+                    fontSize: isWide ? 38 : 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.6,
+                  ),
+                ),
+                Text(
+                  L.t('ایک بٹن کی دوری پر —', 'One button press away —'),
+                  textAlign: TextAlign.center,
+                  style: _ts(
+                    fontSize: isWide ? 40 : 30,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.6,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              L.t('ایک بٹن کی دوری پر —', 'One button press away —'),
-              textAlign: TextAlign.center,
-              style: _ts(
-                fontSize: isWide ? 38 : 28,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
 
-            // Subtext
+            // Subtext (Crisp Pure White with Spaced Line Height)
             Text(
               L.t(
                 'دنیا میں کہیں بھی ہوں، سیکھنا آج شروع کریں۔ 7 دن کی مفت ٹرائل لیں۔',
@@ -1548,12 +1582,13 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
               textAlign: TextAlign.center,
               style: _ts(
-                fontSize: isWide ? 16 : 14,
-                color: Colors.white.withValues(alpha: 0.95),
-                height: 1.7,
+                fontSize: isWide ? 17 : 14,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                height: 1.8,
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 30),
 
             // Buttons Row (Primary & Secondary Outlined)
             Wrap(
