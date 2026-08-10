@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PendingPayment {
@@ -50,8 +51,28 @@ class PendingPayment {
 class PaymentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Track processed/dismissed IDs locally in memory to guarantee immediate filtering
+  // Track processed/dismissed IDs locally in memory and persistent storage to guarantee filtering across F5 page reloads
   static final Set<String> _dismissedKeys = {};
+  static bool _loadedFromPrefs = false;
+
+  static Future<void> _initPrefs() async {
+    if (_loadedFromPrefs) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('dismissed_payments_v2') ?? [];
+      _dismissedKeys.addAll(list);
+      _loadedFromPrefs = true;
+    } catch (_) {}
+  }
+
+  static Future<void> _saveDismissed(String key) async {
+    if (key.trim().isEmpty) return;
+    _dismissedKeys.add(key.trim());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('dismissed_payments_v2', _dismissedKeys.toList());
+    } catch (_) {}
+  }
 
   /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (تصویر کے ساتھ محفوظ ریسیٹ ہینڈلنگ)
   Future<void> submitPayment({
@@ -158,6 +179,7 @@ class PaymentService {
   }
 
   Future<List<PendingPayment>> getPending() async {
+    await _initPrefs();
     List<PendingPayment> result = [];
 
     // 1. Primary: Direct Table Query on payments (کوئی بھی کالم مس ہونے سے کیوری فیل نہیں ہوتی)
@@ -309,6 +331,7 @@ class PaymentService {
     // Filter out locally dismissed items
     return result.where((p) {
       if (_dismissedKeys.contains(p.paymentId)) return false;
+      if (_dismissedKeys.contains(p.studentId)) return false;
       if (p.paymentId.startsWith('enrollment_')) {
         final parts = p.paymentId.split('_');
         if (parts.length >= 3) {
@@ -321,7 +344,7 @@ class PaymentService {
   }
 
   Future<void> approve(String paymentId) async {
-    _dismissedKeys.add(paymentId);
+    await _saveDismissed(paymentId);
 
     String? studentId;
     String? classId;
@@ -331,7 +354,7 @@ class PaymentService {
       if (parts.length >= 3) {
         studentId = parts[1];
         classId = parts[2];
-        _dismissedKeys.add(studentId);
+        await _saveDismissed(studentId);
       }
     } else {
       // Try fetching student_id & class_id from payment record
@@ -344,7 +367,7 @@ class PaymentService {
         if (res != null) {
           studentId = res['student_id']?.toString();
           classId = res['class_id']?.toString();
-          if (studentId != null) _dismissedKeys.add(studentId);
+          if (studentId != null) await _saveDismissed(studentId);
         }
       } catch (_) {}
     }
@@ -380,11 +403,19 @@ class PaymentService {
         }
         await query;
       } catch (_) {}
+
+      try {
+        var query = _supabase.from('enrollments').update({'payment_status': 'paid'}).eq('student_id', studentId);
+        if (classId != null && classId.isNotEmpty) {
+          query = query.eq('class_id', classId);
+        }
+        await query;
+      } catch (_) {}
     }
   }
 
   Future<void> reject(String paymentId) async {
-    _dismissedKeys.add(paymentId);
+    await _saveDismissed(paymentId);
 
     String? studentId;
     String? classId;
@@ -394,7 +425,7 @@ class PaymentService {
       if (parts.length >= 3) {
         studentId = parts[1];
         classId = parts[2];
-        _dismissedKeys.add(studentId);
+        await _saveDismissed(studentId);
       }
     } else {
       // Fetch student_id & class_id from payments table before deleting
@@ -407,7 +438,7 @@ class PaymentService {
         if (res != null) {
           studentId = res['student_id']?.toString();
           classId = res['class_id']?.toString();
-          if (studentId != null) _dismissedKeys.add(studentId);
+          if (studentId != null) await _saveDismissed(studentId);
         }
       } catch (_) {}
     }
@@ -440,7 +471,7 @@ class PaymentService {
         } catch (_) {}
       }
 
-      // 2. CRITICAL: Delete/Update class_enrollments table so student enrollment is rejected as well
+      // 2. Delete/Update class_enrollments table
       try {
         var q = _supabase.from('class_enrollments').delete().eq('student_id', studentId);
         if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
@@ -453,9 +484,25 @@ class PaymentService {
         } catch (_) {}
       }
 
+      // 3. Delete/Update enrollments table
+      try {
+        var q = _supabase.from('enrollments').delete().eq('student_id', studentId);
+        if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+        await q;
+      } catch (_) {
+        try {
+          var q = _supabase.from('enrollments').update({'payment_status': 'rejected'}).eq('student_id', studentId);
+          if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
+          await q;
+        } catch (_) {}
+      }
+
       // Try RPC calls if available
       try {
         await _supabase.rpc('reject_student', params: {'p_student_id': studentId});
+      } catch (_) {}
+      try {
+        await _supabase.rpc('staff_reject_student', params: {'p_student_id': studentId});
       } catch (_) {}
     }
   }
