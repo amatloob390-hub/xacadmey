@@ -201,7 +201,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
           ),
           body: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _pendingStudents.isEmpty
@@ -281,9 +281,11 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                 ],
                               ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       CircleAvatar(
                                         backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
@@ -292,10 +294,12 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               name,
+                                              textAlign: TextAlign.center,
                                               style: _ts(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -304,6 +308,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                             ),
                                             Text(
                                               email,
+                                              textAlign: TextAlign.center,
                                               style: _ts(fontSize: 13, color: theme.subtextColor),
                                             ),
                                           ],
@@ -313,7 +318,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                   ),
                                   const SizedBox(height: 14),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       OutlinedButton.icon(
                                         style: OutlinedButton.styleFrom(
