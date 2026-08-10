@@ -472,38 +472,12 @@ class _ClassCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.cast_for_education_rounded, color: Color(0xFF10B981), size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (scheduled != null)
-                      Text(
-                        '${L.t('وقت', 'Time')}: ${scheduled.day}/${scheduled.month} ${scheduled.hour}:${scheduled.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                      ),
-                  ],
-                ),
-              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -524,13 +498,45 @@ class _ClassCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (scheduled != null)
+                      Text(
+                        '${L.t('وقت', 'Time')}: ${scheduled.day}/${scheduled.month} ${scheduled.hour}:${scheduled.minute.toString().padLeft(2, '0')}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.cast_for_education_rounded, color: Color(0xFF10B981), size: 20),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
           const SizedBox(height: 10),
+          const Divider(height: 1),
+          const SizedBox(height: 6),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
                 icon: const Icon(Icons.link, color: Color(0xFF10B981)),
