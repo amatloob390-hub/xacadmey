@@ -106328,7 +106328,7 @@ s=A.I(A.n("\u06a9\u0646 \u06a9\u06d2 \u0644\u06cc\u06d2","FOR WHOM?"),n,n,n,o.fu
 r=A.n("\u0627\u064f\u0646 \u0633\u0628 \u06a9\u06d2 \u0644\u06cc\u06d2 \u062c\u0648 \u0622\u0646 \u0644\u0627\u0626\u0646 \u0627\u0633\u06a9\u0644 \u0633\u06cc\u06a9\u06be \u06a9\u0631 \u0622\u06af\u06d2 \u0628\u0691\u06be\u0646\u0627 \u0686\u0627\u06c1\u062a\u06d2 \u06c1\u06cc\u06ba\u06d4","For everyone who wants to learn online skills and move forward.")
 q=b?34:24
 p=t.p
-q=A.b([s,B.aZ,A.I(r,n,n,n,o.fu(a.x,q,B.al,1.8),B.R,n,n),B.aZ,A.I(A.n("\u0641\u0627\u0635\u0644\u06c1\u060c \u0645\u0635\u0631\u0648\u0641\u06cc\u062a \u06cc\u0627 \u0645\u0642\u0627\u0645\u060c \u0633\u06c1\u0648\u0644\u062a \u06a9\u0627 \u06a9\u0645\u060c \u0622\u067e \u06a9\u06d2 \u0633\u06cc\u06a9\u06be\u0646\u06d2 \u06a9\u06cc \u0631\u0627\u06c1 \u0645\u06cc\u06ba \u0646\u06c1 \u0622\u0626\u06d2\u06d4","Distance, busy schedule, or location should not stand in your way of learning."),n,n,n,o.j8(a.y,16,1.8),B.R,n,n),B.ku],p)
+q=A.b([s,B.aZ,A.I(r,n,n,n,o.fu(a.x,q,B.al,1.8),B.R,n,n),B.aZ,A.I(A.n("\u0641\u0627\u0635\u0644\u06c1\u060c \u0645\u0635\u0631\u0648\u0641\u06cc\u062a \u06cc\u0627 \u0645\u0642\u0627\u0645\u060c \u0633\u06c1\u0648\u0644\u062a \u06a9\u06cc \u06a9\u0645\u06cc\u060c \u0622\u067e \u06a9\u06d2 \u0633\u06cc\u06a9\u06be\u0646\u06d2 \u06a9\u06cc \u0631\u0627\u06c1 \u0645\u06cc\u06ba \u0646\u06c1 \u0622\u0626\u06d2\u06d4","Distance, busy schedule, or location should not stand in your way of learning."),n,n,n,o.j8(a.y,16,1.8),B.R,n,n),B.ku],p)
 if(b)q.push(new A.oA(A.br(A.b([A.bF(l.$1(k[0]),1),B.cn,A.bF(l.$1(k[1]),1),B.cn,A.bF(l.$1(k[2]),1)],p),B.aS,B.ap,B.m,0,n),n))
 else{s=t.iV
 l=A.a_(new A.a6(k,new A.aCA(l),s),s.i("an.E"))

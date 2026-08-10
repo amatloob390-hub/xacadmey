@@ -659,7 +659,7 @@ class _LandingScreenState extends State<LandingScreen> {
             const SizedBox(height: 12),
             Text(
               L.t(
-                'فاصلہ، مصروفیت یا مقام، سہولت کا کم، آپ کے سیکھنے کی راہ میں نہ آئے۔',
+                'فاصلہ، مصروفیت یا مقام، سہولت کی کمی، آپ کے سیکھنے کی راہ میں نہ آئے۔',
                 'Distance, busy schedule, or location should not stand in your way of learning.',
               ),
               textAlign: TextAlign.center,
