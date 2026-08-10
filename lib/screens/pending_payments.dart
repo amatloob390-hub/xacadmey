@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../services/payment_service.dart';
@@ -94,18 +95,6 @@ class _PendingPaymentsState extends State<PendingPayments> {
               textAlign: TextAlign.center,
               style: _ts(fontSize: 15, fontWeight: FontWeight.bold, theme: theme),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${L.t('ٹرانزیکشن آئی ڈی / رسید نمبر', 'Txn ID')}: ${p.txnReference}',
-                style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: theme.primaryColor),
-              ),
-            ),
           ],
         ),
       );
@@ -128,7 +117,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${L.t('رسید / اسکرین شاٹ', 'Receipt Screenshot')}: ${p.studentName}',
+                      '${L.t('فیس تصدیق و رسید', 'Fee Verification')}: ${p.studentName}',
                       style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
                     ),
                   ),
@@ -140,8 +129,58 @@ class _PendingPaymentsState extends State<PendingPayments> {
               ),
               const Divider(),
               const SizedBox(height: 10),
+
+              // Highlighted Transaction ID / Reference Banner
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF10B981), width: 1.2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long_rounded, color: Color(0xFF10B981), size: 24),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            L.t('ریفرنس نمبر / ٹرانزیکشن آئی ڈی', 'Reference / Transaction ID'),
+                            style: _ts(fontSize: 12, color: theme.subtextColor),
+                          ),
+                          SelectableText(
+                            p.txnReference.isEmpty ? L.t('درخواست جمع ہو گئی', 'Request Submitted') : p.txnReference,
+                            style: _ts(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (p.txnReference.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 20, color: Color(0xFF10B981)),
+                        tooltip: L.t('کاپی کریں', 'Copy'),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: p.txnReference));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(L.t('ٹرانزیکشن آئی ڈی کاپی ہو گئی! 📋', 'Txn ID copied! 📋')),
+                            duration: const Duration(seconds: 2),
+                          ));
+                        },
+                      ),
+                  ],
+                ),
+              ),
+
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 400),
+                constraints: const BoxConstraints(maxHeight: 380),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: contentWidget,
@@ -431,20 +470,50 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(Icons.receipt_long_rounded,
-                                        size: 16, color: theme.subtextColor),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        '${L.t('رسید / Txn ID', 'Txn ID')}: ${p.txnReference}',
-                                        style: _ts(fontSize: 13, color: theme.subtextColor),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  margin: const EdgeInsets.only(top: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: theme.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                                     ),
-                                  ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.receipt_long_rounded, size: 18, color: Color(0xFF10B981)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              L.t('ریفرنس / ٹرانزیکشن آئی ڈی', 'Txn ID / Ref No'),
+                                              style: _ts(fontSize: 11, color: theme.subtextColor),
+                                            ),
+                                            SelectableText(
+                                              p.txnReference.isEmpty ? L.t('کوئی ریفرنس درج نہیں', 'No reference') : p.txnReference,
+                                              style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (p.txnReference.isNotEmpty)
+                                        IconButton(
+                                          icon: const Icon(Icons.copy_rounded, size: 16),
+                                          tooltip: L.t('کاپی کریں', 'Copy'),
+                                          onPressed: () {
+                                            Clipboard.setData(ClipboardData(text: p.txnReference));
+                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                              content: Text(L.t('ٹرانزیکشن آئی ڈی کاپی ہو گئی! 📋', 'Txn ID copied! 📋')),
+                                              duration: const Duration(seconds: 2),
+                                            ));
+                                          },
+                                        ),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
 

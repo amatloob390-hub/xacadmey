@@ -14,14 +14,21 @@ class PendingStudents extends StatefulWidget {
 class _PendingStudentsState extends State<PendingStudents> {
   final PendingStudentService _service = PendingStudentService();
   late Future<List<PendingStudent>> _future;
+  List<PendingStudent>? _localList;
 
   @override
   void initState() {
     super.initState();
-    _future = _service.getPending();
+    _future = _loadPending();
   }
 
-  void _refresh() => setState(() => _future = _service.getPending());
+  Future<List<PendingStudent>> _loadPending() async {
+    final list = await _service.getPending();
+    _localList = List<PendingStudent>.from(list);
+    return _localList!;
+  }
+
+  void _refresh() => setState(() => _future = _loadPending());
 
   Future<void> _daysDialog(PendingStudent s, {required bool isExtend}) async {
     final ctrl = TextEditingController(text: isExtend ? '3' : '7');
@@ -118,6 +125,14 @@ class _PendingStudentsState extends State<PendingStudents> {
     );
 
     if (ok == true) {
+      // Instantly remove locally from list so card disappears immediately
+      if (_localList != null) {
+        setState(() {
+          _localList!.removeWhere((item) => item.studentId == s.studentId);
+          _future = Future.value(List<PendingStudent>.from(_localList!));
+        });
+      }
+
       await _service.removeStudent(studentId: s.studentId, classId: s.classId);
       if (mounted) {
         _refresh();
