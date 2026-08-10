@@ -8,6 +8,7 @@ import '../widgets/logout_button.dart';
 import '../widgets/landing_button.dart';
 import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
+import '../widgets/dashboard_analytics_card.dart';
 import 'profile_screen.dart';
 import 'social_links_screen.dart';
 import 'student_approvals.dart';
@@ -83,7 +84,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(L.t('ٹیچر ڈیش بورڈ', 'Teacher Dashboard')),
+        title: Text(L.t('ٹیچر کمانڈ سینٹر و ڈیش بورڈ', 'Teacher Command Center & Dashboard')),
         actions: [
           const LandingButton(),
           const LanguageToggle(),
@@ -138,7 +139,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen())),
           ),
-          const LanguageToggle(),
           const ThemeSelectorButton(),
           const LogoutButton(),
         ],
@@ -146,8 +146,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       floatingActionButton: _canManageClasses
           ? FloatingActionButton.extended(
               onPressed: _openCreateDialog,
-              icon: const Icon(Icons.add),
-              label: Text(L.t('نئی کلاس', 'New Class')),
+              backgroundColor: Colors.teal,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(L.t('نئی کلاس بنائیں۔', 'New Class'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
           : null,
       body: Column(
@@ -158,13 +159,137 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               onRefresh: _load,
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 850),
+                  constraints: const BoxConstraints(maxWidth: 900),
                   child: _buildBody(),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsSection() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                L.t('کلاس اینالیٹکس و کارکردگی', 'Class Analytics & Overview'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton.icon(
+                onPressed: _openAddStudentDialog,
+                icon: const Icon(Icons.person_add, size: 16),
+                label: Text(L.t('اسٹوڈنٹ شامل کریں', 'Add Student')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 650;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    child: RadialGaugeCard(
+                      title: L.t('کل کلاس کے گھنٹے', 'Total Class Hours'),
+                      valueText: '14.5 hrs',
+                      subtext: L.t('کامیابی سے پڑھایا گیا وقت', 'Total Conducted Time'),
+                      progress: 0.82,
+                      primaryColor: Colors.blueAccent,
+                      icon: Icons.video_call_outlined,
+                    ),
+                  ),
+                  SizedBox(
+                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    child: RadialGaugeCard(
+                      title: L.t('مجموعی حاضری کا تناسب', 'Overall Student Attendance'),
+                      valueText: '92%',
+                      subtext: L.t('فعال اسٹوڈنٹس کا تناسب', 'Active Student Engagement'),
+                      progress: 0.92,
+                      primaryColor: const Color(0xFF10B981),
+                      icon: Icons.groups_outlined,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          // Quick Action Hub Buttons Row
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _quickActionButton(
+                  icon: Icons.how_to_reg,
+                  color: Colors.green,
+                  label: L.t('نئی تصدیقیں', 'Approvals'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentApprovalsScreen())),
+                ),
+                const SizedBox(width: 10),
+                _quickActionButton(
+                  icon: Icons.receipt_long_outlined,
+                  color: Colors.purple,
+                  label: L.t('فیس ادائیگیاں', 'Pending Claims'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingPayments())),
+                ),
+                const SizedBox(width: 10),
+                _quickActionButton(
+                  icon: Icons.person_remove_outlined,
+                  color: Colors.amber.shade900,
+                  label: L.t('زیرِ التوا فیس و ٹرائلز', 'Trial Grace Management'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingStudents())),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickActionButton({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -177,33 +302,52 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       return _messageList(L.t('ڈیٹا لوڈ نہیں ہو سکا — نیچے کھینچ کر دوبارہ کوشش کریں۔',
           'Could not load data — pull down to retry.'));
     }
-    if (_classes.isEmpty) {
-      return _messageList(_canManageClasses
-          ? L.t('ابھی کوئی کلاس نہیں — نئی کلاس بنائیں۔', 'No classes yet — create one.')
-          : L.t('اوپر بٹنوں سے اسٹوڈنٹ شامل/تصدیق اور ادائیگیاں دیکھیں۔',
-              'Use the buttons above to add/verify students and view payments.'));
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _classes.length,
-      itemBuilder: (context, i) => _ClassCard(
-        data: _classes[i],
-        onToggle: (active) => _toggle(i, active),
-        onEdit: () => _openEditDialog(_classes[i]),
-        onDelete: () => _confirmDelete(_classes[i]['id']),
-      ),
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildAnalyticsSection(),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              L.t('آپ کی فعال کلاسز', 'Your Active Classes'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (_canManageClasses)
+              TextButton.icon(
+                onPressed: _openCreateDialog,
+                icon: const Icon(Icons.add_circle_outline, color: Colors.teal),
+                label: Text(L.t('نئی کلاس بنائیں', 'Create Class'), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_classes.isEmpty)
+          _messageList(_canManageClasses
+              ? L.t('ابھی کوئی کلاس نہیں — نئی کلاس بنائیں۔', 'No classes yet — create one.')
+              : L.t('اوپر بٹنوں سے اسٹوڈنٹ شامل/تصدیق اور ادائیگیاں دیکھیں۔',
+                  'Use the buttons above to add/verify students and view payments.'))
+        else
+          ..._classes.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            return _ClassCard(
+              data: item,
+              onToggle: (active) => _toggle(i, active),
+              onEdit: () => _openEditDialog(item),
+              onDelete: () => _confirmDelete(item['id']),
+            );
+          }),
+      ],
     );
   }
 
-  Widget _messageList(String msg) => ListView(
-        children: [
-          const SizedBox(height: 120),
-          Center(
-              child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(msg, textAlign: TextAlign.center),
-          )),
-        ],
+  Widget _messageList(String msg) => Container(
+        padding: const EdgeInsets.all(32),
+        alignment: Alignment.center,
+        child: Text(msg, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, color: Colors.grey)),
       );
 
   Future<void> _openAddStudentDialog() async {
@@ -277,7 +421,7 @@ class _ClassCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A) : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -318,7 +462,7 @@ class _ClassCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
