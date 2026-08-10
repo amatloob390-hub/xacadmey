@@ -20,7 +20,7 @@ class PendingPayment {
 class PaymentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے
+  /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (ریجیکٹ ہونے کے بعد دوبارہ سبمٹ کو سپورٹ کرتا ہے)
   Future<void> submitPayment({
     required String classId,
     required double amount,
@@ -36,13 +36,35 @@ class PaymentService {
       'method': method,
       'txn_reference': txnReference,
       'status': 'pending',
+      'created_at': DateTime.now().toIso8601String(),
     };
 
     if (receiptImage != null && receiptImage.isNotEmpty) {
       payload['receipt_url'] = receiptImage;
     }
 
-    await _supabase.from('payments').insert(payload);
+    // 1. پچھلی ردی (rejected) یا التوا (pending) فیس کی ریکارڈ ہٹائیں تاکہ ڈپلیکیٹ ایرر نہ آئے
+    try {
+      await _supabase
+          .from('payments')
+          .delete()
+          .eq('student_id', studentId)
+          .eq('class_id', classId)
+          .neq('status', 'approved');
+    } catch (_) {}
+
+    // 2. نئی درخواست insert کریں
+    try {
+      await _supabase.from('payments').insert(payload);
+    } catch (_) {
+      // 3. اگر insert میں کوئی مسلہ آئے تو سابقہ ریکارڈ اپڈیٹ کریں
+      await _supabase
+          .from('payments')
+          .update(payload)
+          .eq('student_id', studentId)
+          .eq('class_id', classId)
+          .neq('status', 'approved');
+    }
   }
 
   Future<List<PendingPayment>> getPending() async {
