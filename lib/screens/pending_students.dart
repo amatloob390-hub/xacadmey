@@ -257,58 +257,60 @@ class _PendingStudentsState extends State<PendingStudents> {
                     children: [
                       // Top Banner
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
                           ),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFF0D9488).withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 28),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 22),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    L.t('مہلت کی مانیٹرنگ', 'Grace Period Monitoring'),
-                                    style: _ts(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  L.t('مہلت کی مانیٹرنگ', 'Grace Period Monitoring'),
+                                  textAlign: TextAlign.center,
+                                  style: _ts(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
-                                  Text(
-                                    L.t('${list.length} اسٹوڈنٹس کی مہلت باقی ہے',
-                                        '${list.length} student(s) with grace time'),
-                                    style: _ts(
-                                      fontSize: 13,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
+                                ),
+                                Text(
+                                  L.t('${list.length} اسٹوڈنٹس کی مہلت باقی ہے',
+                                      '${list.length} student(s) with grace time'),
+                                  textAlign: TextAlign.center,
+                                  style: _ts(
+                                    fontSize: 12,
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
                       ...list.map((s) => _card(s, theme)),
                     ],
@@ -330,138 +332,152 @@ class _PendingStudentsState extends State<PendingStudents> {
             '⏳ ${s.remaining.inDays}d ${s.remaining.inHours % 24}h left');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(
-          s.studentName,
-          style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              '${L.t('کلاس', 'Class')}: ${s.classTitle}',
-              style: _ts(fontSize: 14, color: theme.subtextColor),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (blocked ? Colors.red : Colors.orange).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: blocked ? Colors.red : Colors.orange,
-                      width: 1,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                s.studentName,
+                textAlign: TextAlign.center,
+                style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${L.t('کلاس', 'Class')}: ${s.classTitle}',
+                textAlign: TextAlign.center,
+                style: _ts(fontSize: 13, color: theme.subtextColor),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (blocked ? Colors.red : Colors.orange).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: blocked ? Colors.red : Colors.orange,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: _ts(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: blocked ? Colors.red : Colors.orange,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    label,
-                    style: _ts(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: blocked ? Colors.red : Colors.orange,
+                  if (blocked) ...[
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => _confirmRemoveStudent(s),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade400),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.delete_outline, color: Colors.red, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
+                              style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+          Positioned(
+            left: AppLang.ur ? 0 : null,
+            right: AppLang.ur ? null : 0,
+            top: 0,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: theme.textColor, size: 20),
+              padding: EdgeInsets.zero,
+              color: theme.cardColor,
+              onSelected: (choice) {
+                if (choice == 'payments') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PendingPayments()),
+                  );
+                } else if (choice == 'remove') {
+                  _confirmRemoveStudent(s);
+                } else {
+                  _daysDialog(s, isExtend: choice == 'extend');
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'payments',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.payments_outlined, color: Color(0xFF10B981), size: 18),
+                      const SizedBox(width: 8),
+                      Text(L.t('فیس درخواست اور تصدیق', 'View & Approve Payment'),
+                          style: _ts(fontSize: 13, theme: theme)),
+                    ],
                   ),
                 ),
-                if (blocked) ...[
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => _confirmRemoveStudent(s),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade400),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.delete_outline, color: Colors.red, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
-                            style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
+                PopupMenuItem(
+                  value: 'extend',
+                  child: Text(L.t('مہلت بڑھائیں (+ دن)', 'Extend grace (+ days)'),
+                      style: _ts(fontSize: 13, theme: theme)),
+                ),
+                PopupMenuItem(
+                  value: 'set',
+                  child: Text(L.t('نئی مہلت مقرر کریں', 'Set new grace'),
+                      style: _ts(fontSize: 13, theme: theme)),
+                ),
+                PopupMenuItem(
+                  value: 'remove',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                      const SizedBox(width: 8),
+                      Text(L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
+                          style: _ts(fontSize: 13, color: Colors.red, theme: theme)),
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: theme.textColor),
-          color: theme.cardColor,
-          onSelected: (choice) {
-            if (choice == 'payments') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PendingPayments()),
-              );
-            } else if (choice == 'remove') {
-              _confirmRemoveStudent(s);
-            } else {
-              _daysDialog(s, isExtend: choice == 'extend');
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'payments',
-              child: Row(
-                children: [
-                  const Icon(Icons.payments_outlined, color: Color(0xFF10B981), size: 20),
-                  const SizedBox(width: 8),
-                  Text(L.t('فیس درخواست اور تصدیق', 'View & Approve Payment'),
-                      style: _ts(fontSize: 14, theme: theme)),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'extend',
-              child: Text(L.t('مہلت بڑھائیں (+ دن)', 'Extend grace (+ days)'),
-                  style: _ts(fontSize: 14, theme: theme)),
-            ),
-            PopupMenuItem(
-              value: 'set',
-              child: Text(L.t('نئی مہلت مقرر کریں', 'Set new grace'),
-                  style: _ts(fontSize: 14, theme: theme)),
-            ),
-            PopupMenuItem(
-              value: 'remove',
-              child: Row(
-                children: [
-                  const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                  const SizedBox(width: 8),
-                  Text(L.t('اسٹوڈنٹ ہٹائیں', 'Remove Student'),
-                      style: _ts(fontSize: 14, color: Colors.red, theme: theme)),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
