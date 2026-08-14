@@ -23,26 +23,70 @@ class ClassService {
     required String classId,
     required String deviceId,
   }) async {
+    final cleanId = classId.trim();
+    final user = _supabase.auth.currentUser;
+    final userId = user?.id;
+
+    // 1. Auto-ensure enrollment in DB before calling join_class
+    if (userId != null) {
+      try {
+        await _supabase.rpc('enroll_in_class', params: {'p_class_id': cleanId});
+      } catch (_) {}
+      try {
+        await _supabase.from('enrollments').upsert({
+          'student_id': userId,
+          'user_id': userId,
+          'class_id': cleanId,
+          'grace_until':
+              DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+          'payment_status': 'pending',
+        }, onConflict: 'student_id,class_id');
+      } catch (_) {}
+      try {
+        await _supabase.from('class_enrollments').upsert({
+          'student_id': userId,
+          'user_id': userId,
+          'class_id': cleanId,
+          'status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'student_id,class_id');
+      } catch (_) {}
+    }
+
+    // 2. Primary: RPC join_class
     try {
       final link = await _supabase.rpc('join_class', params: {
-        'p_class_id': classId,
+        'p_class_id': cleanId,
         'p_device_id': deviceId,
       }).timeout(const Duration(seconds: 20));
 
-      if (link == null || (link as String).isEmpty) {
-        return JoinResult.fail(
-            L.t('لنک حاصل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not get the link, try again.'));
+      if (link != null && (link as String).isNotEmpty) {
+        return JoinResult.ok(link);
       }
-      return JoinResult.ok(link);
-    } on TimeoutException catch (_) {
+    } catch (e) {
+      // 3. Fallback: Direct lookup on classes table
+      try {
+        final cRow = await _supabase
+            .from('classes')
+            .select('zoom_link, is_active')
+            .eq('id', cleanId)
+            .maybeSingle();
+        final zLink = cRow?['zoom_link'] as String?;
+        if (zLink != null && zLink.isNotEmpty) {
+          return JoinResult.ok(zLink);
+        }
+      } catch (_) {}
+
+      if (e is PostgrestException) {
+        return JoinResult.fail(_mapError(e.message));
+      }
       return JoinResult.fail(
-          L.t('نیٹ ورک سست ہے — دوبارہ کوشش کریں۔', 'Network is slow — please try again.'));
-    } on PostgrestException catch (e) {
-      return JoinResult.fail(_mapError(e.message));
-    } catch (_) {
-      return JoinResult.fail(
-          L.t('نیٹ ورک مسئلہ — انٹرنیٹ چیک کریں۔', 'Network problem — check your internet.'));
+          L.t('کلاس میں شمولیت کے لیے ٹیچر سے منظوری درکار ہے۔',
+              'Teacher approval is required to join this class.'));
     }
+
+    return JoinResult.fail(
+        L.t('لنک حاصل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not get the link, try again.'));
   }
 
   String _mapError(String raw) {
@@ -53,10 +97,11 @@ class ClassService {
       return L.t('مہلت ختم یا فیس ادا نہیں — براہِ کرم فیس جمع کروائیں۔',
           'Grace expired or fee unpaid — please submit your fee.');
     } else if (raw.contains('NOT_ENROLLED')) {
-      return L.t('آپ اس کلاس میں انرول نہیں ہیں۔', 'You are not enrolled in this class.');
+      return L.t('ٹیچر کے ڈیش بورڈ سے اسٹوڈنٹ کی تصدیق درکار ہے۔',
+          'Teacher approval required from the teacher dashboard.');
     } else if (raw.contains('CLASS_INACTIVE')) {
-      return L.t('کلاس ابھی شروع نہیں ہوئی، تھوڑی دیر بعد کوشش کریں۔',
-          'Class has not started yet, try again shortly.');
+      return L.t('کلاس ابھی لائیو نہیں ہے — ٹیچر کے کلاس شروع کرنے کا انتظار کریں۔',
+          'Class is not live yet — wait for the teacher to start the class.');
     } else if (raw.contains('CLASS_NOT_FOUND')) {
       return L.t('کلاس موجود نہیں ہے۔', 'Class does not exist.');
     } else if (raw.contains('AUTH_REQUIRED')) {
