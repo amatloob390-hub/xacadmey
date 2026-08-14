@@ -14,11 +14,21 @@ class PendingPayment {
         classId = m['class_id'] ?? '',
         studentName = m['student_name'] ?? 'اسٹوڈنٹ',
         classTitle = m['class_title'] ?? 'کلاس',
-        method = m['method'] ?? 'JazzCash',
+        method = _formatMethod(m['method']),
         txnReference = _parseTxn(m['txn_reference']),
         receiptUrl = m['receipt_url'] ?? m['receipt_image'] ?? _parseReceipt(m['txn_reference']),
         amount = _parseNum(m['amount']),
         createdAt = DateTime.tryParse(m['created_at'] ?? '') ?? DateTime.now();
+
+  static String _formatMethod(dynamic method) {
+    if (method == null) return 'JazzCash';
+    final m = method.toString().toLowerCase().trim();
+    if (m == 'jazzcash') return 'JazzCash';
+    if (m == 'easypaisa') return 'EasyPaisa';
+    if (m == 'bank') return 'Bank Transfer';
+    if (m == 'other') return 'Other';
+    return method.toString();
+  }
 
   static num _parseNum(dynamic v) {
     if (v == null) return 0;

@@ -198,7 +198,23 @@ class _AttendanceReportState extends State<AttendanceReport> {
         child: ListTile(
           leading: CircleAvatar(child: Text('$index')),
           title: Text(r.fullName),
-          subtitle: Text('${L.t('جوائن کیا', 'Joined')}: ${_fmt(r.joinedAt)}'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (r.email.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    r.email,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              Text('${L.t('جوائن کیا', 'Joined')}: ${_fmt(r.joinedAt)}'),
+            ],
+          ),
           trailing: const Icon(Icons.check_circle, color: Colors.green),
         ),
       );
