@@ -238,6 +238,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 650;
+              final totalClasses = _classes.length;
+              final activeClasses = _classes
+                  .where((c) => (c['is_active'] as bool? ?? false))
+                  .length;
+              final totalDurationMin = _classes.fold<int>(
+                  0, (sum, c) => sum + (c['duration_min'] as int? ?? 60));
+              final totalHours = (totalDurationMin / 60.0).toStringAsFixed(1);
+              final activeRatio = totalClasses > 0 ? (activeClasses / totalClasses) : 0.0;
+              final activePercent = '${(activeRatio * 100).toInt()}%';
+
               return Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -245,10 +255,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
                     child: RadialGaugeCard(
-                      title: L.t('پڑھایا گیا وقت', 'Total Conducted Time'),
-                      valueText: '14.5 hrs',
-                      subtext: L.t('کامیابی سے پڑھایا گیا وقت', 'Total Conducted Time'),
-                      progress: 0.82,
+                      title: L.t('کلاسز کا وقت', 'Class Duration'),
+                      valueText: '$totalHours ${L.t('گھنٹے', 'hrs')}',
+                      subtext: '$totalClasses ${L.t('کلاسز کا شیڈول وقت', 'Scheduled classes time')}',
+                      progress: totalClasses > 0
+                          ? (totalDurationMin / (totalClasses * 60.0)).clamp(0.1, 1.0)
+                          : 0.1,
                       primaryColor: const Color(0xFF10B981),
                       icon: Icons.video_call_outlined,
                     ),
@@ -256,10 +268,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
                     child: RadialGaugeCard(
-                      title: L.t('مجموعی حاضری کا تناسب', 'Overall Student Attendance'),
-                      valueText: '92%',
-                      subtext: L.t('فعال اسٹوڈنٹس کا تناسب', 'Active Student Engagement'),
-                      progress: 0.92,
+                      title: L.t('فعال کلاسز کا تناسب', 'Active Classes Rate'),
+                      valueText: activePercent,
+                      subtext: '$activeClasses ${L.t('میں سے', 'out of')} $totalClasses ${L.t('کلاسز لائیو / فعال', 'classes active')}',
+                      progress: activeRatio.clamp(0.05, 1.0),
                       primaryColor: const Color(0xFF10B981),
                       icon: Icons.groups_outlined,
                     ),

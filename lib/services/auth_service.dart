@@ -19,7 +19,12 @@ class AuthService {
     final response = await _supabase.auth.signUp(
       email: email,
       password: password,
-      data: {'full_name': fullName},
+      data: {
+        'full_name': fullName,
+        'plan': plan,
+        if (classId != null && classId.isNotEmpty) 'registered_class_id': classId,
+        if (classId != null && classId.isNotEmpty) 'class_id': classId,
+      },
     );
 
     final user = response.user;
@@ -33,6 +38,7 @@ class AuthService {
           'is_verified': false,
           'role': 'student',
           'plan': plan,
+          if (classId != null && classId.isNotEmpty) 'registered_class_id': classId,
         }, onConflict: 'id');
       } catch (_) {}
 

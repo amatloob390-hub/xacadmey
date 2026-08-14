@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../pending_class.dart';
 import '../services/student_service.dart';
@@ -32,13 +33,40 @@ class _StudentClassListState extends State<StudentClassList> {
   }
 
   Future<void> _checkPendingClass() async {
-    final pId = PendingClass.id;
-    if (pId != null && pId.isNotEmpty) {
+    String? pId = PendingClass.id;
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (pId == null || pId.isEmpty) {
+      pId = (user?.userMetadata?['registered_class_id'] ??
+              user?.userMetadata?['class_id'])
+          ?.toString();
+    }
+
+    if (pId == null || pId.isEmpty) {
+      try {
+        pId = Uri.base.queryParameters['class'] ??
+            Uri.base.queryParameters['class_id'];
+        if (pId == null || pId.isEmpty) {
+          final frag = Uri.base.fragment;
+          if (frag.contains('class=') || frag.contains('class_id=')) {
+            final qIdx = frag.indexOf('?');
+            if (qIdx != -1) {
+              final params = Uri.splitQueryString(frag.substring(qIdx + 1));
+              pId = params['class'] ?? params['class_id'];
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (pId != null && pId.trim().isNotEmpty) {
       PendingClass.id = null;
       try {
-        await _service.enroll(pId);
-        if (mounted) setState(() => _future = _service.getMyClasses());
+        await _service.enroll(pId.trim());
       } catch (_) {}
+      if (mounted) {
+        setState(() => _future = _service.getMyClasses());
+      }
     }
   }
 
@@ -197,8 +225,31 @@ class _StudentClassListState extends State<StudentClassList> {
                       }
                       final classes = snapshot.data ?? [];
 
+                      if (classes.isEmpty) {
+                        return ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            _emptyState(),
+                          ],
+                        );
+                      }
+
+                      final totalClasses = classes.length;
+                      final activeClasses =
+                          classes.where((c) => c.isActive).length;
+                      final totalDurationMin = classes.fold<int>(
+                          0, (sum, c) => sum + c.durationMin);
+                      final totalHours =
+                          (totalDurationMin / 60.0).toStringAsFixed(1);
+                      final activeRatio = totalClasses > 0
+                          ? (activeClasses / totalClasses)
+                          : 0.0;
+                      final activePercent =
+                          '${(activeRatio * 100).toInt()}%';
+
                       final analyticsWidget = Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -206,25 +257,37 @@ class _StudentClassListState extends State<StudentClassList> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  L.t('ڈیش بورڈ اینالیٹکس', 'Dashboard Analytics'),
+                                  L.t('ڈیش بورڈ اینالیٹکس',
+                                      'Dashboard Analytics'),
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(width: 12),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
+                                    border: Border.all(
+                                        color: const Color(0xFF10B981)
+                                            .withValues(alpha: 0.6)),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.timelapse, size: 14, color: Color(0xFF10B981)),
+                                      const Icon(Icons.timelapse,
+                                          size: 14,
+                                          color: Color(0xFF10B981)),
                                       const SizedBox(width: 4),
                                       Text(
                                         L.t('ہفتہ وار جائزہ', 'Weekly View'),
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF10B981)),
                                       ),
                                     ],
                                   ),
@@ -242,9 +305,13 @@ class _StudentClassListState extends State<StudentClassList> {
                                   width: 260,
                                   child: RadialGaugeCard(
                                     title: L.t('کلاس وقت', 'Class Time'),
-                                    valueText: '2.5 hrs',
-                                    subtext: L.t('کل وقت: 12 hrs', 'Total Time: 12 hrs'),
-                                    progress: 0.65,
+                                    valueText:
+                                        '$totalHours ${L.t('گھنٹے', 'hrs')}',
+                                    subtext:
+                                        '${L.t('کل وقت', 'Total Time')}: $totalHours hrs',
+                                    progress: (totalDurationMin /
+                                            (totalClasses * 60.0))
+                                        .clamp(0.1, 1.0),
                                     primaryColor: const Color(0xFF10B981),
                                     icon: Icons.timer_outlined,
                                   ),
@@ -252,10 +319,11 @@ class _StudentClassListState extends State<StudentClassList> {
                                 SizedBox(
                                   width: 260,
                                   child: RadialGaugeCard(
-                                    title: L.t('حاضری کا تناسب', 'Attendance Rate'),
-                                    valueText: '95%',
-                                    subtext: L.t('19 میں سے 20 کلاسز', '19 out of 20 classes'),
-                                    progress: 0.95,
+                                    title: L.t('فعال کلاسز', 'Active Classes'),
+                                    valueText: activePercent,
+                                    subtext:
+                                        '$activeClasses ${L.t('میں سے', 'out of')} $totalClasses ${L.t('کلاسز', 'classes')}',
+                                    progress: activeRatio.clamp(0.05, 1.0),
                                     primaryColor: const Color(0xFF10B981),
                                     icon: Icons.pie_chart_outline,
                                   ),
@@ -265,16 +333,6 @@ class _StudentClassListState extends State<StudentClassList> {
                           ],
                         ),
                       );
-
-                      if (classes.isEmpty) {
-                        return ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            analyticsWidget,
-                            _emptyState(),
-                          ],
-                        );
-                      }
 
                       return ListView(
                         padding: const EdgeInsets.all(16),

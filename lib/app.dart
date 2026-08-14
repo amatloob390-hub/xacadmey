@@ -12,7 +12,17 @@ Future<void> bootstrap(AppMode mode) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    final c = Uri.base.queryParameters['class'];
+    String? c = Uri.base.queryParameters['class'] ?? Uri.base.queryParameters['class_id'];
+    if (c == null || c.isEmpty) {
+      final frag = Uri.base.fragment;
+      if (frag.contains('class=') || frag.contains('class_id=')) {
+        final qIdx = frag.indexOf('?');
+        if (qIdx != -1) {
+          final params = Uri.splitQueryString(frag.substring(qIdx + 1));
+          c = params['class'] ?? params['class_id'];
+        }
+      }
+    }
     if (c != null && c.trim().isNotEmpty) PendingClass.id = c.trim();
   } catch (_) {}
 
