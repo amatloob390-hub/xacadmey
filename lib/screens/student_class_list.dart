@@ -9,6 +9,7 @@ import '../widgets/landing_button.dart';
 import '../widgets/submit_payment_dialog.dart';
 import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
+import '../widgets/student_drawer.dart';
 import 'profile_screen.dart';
 import 'ai_chat_screen.dart';
 
@@ -174,6 +175,9 @@ class _StudentClassListState extends State<StudentClassList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: StudentDrawer(
+        onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
+      ),
       appBar: AppBar(
         title: Text(L.t('میری کلاسز اور ڈیش بورڈ', 'My Dashboard & Classes')),
         actions: [
