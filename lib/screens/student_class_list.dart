@@ -174,46 +174,17 @@ class _StudentClassListState extends State<StudentClassList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: AppDrawer(
-        onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
-      ),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, size: 26),
-            tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        title: Text(L.t('میری کلاسز اور ڈیش بورڈ', 'My Dashboard & Classes')),
-        actions: [
-          const LandingButton(),
-          const LanguageToggle(),
-          const ThemeSelectorButton(),
-          IconButton(
-            icon: const Icon(Icons.auto_awesome, color: Colors.teal),
-            tooltip: L.t('AI Teaching Assistant', 'AI Teaching Assistant'),
-            onPressed: () => _openAiOverlay('XAcademy Tutors'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            tooltip: L.t('پروفائل', 'Profile'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen())),
-          ),
-          const LogoutButton(),
-        ],
-      ),
-      body: Column(
-        children: [
-          const UserBanner(),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refresh,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 580),
+    final isWide = MediaQuery.of(context).size.width >= 800;
+
+    final mainContent = Column(
+      children: [
+        const UserBanner(),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 580),
                   child: FutureBuilder<List<StudentClass>>(
                     future: _future,
                     builder: (context, snapshot) {
@@ -330,7 +301,58 @@ class _StudentClassListState extends State<StudentClassList> {
             ),
           ),
         ],
+      );
+
+    return Scaffold(
+      drawer: isWide
+          ? null
+          : AppDrawer(
+              onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
+            ),
+      appBar: AppBar(
+        leading: isWide
+            ? null
+            : Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu_rounded, size: 26),
+                  tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              ),
+        title: Text(L.t('میری کلاسز اور ڈیش بورڈ', 'My Dashboard & Classes')),
+        actions: [
+          const LandingButton(),
+          const LanguageToggle(),
+          const ThemeSelectorButton(),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Colors.teal),
+            tooltip: L.t('AI Teaching Assistant', 'AI Teaching Assistant'),
+            onPressed: () => _openAiOverlay('XAcademy Tutors'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: L.t('پروفائل', 'Profile'),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          ),
+          const LogoutButton(),
+        ],
       ),
+      body: isWide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 290,
+                  child: AppDrawer(
+                    isFixed: true,
+                    onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
+                  ),
+                ),
+                Expanded(child: mainContent),
+              ],
+            )
+          : mainContent,
     );
   }
 

@@ -83,21 +83,44 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: AppDrawer(
-        isTeacher: true,
-        role: widget.role,
-        onAddStudent: _openAddStudentDialog,
-        onRefresh: _load,
-      ),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded, size: 26),
-            tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+    final isWide = MediaQuery.of(context).size.width >= 800;
+
+    final mainContent = Column(
+      children: [
+        const UserBanner(),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 580),
+                child: _buildBody(),
+              ),
+            ),
           ),
         ),
+      ],
+    );
+
+    return Scaffold(
+      drawer: isWide
+          ? null
+          : AppDrawer(
+              isTeacher: true,
+              role: widget.role,
+              onAddStudent: _openAddStudentDialog,
+              onRefresh: _load,
+            ),
+      appBar: AppBar(
+        leading: isWide
+            ? null
+            : Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu_rounded, size: 26),
+                  tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              ),
         title: Text(L.t('ٹیچر کمانڈ سینٹر و ڈیش بورڈ', 'Teacher Command Center & Dashboard')),
         actions: [
           const LandingButton(),
@@ -165,22 +188,24 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               label: Text(L.t('نئی کلاس بنائیں۔', 'New Class'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
           : null,
-      body: Column(
-        children: [
-          const UserBanner(),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _load,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 580),
-                  child: _buildBody(),
+      body: isWide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 290,
+                  child: AppDrawer(
+                    isFixed: true,
+                    isTeacher: true,
+                    role: widget.role,
+                    onAddStudent: _openAddStudentDialog,
+                    onRefresh: _load,
+                  ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
+                Expanded(child: mainContent),
+              ],
+            )
+          : mainContent,
     );
   }
 
