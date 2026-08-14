@@ -38,6 +38,13 @@
     <div class="x-sub">لوڈ ہو رہا ہے… &nbsp;|&nbsp; Loading…</div>
   </div>
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var i = 0; i < regs.length; i++) {
+          regs[i].update();
+        }
+      });
+    }
     window.addEventListener('flutter-first-frame', function () {
       var l = document.getElementById('x-loader');
       if (l) { 
@@ -46,6 +53,6 @@
       }
     });
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" defer></script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import '../widgets/logout_button.dart';
 import '../widgets/landing_button.dart';
 import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/dashboard_analytics_card.dart';
 import 'profile_screen.dart';
 import 'social_links_screen.dart';
@@ -83,7 +84,20 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AppDrawer(
+        isTeacher: true,
+        role: widget.role,
+        onAddStudent: _openAddStudentDialog,
+        onRefresh: _load,
+      ),
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, size: 26),
+            tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
         title: Text(L.t('ٹیچر کمانڈ سینٹر و ڈیش بورڈ', 'Teacher Command Center & Dashboard')),
         actions: [
           const LandingButton(),
