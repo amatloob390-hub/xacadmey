@@ -27,19 +27,19 @@ class _StudentClassListState extends State<StudentClassList> {
   @override
   void initState() {
     super.initState();
-    _checkPendingClassAndLoad();
+    _future = _service.getMyClasses();
+    _checkPendingClass();
   }
 
-  Future<void> _checkPendingClassAndLoad() async {
+  Future<void> _checkPendingClass() async {
     final pId = PendingClass.id;
     if (pId != null && pId.isNotEmpty) {
       PendingClass.id = null;
       try {
         await _service.enroll(pId);
+        if (mounted) setState(() => _future = _service.getMyClasses());
       } catch (_) {}
     }
-    _future = _service.getMyClasses();
-    if (mounted) setState(() {});
   }
 
   Future<void> _refresh() async {
