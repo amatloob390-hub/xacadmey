@@ -179,6 +179,13 @@ class _StudentClassListState extends State<StudentClassList> {
         onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
       ),
       appBar: AppBar(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, size: 26),
+            tooltip: L.t('سائیڈ بار / مینو کھولیں', 'Open Sidebar / Menu'),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
         title: Text(L.t('میری کلاسز اور ڈیش بورڈ', 'My Dashboard & Classes')),
         actions: [
           const LandingButton(),
