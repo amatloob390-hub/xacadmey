@@ -445,28 +445,129 @@ class _StudentClassListState extends State<StudentClassList> {
               ),
               const SizedBox(height: 10),
               Text(
-                L.t('دوبارہ لوڈ کرنے کے لیے نیچے بٹن دبائیں۔',
-                    'Press the button below to reload.'),
+                L.t('اگر ٹیچر نے لنک بھیجا ہے تو "کلاس لنک درج کریں" دبائیں یا تصدیق کا انتظار کریں۔',
+                    'If your teacher shared a link, click "Enter Class Link" or wait for teacher approval.'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _refresh,
-                icon: const Icon(Icons.refresh),
-                label: Text(L.t('کلاسز دوبارہ لوڈ کریں', 'Reload Classes')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _openJoinByLinkDialog,
+                    icon: const Icon(Icons.add_link_rounded),
+                    label: Text(L.t('کلاس لنک درج کریں', 'Enter Class Link')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(L.t('دوبارہ لوڈ کریں', 'Reload Classes')),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF10B981),
+                      side: const BorderSide(color: Color(0xFF10B981)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openJoinByLinkDialog() async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.link_rounded, color: Color(0xFF10B981)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                L.t('کلاس لنک سے جوائن کریں', 'Join Class by Link'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              L.t(
+                'ٹیچر کی طرف سے بھیجا گیا کلاس لنک یا کوڈ یہاں پیسٹ کریں:',
+                'Paste the link or class code shared by your teacher:',
+              ),
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'https://.../?class=... / Class ID',
+                prefixIcon: const Icon(Icons.paste_rounded, color: Color(0xFF10B981)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(L.t('منسوخ', 'Cancel')),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.check, size: 18),
+            label: Text(L.t('جوائن کریں', 'Join')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && ctrl.text.trim().isNotEmpty) {
+      String raw = ctrl.text.trim();
+      String classId = raw;
+      if (raw.contains('class=')) {
+        final qIdx = raw.indexOf('class=');
+        classId = raw.substring(qIdx + 6).split('&').first;
+      } else if (raw.contains('class_id=')) {
+        final qIdx = raw.indexOf('class_id=');
+        classId = raw.substring(qIdx + 9).split('&').first;
+      }
+      try {
+        await _service.enroll(classId);
+        await _refresh();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(L.t('کلاس کامیابی سے شامل ہو گئی! 🎉', 'Class enrolled successfully! 🎉')),
+            backgroundColor: const Color(0xFF10B981),
+          ));
+        }
+      } catch (_) {}
+    }
   }
 
   Widget _messageList(String msg) => ListView(
