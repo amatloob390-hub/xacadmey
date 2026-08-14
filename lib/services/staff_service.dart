@@ -50,7 +50,7 @@ class StaffService {
     } catch (_) {}
   }
 
-  /// کسی بھی ای میل کو براہِ راست کلاس میں داخل اور منظور کریں
+  /// کسی بھی ای میل کو براہِ راست تلاش، تصدیق اور کلاس میں داخل کریں
   Future<void> directEnrollByEmail({
     required String email,
     required String classId,
@@ -58,28 +58,70 @@ class StaffService {
   }) async {
     final cleanEmail = email.trim().toLowerCase();
 
-    // 1. RPCs call
+    // 1. RPCs trigger
     await inviteStudent(email: cleanEmail, fullName: fullName, classId: classId);
     await addExistingStudent(email: cleanEmail, classId: classId);
 
-    // 2. Query profiles by email and directly enroll
+    // 2. Find student ID across all sources
+    String? sId;
+
+    // 2a. Check list_pending_students RPC
     try {
-      final pRow = await _supabase
-          .from('profiles')
-          .select('id')
-          .ilike('email', cleanEmail)
-          .maybeSingle();
-      final sId = pRow?['id']?.toString();
-      if (sId != null && sId.isNotEmpty) {
-        await enrollStudentInClass(studentId: sId, classId: classId);
+      final rpcRows = await _supabase.rpc('list_pending_students') as List?;
+      if (rpcRows != null) {
+        for (var r in rpcRows) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final em = m['email']?.toString().trim().toLowerCase();
+          if (em == cleanEmail) {
+            sId = m['id']?.toString() ??
+                m['user_id']?.toString() ??
+                m['student_id']?.toString();
+            break;
+          }
+        }
       }
     } catch (_) {}
+
+    // 2b. Check profiles table
+    if (sId == null) {
+      try {
+        final pRows = await _supabase.from('profiles').select('id, email');
+        if (pRows is List) {
+          for (var r in pRows) {
+            final m = Map<String, dynamic>.from(r as Map);
+            if (m['email']?.toString().trim().toLowerCase() == cleanEmail) {
+              sId = m['id']?.toString();
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. If found, apply full verification & class enrollment
+    if (sId != null && sId.isNotEmpty) {
+      await enrollStudentInClass(studentId: sId, classId: classId);
+      try {
+        await _supabase.rpc('staff_verify_student_paid', params: {'p_student_id': sId});
+      } catch (_) {}
+      try {
+        await _supabase.rpc('staff_verify_student_trial', params: {'p_student_id': sId, 'p_days': 30});
+      } catch (_) {}
+      try {
+        await _supabase.rpc('staff_verify_student', params: {'p_student_id': sId});
+      } catch (_) {}
+    }
   }
 
   /// اسٹوڈنٹ کی تصدیق (فیس سلپ دیکھنے کے بعد)
   Future<void> verifyStudent(String studentId) async {
     try {
       await _supabase.rpc('staff_verify_student', params: {
+        'p_student_id': studentId,
+      });
+    } catch (_) {}
+    try {
+      await _supabase.rpc('staff_verify_student_paid', params: {
         'p_student_id': studentId,
       });
     } catch (_) {}
