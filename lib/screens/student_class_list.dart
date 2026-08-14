@@ -71,6 +71,9 @@ class _StudentClassListState extends State<StudentClassList> {
   }
 
   Future<void> _refresh() async {
+    try {
+      await Supabase.instance.client.rpc('claim_invite');
+    } catch (_) {}
     setState(() => _future = _service.getMyClasses());
     await _future;
   }

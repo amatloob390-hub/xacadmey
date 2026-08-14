@@ -27,7 +27,12 @@ class ClassService {
     final user = _supabase.auth.currentUser;
     final userId = user?.id;
 
-    // 1. Auto-ensure enrollment & trial in DB before calling join_class
+    // 1. Claim any pending teacher invites
+    try {
+      await _supabase.rpc('claim_invite');
+    } catch (_) {}
+
+    // 2. Auto-ensure enrollment & trial in DB before calling join_class
     if (userId != null) {
       try {
         await _supabase.rpc('enroll_in_class', params: {'p_class_id': cleanId});
@@ -53,46 +58,52 @@ class ClassService {
       } catch (_) {}
     }
 
-    // 2. Primary: RPC join_class
+    // 3. Primary: RPC join_class
     try {
       final link = await _supabase.rpc('join_class', params: {
         'p_class_id': cleanId,
         'p_device_id': deviceId,
-      }).timeout(const Duration(seconds: 20));
+      }).timeout(const Duration(seconds: 15));
 
       if (link != null && (link as String).isNotEmpty) {
         return JoinResult.ok(link);
       }
     } catch (e) {
-      // 3. If RPC failed due to verification, auto-grant 7-day trial & retry
-      if (userId != null) {
-        try {
-          await _supabase.rpc('staff_verify_student_trial', params: {
-            'p_student_id': userId,
-            'p_days': 7,
-          });
-        } catch (_) {}
-        try {
-          await _supabase.from('profiles').update({
-            'is_verified': true,
-            'is_trial': true,
-            'trial_until':
-                DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-          }).eq('id', userId);
-        } catch (_) {}
-
-        try {
-          final link2 = await _supabase.rpc('join_class', params: {
-            'p_class_id': cleanId,
-            'p_device_id': deviceId,
-          });
-          if (link2 != null && (link2 as String).isNotEmpty) {
-            return JoinResult.ok(link2);
+      // 4. Check get_available_classes RPC for zoom_link
+      try {
+        final avail = await _supabase.rpc('get_available_classes') as List?;
+        if (avail != null) {
+          for (var a in avail) {
+            final m = Map<String, dynamic>.from(a as Map);
+            final cId = (m['class_id'] ?? m['id'])?.toString();
+            if (cId == cleanId) {
+              final z = m['zoom_link']?.toString();
+              if (z != null && z.isNotEmpty) {
+                return JoinResult.ok(z);
+              }
+            }
           }
-        } catch (_) {}
-      }
+        }
+      } catch (_) {}
 
-      // 4. Fallback: Direct lookup on classes table
+      // 5. Check get_my_classes RPC for zoom_link
+      try {
+        final myCls = await _supabase.rpc('get_my_classes') as List?;
+        if (myCls != null) {
+          for (var c in myCls) {
+            final m = Map<String, dynamic>.from(c as Map);
+            final cId = (m['class_id'] ?? m['id'])?.toString();
+            if (cId == cleanId) {
+              final z = m['zoom_link']?.toString();
+              if (z != null && z.isNotEmpty) {
+                return JoinResult.ok(z);
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 6. Direct lookup on classes table
       try {
         final cRow = await _supabase
             .from('classes')
