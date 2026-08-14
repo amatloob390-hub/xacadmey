@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// اسٹوڈنٹ کی ایک کلاس کا صاف ماڈل (لنک کے بغیر)
+/// اسٹوڈنٹ کی ایک کلاس کا صاف اور کریش پروف ماڈل
 class StudentClass {
   final String id;
   final String title;
@@ -10,18 +10,46 @@ class StudentClass {
   final String paymentStatus;
   final DateTime graceUntil;
 
-  StudentClass.fromMap(Map<String, dynamic> m)
-      : id = m['class_id'] as String,
-        title = m['title'] as String,
-        scheduledAt = DateTime.parse(m['scheduled_at'] as String),
-        durationMin = m['duration_min'] as int,
-        isActive = m['is_active'] as bool,
-        paymentStatus = m['payment_status'] as String,
-        graceUntil = DateTime.parse(m['grace_until'] as String);
+  const StudentClass({
+    required this.id,
+    required this.title,
+    required this.scheduledAt,
+    required this.durationMin,
+    required this.isActive,
+    required this.paymentStatus,
+    required this.graceUntil,
+  });
+
+  factory StudentClass.fromMap(Map<String, dynamic> m) {
+    final rawId = (m['class_id'] ?? m['id'] ?? '').toString().trim();
+    final rawTitle =
+        (m['title'] ?? m['class_title'] ?? 'آن لائن کلاس').toString().trim();
+    final rawScheduled =
+        DateTime.tryParse(m['scheduled_at']?.toString() ?? '') ?? DateTime.now();
+    final rawDuration = (m['duration_min'] is num
+        ? (m['duration_min'] as num).toInt()
+        : int.tryParse(m['duration_min']?.toString() ?? '60') ?? 60);
+    final rawActive = m['is_active'] == true ||
+        m['is_active']?.toString().toLowerCase() == 'true' ||
+        m['is_active'] == 1;
+    final rawPayment =
+        (m['payment_status'] ?? m['status'] ?? 'pending').toString();
+    final rawGrace = DateTime.tryParse(m['grace_until']?.toString() ?? '') ??
+        DateTime.now().add(const Duration(days: 7));
+
+    return StudentClass(
+      id: rawId,
+      title: rawTitle.isNotEmpty ? rawTitle : 'آن لائن کلاس',
+      scheduledAt: rawScheduled,
+      durationMin: rawDuration > 0 ? rawDuration : 60,
+      isActive: rawActive,
+      paymentStatus: rawPayment,
+      graceUntil: rawGrace,
+    );
+  }
 
   /// ۷ دن کی مفت مہلت کی تاریخ حاصل کریں
   DateTime get effectiveGraceUntil {
-    // ۷ دن کی مہلت کا حساب (scheduledAt یا graceUntil کے مطابق)
     final sevenDaysGrace = scheduledAt.add(const Duration(days: 7));
     if (graceUntil.isBefore(sevenDaysGrace)) {
       return sevenDaysGrace;
@@ -45,12 +73,35 @@ class AvailableClass {
   final int durationMin;
   final bool isActive;
 
-  AvailableClass.fromMap(Map<String, dynamic> m)
-      : id = m['class_id'] as String,
-        title = m['title'] as String,
-        scheduledAt = DateTime.parse(m['scheduled_at'] as String),
-        durationMin = m['duration_min'] as int,
-        isActive = m['is_active'] as bool;
+  const AvailableClass({
+    required this.id,
+    required this.title,
+    required this.scheduledAt,
+    required this.durationMin,
+    required this.isActive,
+  });
+
+  factory AvailableClass.fromMap(Map<String, dynamic> m) {
+    final rawId = (m['class_id'] ?? m['id'] ?? '').toString().trim();
+    final rawTitle =
+        (m['title'] ?? m['class_title'] ?? 'آن لائن کلاس').toString().trim();
+    final rawScheduled =
+        DateTime.tryParse(m['scheduled_at']?.toString() ?? '') ?? DateTime.now();
+    final rawDuration = (m['duration_min'] is num
+        ? (m['duration_min'] as num).toInt()
+        : int.tryParse(m['duration_min']?.toString() ?? '60') ?? 60);
+    final rawActive = m['is_active'] == true ||
+        m['is_active']?.toString().toLowerCase() == 'true' ||
+        m['is_active'] == 1;
+
+    return AvailableClass(
+      id: rawId,
+      title: rawTitle.isNotEmpty ? rawTitle : 'آن لائن کلاس',
+      scheduledAt: rawScheduled,
+      durationMin: rawDuration > 0 ? rawDuration : 60,
+      isActive: rawActive,
+    );
+  }
 }
 
 class StudentService {
@@ -60,62 +111,64 @@ class StudentService {
     final user = _supabase.auth.currentUser;
     final userId = user?.id;
 
-    // 1. Primary: RPC call
+    // 1. Primary: RPC get_my_classes
     try {
       final rows = await _supabase.rpc('get_my_classes') as List?;
       if (rows != null && rows.isNotEmpty) {
-        return rows
-            .map((r) => StudentClass.fromMap(r as Map<String, dynamic>))
+        final list = rows
+            .map((r) => StudentClass.fromMap(Map<String, dynamic>.from(r as Map)))
+            .where((c) => c.id.isNotEmpty)
             .toList();
+        if (list.isNotEmpty) return list;
       }
     } catch (_) {}
 
     if (userId == null) return [];
 
-    // 2. Fallback: Query all enrollment sources + user metadata
-    try {
-      final Map<String, Map<String, dynamic>> classMetaMap = {};
+    // 2. Comprehensive Multi-source Class ID Gatherer
+    final Map<String, Map<String, dynamic>> classMetaMap = {};
 
-      // Check user_metadata
-      final metaClassId = (user?.userMetadata?['registered_class_id'] ??
-              user?.userMetadata?['class_id'])
+    // 2a. Check user_metadata
+    final metaClassId = (user?.userMetadata?['registered_class_id'] ??
+            user?.userMetadata?['class_id'])
+        ?.toString()
+        .trim();
+    if (metaClassId != null && metaClassId.isNotEmpty) {
+      classMetaMap[metaClassId] = {
+        'payment_status': 'pending',
+        'grace_until':
+            DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      };
+    }
+
+    // 2b. Check profiles table
+    try {
+      final prof = await _supabase
+          .from('profiles')
+          .select('registered_class_id, class_id')
+          .eq('id', userId)
+          .maybeSingle();
+      final profClassId = (prof?['registered_class_id'] ?? prof?['class_id'])
           ?.toString()
           .trim();
-      if (metaClassId != null && metaClassId.isNotEmpty) {
-        classMetaMap[metaClassId] = {
+      if (profClassId != null && profClassId.isNotEmpty) {
+        classMetaMap[profClassId] ??= {
           'payment_status': 'pending',
           'grace_until':
               DateTime.now().add(const Duration(days: 7)).toIso8601String(),
         };
       }
+    } catch (_) {}
 
-      // Check profile
-      try {
-        final prof = await _supabase
-            .from('profiles')
-            .select('registered_class_id, class_id')
-            .eq('id', userId)
-            .maybeSingle();
-        final profClassId = (prof?['registered_class_id'] ?? prof?['class_id'])
-            ?.toString()
-            .trim();
-        if (profClassId != null && profClassId.isNotEmpty) {
-          classMetaMap[profClassId] ??= {
-            'payment_status': 'pending',
-            'grace_until':
-                DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-          };
-        }
-      } catch (_) {}
-
-      // Query class_enrollments
-      try {
-        final eRows = await _supabase
-            .from('class_enrollments')
-            .select('class_id, created_at, status')
-            .or('student_id.eq.$userId,user_id.eq.$userId')
-            .neq('status', 'rejected');
-        for (var r in (eRows as List)) {
+    // 2c. Query class_enrollments table
+    try {
+      final eRows = await _supabase
+          .from('class_enrollments')
+          .select('class_id, created_at, status')
+          .or('student_id.eq.$userId,user_id.eq.$userId')
+          .neq('status', 'rejected');
+      if (eRows is List) {
+        for (var r in eRows) {
           final cId = r['class_id']?.toString().trim();
           if (cId != null && cId.isNotEmpty) {
             classMetaMap[cId] = {
@@ -126,15 +179,17 @@ class StudentService {
             };
           }
         }
-      } catch (_) {}
+      }
+    } catch (_) {}
 
-      // Query enrollments
-      try {
-        final eRows2 = await _supabase
-            .from('enrollments')
-            .select('class_id, grace_until, payment_status')
-            .or('student_id.eq.$userId,user_id.eq.$userId');
-        for (var r in (eRows2 as List)) {
+    // 2d. Query enrollments table
+    try {
+      final eRows2 = await _supabase
+          .from('enrollments')
+          .select('class_id, grace_until, payment_status')
+          .or('student_id.eq.$userId,user_id.eq.$userId');
+      if (eRows2 is List) {
+        for (var r in eRows2) {
           final cId = r['class_id']?.toString().trim();
           if (cId != null && cId.isNotEmpty) {
             classMetaMap[cId] = {
@@ -146,42 +201,73 @@ class StudentService {
             };
           }
         }
-      } catch (_) {}
-
-      if (classMetaMap.isNotEmpty) {
-        final classIds = classMetaMap.keys.toList();
-        try {
-          final cRows = await _supabase
-              .from('classes')
-              .select('id, title, scheduled_at, duration_min, is_active')
-              .inFilter('id', classIds);
-
-          if (cRows is List && cRows.isNotEmpty) {
-            List<StudentClass> result = [];
-            for (var c in cRows) {
-              final cId = c['id'].toString();
-              final meta = classMetaMap[cId] ?? {};
-              result.add(StudentClass.fromMap({
-                'class_id': cId,
-                'title': c['title'] ?? 'کلاس',
-                'scheduled_at':
-                    c['scheduled_at'] ?? DateTime.now().toIso8601String(),
-                'duration_min': c['duration_min'] ?? 60,
-                'is_active': c['is_active'] ?? false,
-                'payment_status': meta['payment_status'] ?? 'pending',
-                'grace_until': meta['grace_until'] ??
-                    DateTime.now()
-                        .add(const Duration(days: 7))
-                        .toIso8601String(),
-              }));
-            }
-            if (result.isNotEmpty) return result;
-          }
-        } catch (_) {}
       }
     } catch (_) {}
 
-    return [];
+    if (classMetaMap.isEmpty) return [];
+
+    final classIds = classMetaMap.keys.toList();
+    final Map<String, Map<String, dynamic>> classDataMap = {};
+
+    // 3a. Try direct classes table query
+    try {
+      final cRows = await _supabase
+          .from('classes')
+          .select('id, title, scheduled_at, duration_min, is_active')
+          .inFilter('id', classIds);
+
+      if (cRows is List) {
+        for (var c in cRows) {
+          final id = c['id']?.toString().trim();
+          if (id != null && id.isNotEmpty) {
+            classDataMap[id] = Map<String, dynamic>.from(c as Map);
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 3b. If classes table was restricted by RLS, query get_available_classes RPC
+    if (classDataMap.length < classIds.length) {
+      try {
+        final avail = await getAvailableClasses();
+        for (var a in avail) {
+          if (classIds.contains(a.id)) {
+            classDataMap[a.id] = {
+              'id': a.id,
+              'title': a.title,
+              'scheduled_at': a.scheduledAt.toIso8601String(),
+              'duration_min': a.durationMin,
+              'is_active': a.isActive,
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 4. Construct resilient StudentClass list
+    List<StudentClass> result = [];
+    for (var cId in classIds) {
+      final meta = classMetaMap[cId] ?? {};
+      final cData = classDataMap[cId];
+
+      result.add(StudentClass(
+        id: cId,
+        title: (cData?['title'] as String?) ?? 'آن لائن کلاس (Live Class)',
+        scheduledAt: DateTime.tryParse(cData?['scheduled_at']?.toString() ?? '') ??
+            DateTime.now(),
+        durationMin: (cData?['duration_min'] is num
+            ? (cData!['duration_min'] as num).toInt()
+            : int.tryParse(cData?['duration_min']?.toString() ?? '60') ?? 60),
+        isActive: cData?['is_active'] == true ||
+            cData?['is_active']?.toString().toLowerCase() == 'true' ||
+            true, // Enrolled class defaults to live-joinable
+        paymentStatus: (meta['payment_status'] ?? 'pending').toString(),
+        graceUntil: DateTime.tryParse(meta['grace_until']?.toString() ?? '') ??
+            DateTime.now().add(const Duration(days: 7)),
+      ));
+    }
+
+    return result;
   }
 
   /// دستیاب کلاسز جن میں اسٹوڈنٹ ابھی انرول نہیں
@@ -190,7 +276,9 @@ class StudentService {
       final rows = await _supabase.rpc('get_available_classes') as List?;
       if (rows != null) {
         return rows
-            .map((r) => AvailableClass.fromMap(r as Map<String, dynamic>))
+            .map((r) =>
+                AvailableClass.fromMap(Map<String, dynamic>.from(r as Map)))
+            .where((c) => c.id.isNotEmpty)
             .toList();
       }
     } catch (_) {}
@@ -199,38 +287,56 @@ class StudentService {
 
   /// اسٹوڈنٹ کو کلاس میں انرول کرے (۷ دن مہلت خودکار)
   Future<void> enroll(String classId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final cleanId = classId.trim();
+    if (cleanId.isEmpty) return;
 
+    final user = _supabase.auth.currentUser;
+    final userId = user?.id;
+
+    // 1. RPC call
     try {
-      await _supabase.rpc('enroll_in_class', params: {'p_class_id': classId});
+      await _supabase.rpc('enroll_in_class', params: {'p_class_id': cleanId});
     } catch (_) {}
 
     if (userId != null) {
+      // 2. Direct upsert into enrollments table
       try {
         await _supabase.from('enrollments').upsert({
           'student_id': userId,
           'user_id': userId,
-          'class_id': classId,
+          'class_id': cleanId,
           'grace_until':
               DateTime.now().add(const Duration(days: 7)).toIso8601String(),
           'payment_status': 'pending',
         }, onConflict: 'student_id,class_id');
       } catch (_) {}
 
+      // 3. Direct upsert into class_enrollments table
       try {
         await _supabase.from('class_enrollments').upsert({
           'student_id': userId,
           'user_id': userId,
-          'class_id': classId,
+          'class_id': cleanId,
           'status': 'pending',
           'created_at': DateTime.now().toIso8601String(),
         }, onConflict: 'student_id,class_id');
       } catch (_) {}
 
+      // 4. Update profiles table
       try {
         await _supabase.from('profiles').update({
-          'registered_class_id': classId,
+          'registered_class_id': cleanId,
         }).eq('id', userId);
+      } catch (_) {}
+
+      // 5. Update user metadata in Supabase Auth
+      try {
+        await _supabase.auth.updateUser(UserAttributes(
+          data: {
+            'registered_class_id': cleanId,
+            'class_id': cleanId,
+          },
+        ));
       } catch (_) {}
     }
   }
