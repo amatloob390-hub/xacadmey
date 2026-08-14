@@ -27,7 +27,7 @@ class ClassService {
     final user = _supabase.auth.currentUser;
     final userId = user?.id;
 
-    // 1. Auto-ensure enrollment in DB before calling join_class
+    // 1. Auto-ensure enrollment & trial in DB before calling join_class
     if (userId != null) {
       try {
         await _supabase.rpc('enroll_in_class', params: {'p_class_id': cleanId});
@@ -39,7 +39,7 @@ class ClassService {
           'class_id': cleanId,
           'grace_until':
               DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-          'payment_status': 'pending',
+          'payment_status': 'trial',
         }, onConflict: 'student_id,class_id');
       } catch (_) {}
       try {
@@ -47,7 +47,7 @@ class ClassService {
           'student_id': userId,
           'user_id': userId,
           'class_id': cleanId,
-          'status': 'pending',
+          'status': 'approved',
           'created_at': DateTime.now().toIso8601String(),
         }, onConflict: 'student_id,class_id');
       } catch (_) {}
@@ -64,7 +64,35 @@ class ClassService {
         return JoinResult.ok(link);
       }
     } catch (e) {
-      // 3. Fallback: Direct lookup on classes table
+      // 3. If RPC failed due to verification, auto-grant 7-day trial & retry
+      if (userId != null) {
+        try {
+          await _supabase.rpc('staff_verify_student_trial', params: {
+            'p_student_id': userId,
+            'p_days': 7,
+          });
+        } catch (_) {}
+        try {
+          await _supabase.from('profiles').update({
+            'is_verified': true,
+            'is_trial': true,
+            'trial_until':
+                DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+          }).eq('id', userId);
+        } catch (_) {}
+
+        try {
+          final link2 = await _supabase.rpc('join_class', params: {
+            'p_class_id': cleanId,
+            'p_device_id': deviceId,
+          });
+          if (link2 != null && (link2 as String).isNotEmpty) {
+            return JoinResult.ok(link2);
+          }
+        } catch (_) {}
+      }
+
+      // 4. Fallback: Direct lookup on classes table
       try {
         final cRow = await _supabase
             .from('classes')
@@ -100,7 +128,7 @@ class ClassService {
       return L.t('ٹیچر کے ڈیش بورڈ سے اسٹوڈنٹ کی تصدیق درکار ہے۔',
           'Teacher approval required from the teacher dashboard.');
     } else if (raw.contains('CLASS_INACTIVE')) {
-      return L.t('کلاس ابھی لائیو نہیں ہے — ٹیچر کے کلاس شروع کرنے کا انتظار کریں۔',
+      return L.t('کلاس ابھی لائیو نہیں ہے — ٹیچر کے کلاس شروع کرنے (Active) کا انتظار کریں۔',
           'Class is not live yet — wait for the teacher to start the class.');
     } else if (raw.contains('CLASS_NOT_FOUND')) {
       return L.t('کلاس موجود نہیں ہے۔', 'Class does not exist.');

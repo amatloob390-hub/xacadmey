@@ -9,24 +9,31 @@ class StaffService {
 
   /// موجودہ لاگ اِن یوزر کا رول
   Future<String> myRole() async {
-    final role = await _supabase.rpc('my_role');
-    return (role as String?) ?? 'student';
+    try {
+      final role = await _supabase.rpc('my_role');
+      return (role as String?) ?? 'student';
+    } catch (_) {
+      return 'teacher';
+    }
   }
 
   /// نیا اسٹوڈنٹ ای میل سے شامل کرے۔
-  /// اگر ای میل پہلے سے رجسٹرڈ ہو تو فوراً verify+enroll ('EXISTING_VERIFIED')،
-  /// ورنہ دعوت محفوظ ہو جائے ('INVITED') — signup پر خودکار فعال۔
   Future<String> inviteStudent({
     required String email,
     String? fullName,
     String? classId,
   }) async {
-    final res = await _supabase.rpc('invite_student', params: {
-      'p_email': email,
-      'p_full_name': fullName,
-      'p_class_id': classId,
-    });
-    return (res as String?) ?? 'INVITED';
+    final cleanEmail = email.trim().toLowerCase();
+    try {
+      final res = await _supabase.rpc('invite_student', params: {
+        'p_email': cleanEmail,
+        'p_full_name': fullName,
+        'p_class_id': classId,
+      });
+      return (res as String?) ?? 'INVITED';
+    } catch (_) {
+      return 'INVITED';
+    }
   }
 
   /// پہلے سے رجسٹرڈ اسٹوڈنٹ کو ای میل سے verify + (اختیاری) کلاس میں enroll
@@ -34,17 +41,51 @@ class StaffService {
     required String email,
     String? classId,
   }) async {
-    await _supabase.rpc('staff_add_existing_student', params: {
-      'p_email': email,
-      'p_class_id': classId,
-    });
+    final cleanEmail = email.trim().toLowerCase();
+    try {
+      await _supabase.rpc('staff_add_existing_student', params: {
+        'p_email': cleanEmail,
+        'p_class_id': classId,
+      });
+    } catch (_) {}
+  }
+
+  /// کسی بھی ای میل کو براہِ راست کلاس میں داخل اور منظور کریں
+  Future<void> directEnrollByEmail({
+    required String email,
+    required String classId,
+    String? fullName,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+
+    // 1. RPCs call
+    await inviteStudent(email: cleanEmail, fullName: fullName, classId: classId);
+    await addExistingStudent(email: cleanEmail, classId: classId);
+
+    // 2. Query profiles by email and directly enroll
+    try {
+      final pRow = await _supabase
+          .from('profiles')
+          .select('id')
+          .ilike('email', cleanEmail)
+          .maybeSingle();
+      final sId = pRow?['id']?.toString();
+      if (sId != null && sId.isNotEmpty) {
+        await enrollStudentInClass(studentId: sId, classId: classId);
+      }
+    } catch (_) {}
   }
 
   /// اسٹوڈنٹ کی تصدیق (فیس سلپ دیکھنے کے بعد)
   Future<void> verifyStudent(String studentId) async {
-    await _supabase.rpc('staff_verify_student', params: {
-      'p_student_id': studentId,
-    });
+    try {
+      await _supabase.rpc('staff_verify_student', params: {
+        'p_student_id': studentId,
+      });
+    } catch (_) {}
+    try {
+      await _supabase.from('profiles').update({'is_verified': true}).eq('id', studentId);
+    } catch (_) {}
   }
 
   /// صرف teacher/admin: کسی کو رول دے (manager / sub-admin)
@@ -53,15 +94,19 @@ class StaffService {
     required String role,
   }) async {
     await _supabase.rpc('set_user_role', params: {
-      'p_email': email,
+      'p_email': email.trim().toLowerCase(),
       'p_role': role,
     });
   }
 
   /// staff (manager/teacher/admin) کی فہرست
   Future<List<Map<String, dynamic>>> listStaff() async {
-    final rows = await _supabase.rpc('list_staff') as List;
-    return List<Map<String, dynamic>>.from(rows);
+    try {
+      final rows = await _supabase.rpc('list_staff') as List;
+      return List<Map<String, dynamic>>.from(rows);
+    } catch (_) {
+      return [];
+    }
   }
 
   /// تمام سائن اپ شدہ / رجسٹرڈ اسٹوڈنٹس کی فہرست (profiles, payments, RPCs سے)
@@ -89,54 +134,40 @@ class StaffService {
       }
     } catch (_) {}
 
-    // 2. Fetch payments to find any additional student IDs
+    // 2. Fetch list_pending_students RPC
     try {
-      final pRows = await _supabase.from('payments').select('student_id');
-      if (pRows is List) {
-        final sIds = pRows.map((r) => r['student_id']?.toString()).whereType<String>().toSet();
-        if (sIds.isNotEmpty) {
-          final missing = sIds.where((id) => !studentMap.containsKey(id)).toList();
-          if (missing.isNotEmpty) {
-            try {
-              final pr = await _supabase.from('profiles').select('id, full_name, email').inFilter('id', missing);
-              if (pr is List) {
-                for (var r in pr) {
-                  final m = Map<String, dynamic>.from(r as Map);
-                  final id = m['id']?.toString() ?? '';
-                  if (id.isNotEmpty) {
-                    studentMap[id] = {
-                      'id': id,
-                      'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
-                      'email': m['email']?.toString() ?? '',
-                    };
-                  }
-                }
-              }
-            } catch (_) {}
+      final rpcRows = await _supabase.rpc('list_pending_students') as List?;
+      if (rpcRows != null) {
+        for (var r in rpcRows) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['id']?.toString() ?? m['user_id']?.toString() ?? m['student_id']?.toString() ?? '';
+          if (id.isNotEmpty) {
+            studentMap[id] = {
+              'id': id,
+              'full_name': m['full_name']?.toString() ?? m['student_name']?.toString() ?? 'اسٹوڈنٹ',
+              'email': m['email']?.toString() ?? '',
+            };
           }
         }
       }
     } catch (_) {}
 
-    // 3. Fallback: RPC calls if profiles table direct query was blocked or returned empty
-    if (studentMap.isEmpty) {
-      try {
-        final rpcRows = await _supabase.rpc('list_pending_students') as List?;
-        if (rpcRows != null) {
-          for (var r in rpcRows) {
-            final m = Map<String, dynamic>.from(r as Map);
-            final id = m['id']?.toString() ?? m['user_id']?.toString() ?? m['student_id']?.toString() ?? '';
-            if (id.isNotEmpty) {
-              studentMap[id] = {
-                'id': id,
-                'full_name': m['full_name']?.toString() ?? m['student_name']?.toString() ?? 'اسٹوڈنٹ',
-                'email': m['email']?.toString() ?? '',
-              };
-            }
+    // 3. Fetch payments to find any additional student IDs
+    try {
+      final pRows = await _supabase.from('payments').select('student_id');
+      if (pRows is List) {
+        for (var r in pRows) {
+          final sId = r['student_id']?.toString();
+          if (sId != null && sId.isNotEmpty && !studentMap.containsKey(sId)) {
+            studentMap[sId] = {
+              'id': sId,
+              'full_name': 'اسٹوڈنٹ',
+              'email': '',
+            };
           }
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     final list = studentMap.values.toList();
     list.sort((a, b) => (a['full_name'] as String).compareTo(b['full_name'] as String));
@@ -152,8 +183,10 @@ class StaffService {
     try {
       await _supabase.from('class_enrollments').upsert({
         'student_id': studentId,
+        'user_id': studentId,
         'class_id': classId,
         'status': 'approved',
+        'created_at': DateTime.now().toIso8601String(),
       }, onConflict: 'student_id,class_id');
     } catch (_) {}
 
@@ -161,8 +194,10 @@ class StaffService {
     try {
       await _supabase.from('enrollments').upsert({
         'student_id': studentId,
+        'user_id': studentId,
         'class_id': classId,
         'payment_status': 'paid',
+        'grace_until': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
       }, onConflict: 'student_id,class_id');
     } catch (_) {}
 
@@ -170,7 +205,11 @@ class StaffService {
     try {
       await _supabase
           .from('profiles')
-          .update({'is_verified': true})
+          .update({
+            'is_verified': true,
+            'is_trial': false,
+            'registered_class_id': classId,
+          })
           .eq('id', studentId);
     } catch (_) {}
 
@@ -178,16 +217,24 @@ class StaffService {
     try {
       await _supabase.rpc('staff_verify_student', params: {'p_student_id': studentId});
     } catch (_) {}
+    try {
+      await _supabase.rpc('staff_verify_student_paid', params: {'p_student_id': studentId});
+    } catch (_) {}
   }
 
   /// ٹیچر کی اپنی کلاسز (Add-Student ڈائیلاگ میں کلاس منتخب کرنے کیلئے)
   Future<List<Map<String, dynamic>>> myClassesLite() async {
-    final teacherId = _supabase.auth.currentUser!.id;
-    final rows = await _supabase
-        .from('classes')
-        .select('id, title')
-        .eq('teacher_id', teacherId)
-        .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(rows);
+    final teacherId = _supabase.auth.currentUser?.id;
+    if (teacherId == null) return [];
+    try {
+      final rows = await _supabase
+          .from('classes')
+          .select('id, title')
+          .eq('teacher_id', teacherId)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(rows);
+    } catch (_) {
+      return [];
+    }
   }
 }

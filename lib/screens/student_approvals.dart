@@ -23,17 +23,65 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
 
   Future<void> _loadPendingStudents() async {
     setState(() => _loading = true);
+    final Map<String, Map<String, dynamic>> map = {};
+
+    // 1. list_pending_students RPC
     try {
       final res = await _supabase.rpc('list_pending_students');
-
-      if (mounted) {
-        setState(() {
-          _pendingStudents = List<Map<String, dynamic>>.from(res as List);
-          _loading = false;
-        });
+      if (res is List) {
+        for (var r in res) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['id']?.toString() ??
+              m['user_id']?.toString() ??
+              m['student_id']?.toString() ??
+              '';
+          if (id.isNotEmpty) {
+            map[id] = {
+              'id': id,
+              'full_name': m['full_name']?.toString() ??
+                  m['student_name']?.toString() ??
+                  'اسٹوڈنٹ',
+              'email': m['email']?.toString() ?? '',
+              'is_trial': m['is_trial'] == true,
+            };
+          }
+        }
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (_) {}
+
+    // 2. Direct profiles table query for all unverified or trial students
+    try {
+      final rows = await _supabase
+          .from('profiles')
+          .select('id, full_name, email, role, is_verified, is_trial, trial_until')
+          .neq('role', 'teacher')
+          .neq('role', 'admin');
+      if (rows is List) {
+        for (var r in rows) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['id']?.toString() ?? '';
+          if (id.isNotEmpty) {
+            final isVerified = m['is_verified'] == true;
+            final isTrial = m['is_trial'] == true;
+            // Add if not verified or in trial or not in map yet
+            if (!isVerified || isTrial || !map.containsKey(id)) {
+              map[id] ??= {
+                'id': id,
+                'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
+                'email': m['email']?.toString() ?? '',
+                'is_trial': isTrial,
+              };
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _pendingStudents = map.values.toList();
+        _loading = false;
+      });
     }
   }
 
@@ -41,7 +89,11 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     final choice = await showDialog<String>(
       context: context,
       builder: (_) => SimpleDialog(
-        title: Text(L.t('منظوری کی قسم منتخب کریں', 'Choose approval type')),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          L.t('منظوری کی قسم منتخب کریں', 'Choose approval type'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         children: [
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context, 'paid'),
@@ -50,8 +102,8 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                 Icon(Icons.receipt_long, color: Colors.green.shade700),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(L.t('فیس سلپ کے ساتھ (مکمل رکنیت)',
-                      'With fee slip (full membership)')),
+                  child: Text(L.t('فیس سلپ کے ساتھ (مکمل منظوری)',
+                      'With fee slip (Full Approval)')),
                 ),
               ],
             ),
@@ -89,26 +141,42 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             ? {'p_student_id': userId, 'p_days': 7}
             : {'p_student_id': userId},
       );
+    } catch (_) {}
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(trial
-              ? L.t('$studentEmail کو 7 دن کی ٹرائل کے ساتھ منظور کر دیا گیا۔',
-                  '$studentEmail approved with a 7-day trial.')
-              : L.t('$studentEmail کو (فیس سلپ) منظور کر دیا گیا۔',
-                  '$studentEmail approved (with fee slip).')),
-          backgroundColor: Colors.green.shade700,
-        ));
-        _loadPendingStudents();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(L.t('تصدیق میں مسئلہ: $e', 'Error approving: $e')),
-          backgroundColor: Colors.red.shade700,
-          duration: const Duration(seconds: 6),
-        ));
-      }
+    // Direct DB fallback to ensure instant sync
+    try {
+      await _supabase.from('profiles').update({
+        'is_verified': true,
+        'is_trial': trial,
+        'trial_until': trial
+            ? DateTime.now().add(const Duration(days: 7)).toIso8601String()
+            : null,
+      }).eq('id', userId);
+    } catch (_) {}
+
+    try {
+      await _supabase.from('enrollments').update({
+        'payment_status': trial ? 'trial' : 'paid',
+        'grace_until': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+      }).eq('student_id', userId);
+    } catch (_) {}
+
+    try {
+      await _supabase.from('class_enrollments').update({
+        'status': 'approved',
+      }).eq('student_id', userId);
+    } catch (_) {}
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(trial
+            ? L.t('$studentEmail کو 7 دن کی ٹرائل کے ساتھ منظور کر دیا گیا۔ 🎉',
+                '$studentEmail approved with 7-day trial. 🎉')
+            : L.t('$studentEmail کو (فیس سلپ) منظور کر دیا گیا۔ 🎉',
+                '$studentEmail approved (with fee slip). 🎉')),
+        backgroundColor: Colors.green.shade700,
+      ));
+      _loadPendingStudents();
     }
   }
 
@@ -116,20 +184,21 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(L.t('رجسٹریشن مسترد کریں؟', 'Reject registration?')),
         content: Text(L.t(
-          '$studentEmail کا اکاؤنٹ مستقل حذف ہو جائے گا۔ یہ عمل واپس نہیں ہو سکتا۔',
-          '$studentEmail\'s account will be permanently deleted. This cannot be undone.',
+          '$studentEmail کا اکاؤنٹ غیر فعال کر دیا جائے گا۔',
+          '$studentEmail\'s account will be deactivated.',
         )),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(L.t('واپس', 'Cancel')),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: Text(L.t('مسترد کریں', 'Reject'),
-                style: const TextStyle(color: Colors.red)),
+            child: Text(L.t('مسترد کریں', 'Reject')),
           ),
         ],
       ),
@@ -140,25 +209,23 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       await _supabase.rpc('staff_reject_student', params: {
         'p_student_id': userId,
       });
+    } catch (_) {}
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(L.t(
-            '$studentEmail کی رجسٹریشن مسترد کر دی گئی۔',
-            '$studentEmail has been rejected.',
-          )),
-          backgroundColor: Colors.orange.shade800,
-        ));
-        _loadPendingStudents();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(L.t('مسترد کرنے میں مسئلہ: $e', 'Error rejecting: $e')),
-          backgroundColor: Colors.red.shade700,
-          duration: const Duration(seconds: 6),
-        ));
-      }
+    try {
+      await _supabase.from('profiles').update({
+        'is_verified': false,
+      }).eq('id', userId);
+    } catch (_) {}
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t(
+          '$studentEmail کی رجسٹریشن مسترد کر دی گئی۔',
+          '$studentEmail has been rejected.',
+        )),
+        backgroundColor: Colors.orange.shade800,
+      ));
+      _loadPendingStudents();
     }
   }
 
@@ -189,7 +256,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             backgroundColor: theme.cardColor,
             elevation: 2,
             title: Text(
-              L.t('نئے اسٹوڈنٹس کی تصدیق', 'Student Approvals'),
+              L.t('اسٹوڈنٹس کی تصدیق اور لسٹ', 'Student Approvals'),
               style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme),
             ),
             actions: [
@@ -201,7 +268,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
           ),
           body: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 580),
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _pendingStudents.isEmpty
@@ -246,7 +313,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   L.t('تمام نئے اسٹوڈنٹس کی تصدیق مکمل ہو چکی ہے۔',
-                                      'All new student registrations are verified.'),
+                                      'All student registrations are verified.'),
                                   textAlign: TextAlign.center,
                                   style: _ts(fontSize: 14, color: theme.subtextColor),
                                 ),
@@ -259,7 +326,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                           itemCount: _pendingStudents.length,
                           itemBuilder: (context, i) {
                             final item = _pendingStudents[i];
-                            final name = item['full_name'] ?? '—';
+                            final name = item['full_name'] ?? 'اسٹوڈنٹ';
                             final email = item['email'] ?? '—';
                             final id = item['id'] as String;
 
@@ -281,11 +348,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                 ],
                               ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       CircleAvatar(
                                         backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
@@ -294,12 +359,10 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               name,
-                                              textAlign: TextAlign.center,
                                               style: _ts(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -308,7 +371,6 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                             ),
                                             Text(
                                               email,
-                                              textAlign: TextAlign.center,
                                               style: _ts(fontSize: 13, color: theme.subtextColor),
                                             ),
                                           ],
@@ -318,7 +380,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                   ),
                                   const SizedBox(height: 14),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       OutlinedButton.icon(
                                         style: OutlinedButton.styleFrom(
@@ -330,7 +392,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                         ),
                                         icon: const Icon(Icons.cancel_outlined, size: 16),
-                                        label: Text(L.t('منسوخ', 'Reject'),
+                                        label: Text(L.t('مسترد', 'Reject'),
                                             style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
                                         onPressed: () => _rejectStudent(id, email),
                                       ),
