@@ -91,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 24, 20),
                   children: [
                     const SizedBox(height: 8),
                     Center(

@@ -265,7 +265,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
           ),
           body: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
+              constraints: const BoxConstraints(maxWidth: 560),
               child: FutureBuilder<List<PendingPayment>>(
                 future: _future,
                 builder: (context, snapshot) {
@@ -348,7 +348,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
                   }
 
                   return ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 24, 20),
                     children: [
                       // Banner Card
                       Container(
@@ -406,8 +406,8 @@ class _PendingPaymentsState extends State<PendingPayments> {
                       const SizedBox(height: 20),
 
                       ...list.map((p) => Container(
-                            margin: const EdgeInsets.only(bottom: 14),
-                            padding: const EdgeInsets.all(18),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(13),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: theme.isDark
@@ -483,7 +483,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                 const SizedBox(height: 6),
                                 Container(
                                   margin: const EdgeInsets.only(top: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: theme.isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(10),
@@ -493,27 +493,31 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.receipt_long_rounded, size: 18, color: Color(0xFF10B981)),
+                                      const Icon(Icons.receipt_long_rounded, size: 16, color: Color(0xFF10B981)),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
                                               L.t('ریفرنس / ٹرانزیکشن آئی ڈی', 'Txn ID / Ref No'),
-                                              style: _ts(fontSize: 11, color: theme.subtextColor),
+                                              style: _ts(fontSize: 10, color: theme.subtextColor),
                                             ),
                                             SelectableText(
                                               p.txnReference.isEmpty ? L.t('کوئی ریفرنس درج نہیں', 'No reference') : p.txnReference,
-                                              style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
+                                              style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: theme.textColor),
                                             ),
                                           ],
                                         ),
                                       ),
                                       if (p.txnReference.isNotEmpty)
                                         IconButton(
-                                          icon: const Icon(Icons.copy_rounded, size: 16),
+                                          icon: const Icon(Icons.copy_rounded, size: 14),
                                           tooltip: L.t('کاپی کریں', 'Copy'),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                          visualDensity: VisualDensity.compact,
                                           onPressed: () {
                                             Clipboard.setData(ClipboardData(text: p.txnReference));
                                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -525,19 +529,19 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 10),
 
                                 // VIEW RECEIPT / SCREENSHOT BUTTON
                                 Container(
                                   width: double.infinity,
-                                  margin: const EdgeInsets.only(bottom: 12),
+                                  margin: const EdgeInsets.only(bottom: 10),
                                   child: OutlinedButton.icon(
                                     onPressed: () => _showReceiptDialog(p, theme),
-                                    icon: const Icon(Icons.image_outlined, size: 18),
+                                    icon: const Icon(Icons.image_outlined, size: 16),
                                     label: Text(
                                       L.t('🖼️ رسید / اسکرین شاٹ دیکھیں', 'View Receipt Screenshot'),
                                       style: _ts(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: theme.primaryColor,
                                       ),
@@ -545,7 +549,7 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: theme.primaryColor,
                                       side: BorderSide(color: theme.primaryColor, width: 1.4),
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      padding: const EdgeInsets.symmetric(vertical: 7),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -561,25 +565,26 @@ class _PendingPaymentsState extends State<PendingPayments> {
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.red,
                                         side: const BorderSide(color: Colors.red),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                       ),
                                       child: Text(L.t('رد کریں', 'Reject'),
-                                          style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
+                                          style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 10),
                                     ElevatedButton.icon(
                                       onPressed: () => _act(p.paymentId, true),
-                                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                                      icon: const Icon(Icons.check_circle_outline, size: 16),
                                       label: Text(
                                         L.t('منظور کریں', 'Approve'),
-                                        style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                                        style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFF10B981),
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),

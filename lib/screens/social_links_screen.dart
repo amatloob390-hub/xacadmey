@@ -85,7 +85,7 @@ class _SocialLinksScreenState extends State<SocialLinksScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 24, 20),
                   children: [
                     Text(
                       L.t('یہ لنکس آپ کے landing page کے footer میں دکھائے جائیں گے۔ خالی چھوڑیں تو وہ آئیکن چھپ جائے گا۔',
