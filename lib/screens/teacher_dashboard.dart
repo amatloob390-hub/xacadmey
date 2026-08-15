@@ -89,6 +89,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 800;
 
+    // وسیع لے آؤٹ میں AppBar کے quick-icons بھی سائیڈ بار پین ہی بدلیں
+    // (Navigator.push نہیں) تاکہ سائیڈ بار برقرار رہے۔ تنگ لے آؤٹ میں
+    // پرانا مکمل صفحہ push والا رویہ برقرار رہتا ہے۔
+    void goTo(TeacherPane pane, VoidCallback pushFallback) {
+      if (isWide) {
+        setState(() => _pane = pane);
+      } else {
+        pushFallback();
+      }
+    }
+
     final mainContent = Column(
       children: [
         const UserBanner(),
@@ -142,43 +153,55 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           IconButton(
             icon: const Icon(Icons.how_to_reg, color: Colors.green),
             tooltip: L.t('نئی تصدیقیں', 'Student Approvals'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const StudentApprovalsScreen())),
+            onPressed: () => goTo(
+                TeacherPane.approvals,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
           ),
           IconButton(
             icon: const Icon(Icons.payments_outlined),
             tooltip: L.t('ادائیگیاں', 'Payments'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PendingPayments())),
+            onPressed: () => goTo(
+                TeacherPane.payments,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PendingPayments()))),
           ),
           IconButton(
             icon: const Icon(Icons.timelapse),
             tooltip: L.t('زیرِ التوا فیس', 'Pending Fees'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PendingStudents())),
+            onPressed: () => goTo(
+                TeacherPane.pendingFees,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PendingStudents()))),
           ),
           if (_canAssignRoles)
             IconButton(
               icon: const Icon(Icons.admin_panel_settings, color: Color(0xFFB9B2FF)),
               tooltip: L.t('رول اور مینیجرز', 'Roles & Managers'),
-              onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => ManageRolesScreen(
-                          isAdmin: widget.role == 'admin'))),
+              onPressed: () => goTo(
+                  TeacherPane.roles,
+                  () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => ManageRolesScreen(
+                              isAdmin: widget.role == 'admin')))),
             ),
           if (_canAssignRoles)
             IconButton(
               icon: const Icon(Icons.share_outlined),
               tooltip: L.t('سوشل میڈیا لنکس', 'Social links'),
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SocialLinksScreen())),
+              onPressed: () => goTo(
+                  TeacherPane.social,
+                  () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SocialLinksScreen()))),
             ),
           IconButton(
             icon: const Icon(Icons.account_circle),
             tooltip: L.t('پروفائل', 'Profile'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            onPressed: () => goTo(
+                TeacherPane.profile,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()))),
           ),
           const ThemeSelectorButton(),
           const LogoutButton(),
