@@ -212,9 +212,14 @@ class StudentService {
         durationMin: (cData?['duration_min'] is num
             ? (cData!['duration_min'] as num).toInt()
             : int.tryParse(cData?['duration_min']?.toString() ?? '60') ?? 60),
-        isActive: cData?['is_active'] == true ||
-            cData?['is_active']?.toString().toLowerCase() == 'true' ||
-            true, // Enrolled class defaults to live-joinable
+        // اگر class کا ڈیٹا ہی نہیں ملا (RLS/fallback گیپ) تو محفوظ طریقے سے
+        // joinable مان لیں؛ لیکن اگر ڈیٹا مل گیا تو اصل is_active کی قدر
+        // کا احترام کریں — ٹیچر کی بند کی ہوئی کلاس اب واقعی inactive
+        // دکھے گی، ہمیشہ true نہیں۔
+        isActive: (cData == null || cData['is_active'] == null)
+            ? true
+            : (cData['is_active'] == true ||
+                cData['is_active'].toString().toLowerCase() == 'true'),
         paymentStatus: (meta['payment_status'] ?? 'pending').toString(),
         graceUntil: DateTime.tryParse(meta['grace_until']?.toString() ?? '') ??
             DateTime.now().add(const Duration(days: 7)),

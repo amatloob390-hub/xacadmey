@@ -133,6 +133,14 @@ class AuthService {
         }
       } catch (e) {
         if (e is AuthException) rethrow;
+        // پروفائل/تصدیق چیک ناکام ہو (نیٹ ورک/RLS مسئلہ) تو خاموشی سے
+        // آگے نہ بڑھیں — ورنہ غیر-تصدیق شدہ/ٹرائل-ختم اسٹوڈنٹ کا چیک
+        // نظرانداز ہو کر لاگ اِن ہو جاتا۔ صریح خطا دیں تاکہ صارف دوبارہ
+        // کوشش کرے۔
+        await signOut();
+        throw const AuthException(
+          'VERIFICATION_CHECK_FAILED: تصدیق چیک نہیں ہو سکی، دوبارہ کوشش کریں۔',
+        );
       }
     }
 

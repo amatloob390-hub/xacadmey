@@ -47,10 +47,19 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
   }
 
   Future<void> _pickDateTime() async {
+    // ترمیم کے وقت _scheduledAt پہلے سے ماضی میں ہو سکتی ہے (کلاس گزر
+    // چکی) — showDatePicker کا precondition ہے کہ initialDate کبھی
+    // firstDate سے پہلے نہ ہو، ورنہ crash۔ اسی لیے firstDate کو کبھی
+    // _scheduledAt سے بعد میں نہ جانے دیں۔
+    final defaultFirstDate = DateTime.now().subtract(const Duration(minutes: 1));
+    final firstDate = _scheduledAt.isBefore(defaultFirstDate)
+        ? _scheduledAt
+        : defaultFirstDate;
+
     final date = await showDatePicker(
       context: context,
       initialDate: _scheduledAt,
-      firstDate: DateTime.now().subtract(const Duration(minutes: 1)),
+      firstDate: firstDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;

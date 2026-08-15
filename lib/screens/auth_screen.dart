@@ -114,6 +114,9 @@ class _AuthScreenState extends State<AuthScreen> {
     } else if (raw.contains('at least 6')) {
       return L.t('پاس ورڈ کم از کم ۶ حروف کا ہو۔',
           'Password must be at least 6 characters.');
+    } else if (raw.contains('VERIFICATION_CHECK_FAILED')) {
+      return L.t('تصدیق چیک نہیں ہو سکی — دوبارہ کوشش کریں۔',
+          'Could not verify your account — please try again.');
     }
     return L.t('ایتھنٹیکیشن میں مسئلہ پیش آیا۔', 'Authentication problem occurred.');
   }
