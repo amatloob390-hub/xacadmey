@@ -30,6 +30,11 @@ class _StudentClassListState extends State<StudentClassList> {
   // برقرار رہنے کیلئے Navigator.push کی بجائے یہاں سے کنٹرول ہوتا ہے۔
   TeacherPane _pane = TeacherPane.dashboard;
 
+  // AI چیٹ کی گفتگو یہاں (parent) رکھی جاتی ہے — AiChatScreen کی اپنی
+  // State ہر پین سوئچ پر نئی بنتی ہے، لیکن یہ list وہی رہتی ہے، اس لیے
+  // گفتگو یاد رہتی ہے۔
+  final List<ChatMsg> _aiChatHistory = [];
+
   @override
   void initState() {
     super.initState();
@@ -385,7 +390,13 @@ class _StudentClassListState extends State<StudentClassList> {
           : AppDrawer(
               onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
             ),
-      appBar: AppBar(
+      // وسیع لے آؤٹ میں dashboard کے علاوہ کسی پین پر یہ بیرونی AppBar نہیں
+      // دکھاتے — ورنہ اس پین کی اپنی AppBar کے ساتھ دو headers نظر آتے۔
+      // Home/Language/Theme/Logout سائیڈ بار کی tiles میں بھی موجود ہیں،
+      // اس لیے کوئی فعالیت ختم نہیں ہوتی۔
+      appBar: (isWide && _pane != TeacherPane.dashboard)
+          ? null
+          : AppBar(
         leading: isWide
             ? null
             : Builder(
@@ -441,7 +452,7 @@ class _StudentClassListState extends State<StudentClassList> {
   Widget _buildPaneContent(Widget dashboardContent) {
     switch (_pane) {
       case TeacherPane.aiChat:
-        return const AiChatScreen();
+        return AiChatScreen(messages: _aiChatHistory);
       case TeacherPane.profile:
         return const ProfileScreen();
       default:

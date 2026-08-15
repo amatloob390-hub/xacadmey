@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/ai_chat_service.dart';
 
-class _Msg {
+class ChatMsg {
   final String text;
   final bool fromUser;
   // ناکام/خطا کا پیغام — گفتگو کی history میں AI کو نہیں بھیجا جاتا۔
   final bool isError;
-  _Msg(this.text, this.fromUser, {this.isError = false});
+  ChatMsg(this.text, this.fromUser, {this.isError = false});
 }
 
 /// فری لانسنگ AI مدد — سوال پوچھیں، AI جواب دے۔
 class AiChatScreen extends StatefulWidget {
-  const AiChatScreen({super.key});
+  /// دیا جائے تو یہی list استعمال ہوتی ہے (parent کے پاس رہتی ہے) — تاکہ
+  /// سائیڈ بار پین سوئچ ہونے پر AiChatScreen کی اپنی State نئی بننے کے
+  /// باوجود گفتگو یاد رہے۔ نہ دیا جائے تو ہمیشہ کی طرح مقامی/عارضی۔
+  final List<ChatMsg>? messages;
+  const AiChatScreen({super.key, this.messages});
 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
@@ -22,7 +26,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final AiChatService _service = AiChatService();
   final TextEditingController _ctrl = TextEditingController();
   final ScrollController _scroll = ScrollController();
-  final List<_Msg> _messages = [];
+  late final List<ChatMsg> _messages = widget.messages ?? [];
   bool _sending = false;
 
   @override
@@ -37,7 +41,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (text.isEmpty || _sending) return;
 
     setState(() {
-      _messages.add(_Msg(text, true));
+      _messages.add(ChatMsg(text, true));
       _sending = true;
       _ctrl.clear();
     });
@@ -51,10 +55,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
           .toList();
       final reply = await _service.ask(history);
       if (!mounted) return;
-      setState(() => _messages.add(_Msg(reply, false)));
+      setState(() => _messages.add(ChatMsg(reply, false)));
     } catch (e) {
       if (!mounted) return;
-      setState(() => _messages.add(_Msg(
+      setState(() => _messages.add(ChatMsg(
           L.t('معذرت، جواب نہیں مل سکا۔ دوبارہ کوشش کریں۔',
               'Sorry, could not get a reply. Please try again.'),
           false,
@@ -134,7 +138,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         ),
       );
 
-  Widget _bubble(_Msg m) {
+  Widget _bubble(ChatMsg m) {
     final isUser = m.fromUser;
     final label = isUser ? L.t('آپ', 'You') : L.t('AI مدد', 'AI Help');
     final textColor = isUser ? Colors.white : Colors.black87;

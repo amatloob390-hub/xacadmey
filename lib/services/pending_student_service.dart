@@ -20,28 +20,28 @@ class PendingStudent {
 class PendingStudentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  // Removed-student keys are kept in memory ONLY (cleared on every reload)
+  // and scoped to student+class only — matching payment_service.dart's
+  // identical fix ("Stop persistently hiding payments"). Persisting this
+  // forever, and matching by studentId alone, used to permanently hide a
+  // student's later, legitimate pending-fee entries for ANY class.
   static final Set<String> _removedStudentKeys = {};
-  static bool _loadedFromPrefs = false;
+  static bool _purgedLegacy = false;
 
   static Future<void> _initPrefs() async {
-    if (_loadedFromPrefs) return;
+    if (_purgedLegacy) return;
+    _purgedLegacy = true;
+    // One-time cleanup of any stale persisted list from older builds.
     try {
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList('removed_pending_students_v2') ?? [];
-      _removedStudentKeys.addAll(list);
-      _loadedFromPrefs = true;
+      await prefs.remove('removed_pending_students_v2');
     } catch (_) {}
   }
 
   static Future<void> _saveRemoved(String studentId, String classId) async {
-    if (studentId.isNotEmpty) _removedStudentKeys.add(studentId);
     if (studentId.isNotEmpty && classId.isNotEmpty) {
-      _removedStudentKeys.add('${studentId}_$classId');
+      _removedStudentKeys.add('${studentId}_$classId'); // in-memory only
     }
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('removed_pending_students_v2', _removedStudentKeys.toList());
-    } catch (_) {}
   }
 
   Future<List<PendingStudent>> getPending() async {
@@ -57,11 +57,9 @@ class PendingStudentService {
       }
     } catch (_) {}
 
-    return result.where((s) {
-      if (_removedStudentKeys.contains(s.studentId)) return false;
-      if (_removedStudentKeys.contains('${s.studentId}_${s.classId}')) return false;
-      return true;
-    }).toList();
+    return result
+        .where((s) => !_removedStudentKeys.contains('${s.studentId}_${s.classId}'))
+        .toList();
   }
 
   /// آج سے X دن نئی مہلت مقرر کرے

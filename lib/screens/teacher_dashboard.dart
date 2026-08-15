@@ -126,7 +126,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               onAddStudent: _openAddStudentDialog,
               onRefresh: _load,
             ),
-      appBar: AppBar(
+      // وسیع لے آؤٹ میں dashboard کے علاوہ کسی پین پر یہ بیرونی AppBar نہیں
+      // دکھاتے — ورنہ اس پین کی اپنی AppBar کے ساتھ دو headers نظر آتے۔
+      // Home/Language/Theme/Logout سائیڈ بار کی tiles میں بھی موجود ہیں،
+      // اس لیے کوئی فعالیت ختم نہیں ہوتی۔
+      appBar: (isWide && _pane != TeacherPane.dashboard)
+          ? null
+          : AppBar(
         leading: isWide
             ? null
             : Builder(
