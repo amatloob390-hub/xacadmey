@@ -196,7 +196,7 @@ class PaymentService {
     try {
       final rows = await _supabase
           .from('payments')
-          .select('id, student_id, class_id, amount, method, txn_reference, created_at, status')
+          .select('id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status')
           .or('status.eq.pending,status.is.null')
           .order('created_at', ascending: true);
 
