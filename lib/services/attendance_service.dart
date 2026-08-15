@@ -50,32 +50,44 @@ class AttendanceService {
           .toList();
     }
 
-    // Fallback: Fetch emails from profiles table
-    try {
-      final studentIds = rows.map((r) => r['student_id'] as String).toList();
-      final profiles = await _supabase
-          .from('profiles')
-          .select('id, email')
-          .inFilter('id', studentIds);
+    // Fallback: resolve emails for the listed students.
+    final studentIds = rows.map((r) => r['student_id'] as String).toList();
+    final Map<String, String> emailMap = {};
 
-      final Map<String, String> emailMap = {};
-      for (var p in profiles) {
-        final m = Map<String, dynamic>.from(p as Map);
+    // Primary lookup: SECURITY DEFINER RPC — reliable across RLS (staff only)
+    // and coalesces profiles.email with the real auth.users email.
+    try {
+      final emailRows = await _supabase
+          .rpc('get_students_emails', params: {'p_ids': studentIds}) as List;
+      for (var e in emailRows) {
+        final m = Map<String, dynamic>.from(e as Map);
         final id = m['id']?.toString() ?? '';
         final email = m['email']?.toString() ?? '';
-        if (id.isNotEmpty) emailMap[id] = email;
+        if (id.isNotEmpty && email.isNotEmpty) emailMap[id] = email;
       }
+    } catch (_) {}
 
-      return rows.map((r) {
-        final m = Map<String, dynamic>.from(r as Map);
-        m['email'] = emailMap[m['student_id']] ?? '';
-        return AttendanceRecord.fromMap(m);
-      }).toList();
-    } catch (_) {
-      return rows
-          .map((r) => AttendanceRecord.fromMap(Map<String, dynamic>.from(r as Map)))
-          .toList();
+    // Secondary: direct profiles query (in case the RPC isn't deployed yet)
+    if (emailMap.isEmpty) {
+      try {
+        final profiles = await _supabase
+            .from('profiles')
+            .select('id, email')
+            .inFilter('id', studentIds);
+        for (var p in profiles) {
+          final m = Map<String, dynamic>.from(p as Map);
+          final id = m['id']?.toString() ?? '';
+          final email = m['email']?.toString() ?? '';
+          if (id.isNotEmpty && email.isNotEmpty) emailMap[id] = email;
+        }
+      } catch (_) {}
     }
+
+    return rows.map((r) {
+      final m = Map<String, dynamic>.from(r as Map);
+      m['email'] = emailMap[m['student_id']] ?? '';
+      return AttendanceRecord.fromMap(m);
+    }).toList();
   }
 
   Future<AttendanceSummary> getSummary(String classId, {DateTime? date}) async {
