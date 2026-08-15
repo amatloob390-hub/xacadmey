@@ -13,6 +13,10 @@ import '../screens/student_approvals.dart';
 import '../services/auth_service.dart';
 import 'theme_selector.dart';
 
+/// ٹیچر سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
+/// استعمال ہوتا ہے تاکہ صفحہ بدلنے پر بھی سائیڈ بار برقرار رہے)۔
+enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile }
+
 class AppDrawer extends StatefulWidget {
   final bool isTeacher;
   final bool isFixed;
@@ -20,6 +24,10 @@ class AppDrawer extends StatefulWidget {
   final VoidCallback? onOpenAiAssistant;
   final VoidCallback? onAddStudent;
   final VoidCallback? onRefresh;
+  /// isFixed لے آؤٹ میں فی الحال منتخب پین — دیا گیا ہو تو نیویگیشن
+  /// Navigator.push کی بجائے [onSelectTeacherPane] سے پین بدلتی ہے۔
+  final TeacherPane? selectedTeacherPane;
+  final ValueChanged<TeacherPane>? onSelectTeacherPane;
 
   const AppDrawer({
     super.key,
@@ -29,6 +37,8 @@ class AppDrawer extends StatefulWidget {
     this.onOpenAiAssistant,
     this.onAddStudent,
     this.onRefresh,
+    this.selectedTeacherPane,
+    this.onSelectTeacherPane,
   });
 
   @override
@@ -80,6 +90,16 @@ class _AppDrawerState extends State<AppDrawer> {
       Navigator.pop(context);
     }
     action();
+  }
+
+  /// isFixed (وسیع) لے آؤٹ میں pane بدلتا ہے تاکہ سائیڈ بار برقرار رہے؛
+  /// ورنہ (موبائل ڈرار) پرانا Navigator.push رویہ استعمال کرتا ہے۔
+  void _navTeacher(TeacherPane pane, VoidCallback pushFallback) {
+    if (widget.isFixed && widget.onSelectTeacherPane != null) {
+      widget.onSelectTeacherPane!(pane);
+    } else {
+      _nav(pushFallback);
+    }
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
@@ -338,10 +358,12 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            isSelected: true,
-                            onTap: () {
+                            isSelected: !widget.isFixed ||
+                                widget.selectedTeacherPane == null ||
+                                widget.selectedTeacherPane == TeacherPane.dashboard,
+                            onTap: () => _navTeacher(TeacherPane.dashboard, () {
                               if (!widget.isFixed) Navigator.pop(context);
-                            },
+                            }),
                           ),
                           const SizedBox(height: 6),
 
@@ -373,12 +395,16 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            onTap: () => _nav(() => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const StudentApprovalsScreen()),
-                                )),
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.approvals,
+                            onTap: () => _navTeacher(
+                                TeacherPane.approvals,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const StudentApprovalsScreen()),
+                                    )),
                           ),
                           const SizedBox(height: 6),
 
@@ -392,12 +418,16 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            onTap: () => _nav(() => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const PendingPayments()),
-                                )),
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.payments,
+                            onTap: () => _navTeacher(
+                                TeacherPane.payments,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const PendingPayments()),
+                                    )),
                           ),
                           const SizedBox(height: 6),
 
@@ -411,12 +441,16 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            onTap: () => _nav(() => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) =>
-                                          const PendingStudents()),
-                                )),
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.pendingFees,
+                            onTap: () => _navTeacher(
+                                TeacherPane.pendingFees,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const PendingStudents()),
+                                    )),
                           ),
                           const SizedBox(height: 6),
 
@@ -431,13 +465,17 @@ class _AppDrawerState extends State<AppDrawer> {
                               textColor: textColor,
                               subtextColor: subtextColor,
                               isDark: isDark,
-                              onTap: () => _nav(() => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ManageRolesScreen(
-                                          isAdmin: widget.role == 'admin'),
-                                    ),
-                                  )),
+                              isSelected: widget.isFixed &&
+                                  widget.selectedTeacherPane == TeacherPane.roles,
+                              onTap: () => _navTeacher(
+                                  TeacherPane.roles,
+                                  () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ManageRolesScreen(
+                                              isAdmin: widget.role == 'admin'),
+                                        ),
+                                      )),
                             ),
                             const SizedBox(height: 6),
 
@@ -451,12 +489,16 @@ class _AppDrawerState extends State<AppDrawer> {
                               textColor: textColor,
                               subtextColor: subtextColor,
                               isDark: isDark,
-                              onTap: () => _nav(() => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const SocialLinksScreen()),
-                                  )),
+                              isSelected: widget.isFixed &&
+                                  widget.selectedTeacherPane == TeacherPane.social,
+                              onTap: () => _navTeacher(
+                                  TeacherPane.social,
+                                  () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SocialLinksScreen()),
+                                      )),
                             ),
                             const SizedBox(height: 6),
                           ],
@@ -472,11 +514,22 @@ class _AppDrawerState extends State<AppDrawer> {
                           textColor: textColor,
                           subtextColor: subtextColor,
                           isDark: isDark,
-                          onTap: () => _nav(() => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const ProfileScreen()),
-                              )),
+                          isSelected: isStaff &&
+                              widget.isFixed &&
+                              widget.selectedTeacherPane == TeacherPane.profile,
+                          onTap: () => isStaff
+                              ? _navTeacher(
+                                  TeacherPane.profile,
+                                  () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => const ProfileScreen()),
+                                      ))
+                              : _nav(() => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const ProfileScreen()),
+                                  )),
                         ),
 
                         const Padding(
@@ -559,31 +612,28 @@ class _AppDrawerState extends State<AppDrawer> {
                           ),
                           onTap: () => ThemeSelectorDialog.show(context),
                         ),
-                      ],
-                    ),
-                  ),
 
-                  // Logout Button at bottom
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : const Color(0xFFE2E8F0),
+                        // Logout — end of the scrollable menu (not pinned)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Divider(
+                            height: 1,
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFE2E8F0),
+                          ),
                         ),
-                      ),
-                    ),
-                    child: _buildDrawerTile(
-                      icon: Icons.logout_rounded,
-                      iconColor: Colors.red,
-                      title: L.t('لاگ آؤٹ', 'Log out'),
-                      subtitle: L.t('اکاؤنٹ سے باہر نکلیں', 'Sign out of your account'),
-                      textColor: Colors.red,
-                      subtextColor: Colors.red.withValues(alpha: 0.7),
-                      isDark: isDark,
-                      onTap: () => _confirmLogout(context),
+                        _buildDrawerTile(
+                          icon: Icons.logout_rounded,
+                          iconColor: Colors.red,
+                          title: L.t('لاگ آؤٹ', 'Log out'),
+                          subtitle: L.t('اکاؤنٹ سے باہر نکلیں', 'Sign out of your account'),
+                          textColor: Colors.red,
+                          subtextColor: Colors.red.withValues(alpha: 0.7),
+                          isDark: isDark,
+                          onTap: () => _confirmLogout(context),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -658,15 +708,6 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

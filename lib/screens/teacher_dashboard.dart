@@ -30,6 +30,10 @@ class TeacherDashboard extends StatefulWidget {
 class _TeacherDashboardState extends State<TeacherDashboard> {
   final TeacherService _service = TeacherService();
 
+  // وسیع (isFixed) لے آؤٹ میں فی الحال کھلا پین — سائیڈ بار سب صفحات پر برقرار
+  // رہنے کیلئے Navigator.push کی بجائے یہاں سے کنٹرول ہوتا ہے۔
+  TeacherPane _pane = TeacherPane.dashboard;
+
   // teacher/admin کلاسز بنا/ایڈٹ کر سکتے اور رول دے سکتے ہیں؛ manager نہیں۔
   bool get _canManageClasses =>
       widget.role == 'teacher' || widget.role == 'admin';
@@ -180,7 +184,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           const LogoutButton(),
         ],
       ),
-      floatingActionButton: _canManageClasses
+      floatingActionButton: _canManageClasses && (!isWide || _pane == TeacherPane.dashboard)
           ? FloatingActionButton.extended(
               onPressed: _openCreateDialog,
               backgroundColor: Colors.teal,
@@ -200,13 +204,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     role: widget.role,
                     onAddStudent: _openAddStudentDialog,
                     onRefresh: _load,
+                    selectedTeacherPane: _pane,
+                    onSelectTeacherPane: (p) => setState(() => _pane = p),
                   ),
                 ),
-                Expanded(child: mainContent),
+                Expanded(child: _buildPaneContent(mainContent)),
               ],
             )
           : mainContent,
     );
+  }
+
+  /// وسیع لے آؤٹ میں سائیڈ بار سے منتخب پین کا مواد — سائیڈ بار ہر پین پر
+  /// برقرار رہتا ہے، صفحہ بدلنے پر مکمل route push نہیں ہوتا۔
+  Widget _buildPaneContent(Widget dashboardContent) {
+    switch (_pane) {
+      case TeacherPane.dashboard:
+        return dashboardContent;
+      case TeacherPane.approvals:
+        return const StudentApprovalsScreen();
+      case TeacherPane.payments:
+        return const PendingPayments();
+      case TeacherPane.pendingFees:
+        return const PendingStudents();
+      case TeacherPane.roles:
+        return ManageRolesScreen(isAdmin: widget.role == 'admin');
+      case TeacherPane.social:
+        return const SocialLinksScreen();
+      case TeacherPane.profile:
+        return const ProfileScreen();
+    }
   }
 
   Widget _buildAnalyticsSection() {
