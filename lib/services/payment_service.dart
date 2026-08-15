@@ -197,7 +197,8 @@ class PaymentService {
       final rows = await _supabase
           .from('payments')
           .select('id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status')
-          .or('status.eq.pending,status.is.null')
+          // treat every not-yet-decided state as pending: pending / submitted / null
+          .or('status.eq.pending,status.eq.submitted,status.is.null')
           .order('created_at', ascending: true);
 
       if ((rows as List).isNotEmpty) {

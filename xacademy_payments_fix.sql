@@ -109,7 +109,8 @@ RETURNS TABLE (
   LEFT JOIN public.profiles pr ON pr.id = p.student_id
   LEFT JOIN public.classes  c  ON c.id  = p.class_id
   WHERE public.is_staff()
-    AND COALESCE(p.status, 'pending') = 'pending'
+    -- treat everything not yet decided as pending: pending / submitted / null
+    AND COALESCE(p.status, 'pending') NOT IN ('approved', 'rejected')
   ORDER BY p.created_at ASC;
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 

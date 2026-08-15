@@ -111897,7 +111897,7 @@ case 3:m=A.b([],t.UV)
 p=5
 a5=n.a
 s=8
-return A.h(a5.b6("payments").e5("id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status").Ro("status.eq.pending,status.is.null").Hr("created_at",!0),$async$hM)
+return A.h(a5.b6("payments").e5("id, student_id, class_id, amount, method, txn_reference, receipt_url, created_at, status").Ro("status.eq.pending,status.eq.submitted,status.is.null").Hr("created_at",!0),$async$hM)
 case 8:l=c9
 s=J.fd(l)?9:10
 break
