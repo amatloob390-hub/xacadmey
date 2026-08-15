@@ -141,68 +141,22 @@ class StudentService {
       };
     }
 
-    // 2b. Check profiles table
-    try {
-      final prof = await _supabase
-          .from('profiles')
-          .select('registered_class_id, class_id')
-          .eq('id', userId)
-          .maybeSingle();
-      final profClassId = (prof?['registered_class_id'] ?? prof?['class_id'])
-          ?.toString()
-          .trim();
-      if (profClassId != null && profClassId.isNotEmpty) {
-        classMetaMap[profClassId] ??= {
-          'payment_status': 'pending',
-          'grace_until':
-              DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-        };
-      }
-    } catch (_) {}
-
-    // 2c. Query class_enrollments table
-    try {
-      final eRows = await _supabase
-          .from('class_enrollments')
-          .select('class_id, created_at, status')
-          .or('student_id.eq.$userId,user_id.eq.$userId')
-          .neq('status', 'rejected');
-      if (eRows is List) {
-        for (var r in eRows) {
-          final cId = r['class_id']?.toString().trim();
-          if (cId != null && cId.isNotEmpty) {
-            classMetaMap[cId] = {
-              'payment_status': r['status'] == 'approved' ? 'paid' : 'pending',
-              'grace_until': DateTime.now()
-                  .add(const Duration(days: 7))
-                  .toIso8601String(),
-            };
-          }
-        }
-      }
-    } catch (_) {}
-
-    // 2d. Query enrollments table
-    try {
-      final eRows2 = await _supabase
-          .from('enrollments')
-          .select('class_id, grace_until, payment_status')
-          .or('student_id.eq.$userId,user_id.eq.$userId');
-      if (eRows2 is List) {
-        for (var r in eRows2) {
-          final cId = r['class_id']?.toString().trim();
-          if (cId != null && cId.isNotEmpty) {
-            classMetaMap[cId] = {
-              'payment_status': r['payment_status'] ?? 'pending',
-              'grace_until': r['grace_until'] ??
-                  DateTime.now()
-                      .add(const Duration(days: 7))
-                      .toIso8601String(),
-            };
-          }
-        }
-      }
-    } catch (_) {}
+    // 2b/2c/2d: تینوں آزاد fallback ماخذ ایک ساتھ (parallel) لائیں — سست
+    // نیٹ ورک پر یکے بعد دیگرے (sequential) کالز مجموعی تاخیر کئی گنا بڑھا
+    // دیتے تھے۔ نتیجہ اسی ترتیب میں merge ہوتا ہے (بعد والا پہلے کو override
+    // کرے) تاکہ رویہ بالکل ویسا ہی رہے۔
+    final results = await Future.wait([
+      _fetchProfileClassId(userId),
+      _fetchClassEnrollments(userId),
+      _fetchEnrollments(userId),
+    ]);
+    // 2b (profiles): صرف اُن keys کیلئے جو 2a سے پہلے سے موجود نہ ہوں
+    for (final entry in results[0].entries) {
+      classMetaMap.putIfAbsent(entry.key, () => entry.value);
+    }
+    // 2c پھر 2d: زیادہ مستند enrollment ڈیٹا — پچھلے سب کو override کرے
+    classMetaMap.addAll(results[1]);
+    classMetaMap.addAll(results[2]);
 
     if (classMetaMap.isEmpty) return [];
 
@@ -268,6 +222,79 @@ class StudentService {
     }
 
     return result;
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _fetchProfileClassId(String userId) async {
+    try {
+      final prof = await _supabase
+          .from('profiles')
+          .select('registered_class_id, class_id')
+          .eq('id', userId)
+          .maybeSingle();
+      final profClassId = (prof?['registered_class_id'] ?? prof?['class_id'])
+          ?.toString()
+          .trim();
+      if (profClassId != null && profClassId.isNotEmpty) {
+        return {
+          profClassId: {
+            'payment_status': 'pending',
+            'grace_until':
+                DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+          },
+        };
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _fetchClassEnrollments(String userId) async {
+    final out = <String, Map<String, dynamic>>{};
+    try {
+      final eRows = await _supabase
+          .from('class_enrollments')
+          .select('class_id, created_at, status')
+          .or('student_id.eq.$userId,user_id.eq.$userId')
+          .neq('status', 'rejected');
+      if (eRows is List) {
+        for (var r in eRows) {
+          final cId = r['class_id']?.toString().trim();
+          if (cId != null && cId.isNotEmpty) {
+            out[cId] = {
+              'payment_status': r['status'] == 'approved' ? 'paid' : 'pending',
+              'grace_until': DateTime.now()
+                  .add(const Duration(days: 7))
+                  .toIso8601String(),
+            };
+          }
+        }
+      }
+    } catch (_) {}
+    return out;
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _fetchEnrollments(String userId) async {
+    final out = <String, Map<String, dynamic>>{};
+    try {
+      final eRows2 = await _supabase
+          .from('enrollments')
+          .select('class_id, grace_until, payment_status')
+          .or('student_id.eq.$userId,user_id.eq.$userId');
+      if (eRows2 is List) {
+        for (var r in eRows2) {
+          final cId = r['class_id']?.toString().trim();
+          if (cId != null && cId.isNotEmpty) {
+            out[cId] = {
+              'payment_status': r['payment_status'] ?? 'pending',
+              'grace_until': r['grace_until'] ??
+                  DateTime.now()
+                      .add(const Duration(days: 7))
+                      .toIso8601String(),
+            };
+          }
+        }
+      }
+    } catch (_) {}
+    return out;
   }
 
   /// دستیاب کلاسز جن میں اسٹوڈنٹ ابھی انرول نہیں
