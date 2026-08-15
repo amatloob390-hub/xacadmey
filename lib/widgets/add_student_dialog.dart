@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/staff_service.dart';
+import 'teal_box.dart';
 
 /// ٹیچر/مینیجر: اسٹوڈنٹ کو کلاس میں اینرول کرے یا ای میل سے شامل کرے۔
 ///  • سائن اپ شدہ اسٹوڈنٹس تلاش (نام / ای میل) اور کلاس میں اینرول کرے
@@ -261,41 +262,53 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // SEARCH FIELD FOR NAME / EMAIL
-                      TextFormField(
-                        controller: _searchCtrl,
-                        decoration: InputDecoration(
-                          labelText: L.t('نام یا ای میل سے تلاش کریں...', 'Search name or email...'),
-                          hintText: 'e.g. talha2@gmail.com',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchCtrl.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      TealBox(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: TextFormField(
+                          controller: _searchCtrl,
+                          decoration: InputDecoration(
+                            labelText: L.t('نام یا ای میل سے تلاش کریں...', 'Search name or email...'),
+                            hintText: 'e.g. talha2@gmail.com',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    onPressed: () {
+                                      _searchCtrl.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  )
+                                : null,
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
+                          onChanged: (q) => setState(() => _searchQuery = q.trim().toLowerCase()),
                         ),
-                        onChanged: (q) => setState(() => _searchQuery = q.trim().toLowerCase()),
                       ),
                       const SizedBox(height: 14),
 
                       if (_classes.isNotEmpty) ...[
-                        DropdownButtonFormField<String>(
-                          value: _classId,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            labelText: L.t('کلاس منتخب کریں', 'Select Class'),
-                            prefixIcon: const Icon(Icons.class_outlined, color: Colors.teal),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        TealBox(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: DropdownButtonFormField<String>(
+                            value: _classId,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: L.t('کلاس منتخب کریں', 'Select Class'),
+                              prefixIcon: const Icon(Icons.class_outlined, color: Colors.teal),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
+                            items: _classes.map((c) => DropdownMenuItem<String>(
+                                  value: c['id'] as String,
+                                  child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
+                                )).toList(),
+                            onChanged: (v) => setState(() => _classId = v),
                           ),
-                          items: _classes.map((c) => DropdownMenuItem<String>(
-                                value: c['id'] as String,
-                                child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
-                              )).toList(),
-                          onChanged: (v) => setState(() => _classId = v),
                         ),
                         const SizedBox(height: 14),
                       ],
@@ -336,28 +349,34 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                           ),
                         ),
                       ] else if (filteredStudents.isNotEmpty) ...[
-                        DropdownButtonFormField<String>(
-                          value: filteredStudents.any((s) => s['id'] == _selectedStudentId)
-                              ? _selectedStudentId
-                              : (filteredStudents.first['id'] as String?),
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            labelText: L.t('اسٹوڈنٹ منتخب کریں', 'Select Student'),
-                            prefixIcon: const Icon(Icons.person_pin_outlined, color: Colors.teal),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        TealBox(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: DropdownButtonFormField<String>(
+                            value: filteredStudents.any((s) => s['id'] == _selectedStudentId)
+                                ? _selectedStudentId
+                                : (filteredStudents.first['id'] as String?),
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: L.t('اسٹوڈنٹ منتخب کریں', 'Select Student'),
+                              prefixIcon: const Icon(Icons.person_pin_outlined, color: Colors.teal),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
+                            items: filteredStudents.map((s) {
+                              final name = s['full_name']?.toString() ?? 'اسٹوڈنٹ';
+                              final email = s['email']?.toString() ?? '';
+                              return DropdownMenuItem<String>(
+                                value: s['id'] as String,
+                                child: Text(
+                                  email.isNotEmpty ? '$name ($email)' : name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (v) => setState(() => _selectedStudentId = v),
                           ),
-                          items: filteredStudents.map((s) {
-                            final name = s['full_name']?.toString() ?? 'اسٹوڈنٹ';
-                            final email = s['email']?.toString() ?? '';
-                            return DropdownMenuItem<String>(
-                              value: s['id'] as String,
-                              child: Text(
-                                email.isNotEmpty ? '$name ($email)' : name,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (v) => setState(() => _selectedStudentId = v),
                         ),
                       ],
                     ],
@@ -367,49 +386,67 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextFormField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            labelText: L.t('اسٹوڈنٹ کی ای میل *', 'Student Email *'),
-                            hintText: 'student@gmail.com',
-                            prefixIcon: const Icon(Icons.email_outlined, color: Colors.teal),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        TealBox(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: TextFormField(
+                            controller: _emailCtrl,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              labelText: L.t('اسٹوڈنٹ کی ای میل *', 'Student Email *'),
+                              hintText: 'student@gmail.com',
+                              prefixIcon: const Icon(Icons.email_outlined, color: Colors.teal),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return L.t('ای میل درج کریں', 'Please enter email');
+                              }
+                              if (!v.contains('@')) {
+                                return L.t('درست ای میل درج کریں', 'Enter valid email');
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return L.t('ای میل درج کریں', 'Please enter email');
-                            }
-                            if (!v.contains('@')) {
-                              return L.t('درست ای میل درج کریں', 'Enter valid email');
-                            }
-                            return null;
-                          },
                         ),
                         const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _nameCtrl,
-                          decoration: InputDecoration(
-                            labelText: L.t('اسٹوڈنٹ کا نام (اختیاری)', 'Student Name (optional)'),
-                            prefixIcon: const Icon(Icons.badge_outlined, color: Colors.teal),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        TealBox(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: TextFormField(
+                            controller: _nameCtrl,
+                            decoration: InputDecoration(
+                              labelText: L.t('اسٹوڈنٹ کا نام (اختیاری)', 'Student Name (optional)'),
+                              prefixIcon: const Icon(Icons.badge_outlined, color: Colors.teal),
+                              filled: false,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 14),
                         if (_classes.isNotEmpty)
-                          DropdownButtonFormField<String>(
-                            value: _classId,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              labelText: L.t('کلاس میں شامل کریں', 'Select Class'),
-                              prefixIcon: const Icon(Icons.class_outlined, color: Colors.teal),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          TealBox(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: DropdownButtonFormField<String>(
+                              value: _classId,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: L.t('کلاس میں شامل کریں', 'Select Class'),
+                                prefixIcon: const Icon(Icons.class_outlined, color: Colors.teal),
+                                filled: false,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                              items: _classes.map((c) => DropdownMenuItem<String>(
+                                    value: c['id'] as String,
+                                    child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
+                                  )).toList(),
+                              onChanged: (v) => setState(() => _classId = v),
                             ),
-                            items: _classes.map((c) => DropdownMenuItem<String>(
-                                  value: c['id'] as String,
-                                  child: Text(c['title'] as String? ?? '—', overflow: TextOverflow.ellipsis),
-                                )).toList(),
-                            onChanged: (v) => setState(() => _classId = v),
                           ),
                       ],
                     ),

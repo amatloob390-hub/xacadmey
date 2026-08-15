@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../services/pending_student_service.dart';
+import '../widgets/teal_box.dart';
 import 'pending_payments.dart';
 
 class PendingStudents extends StatefulWidget {
@@ -45,16 +46,23 @@ class _PendingStudentsState extends State<PendingStudents> {
           children: [
             Text('${L.t('کلاس', 'Class')}: ${s.classTitle}'),
             const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: isExtend
-                    ? L.t('کتنے دن مزید؟', 'How many more days?')
-                    : L.t('کتنے دن (آج سے)؟', 'How many days (from today)?'),
-                helperText: isExtend
-                    ? L.t('موجودہ مہلت میں جُڑ جائیں گے', 'Added to current grace')
-                    : L.t('0 = فوراً بلاک', '0 = block immediately'),
+            TealBox(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: TextField(
+                controller: ctrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: isExtend
+                      ? L.t('کتنے دن مزید؟', 'How many more days?')
+                      : L.t('کتنے دن (آج سے)؟', 'How many days (from today)?'),
+                  helperText: isExtend
+                      ? L.t('موجودہ مہلت میں جُڑ جائیں گے', 'Added to current grace')
+                      : L.t('0 = فوراً بلاک', '0 = block immediately'),
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -63,6 +71,8 @@ class _PendingStudentsState extends State<PendingStudents> {
               children: [3, 7, 15]
                   .map((d) => ActionChip(
                         label: Text('$d ${L.t('دن', 'd')}'),
+                        backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        side: BorderSide(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
                         onPressed: () => Navigator.pop(context, d),
                       ))
                   .toList(),
@@ -335,16 +345,23 @@ class _PendingStudentsState extends State<PendingStudents> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        gradient: LinearGradient(
+          colors: theme.isDark
+              ? [const Color(0xFF0C2738), const Color(0xFF132A4B)]
+              : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: const Color(0xFF10B981).withValues(alpha: 0.5),
+          width: 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),

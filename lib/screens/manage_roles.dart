@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/staff_service.dart';
+import '../widgets/teal_box.dart';
 
 /// صرف Teacher/Admin: کسی کو رول دے (Manager / Sub-admin بنائے) اور موجودہ staff دیکھے۔
 class ManageRolesScreen extends StatefulWidget {
@@ -102,12 +103,10 @@ class _ManageRolesScreenState extends State<ManageRolesScreen> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+              TealBox(
+                borderRadius: 20,
+                padding: const EdgeInsets.all(20),
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
@@ -116,34 +115,46 @@ class _ManageRolesScreenState extends State<ManageRolesScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                       ),
                       const SizedBox(height: 14),
-                      TextField(
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                          labelText: L.t('یوزر ای میل', 'User email'),
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      TealBox(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: TextField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            labelText: L.t('یوزر ای میل', 'User email'),
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
-                      DropdownButtonFormField<String>(
-                        initialValue: _role,
-                        decoration: InputDecoration(
-                          labelText: L.t('رول', 'Role'),
-                          prefixIcon: const Icon(Icons.badge_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      TealBox(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _role,
+                          decoration: InputDecoration(
+                            labelText: L.t('رول', 'Role'),
+                            prefixIcon: const Icon(Icons.badge_outlined),
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
+                          items: roleItems
+                              .map((r) => DropdownMenuItem(
+                                    value: r,
+                                    child: Align(
+                                      alignment: Alignment.center,
+                                      child: Text(_roleLabel(r), textAlign: TextAlign.center),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() => _role = v ?? 'manager'),
                         ),
-                        items: roleItems
-                            .map((r) => DropdownMenuItem(
-                                  value: r,
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Text(_roleLabel(r), textAlign: TextAlign.center),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (v) => setState(() => _role = v ?? 'manager'),
                       ),
                       const SizedBox(height: 18),
                       SizedBox(
@@ -171,7 +182,6 @@ class _ManageRolesScreenState extends State<ManageRolesScreen> {
                       ),
                     ],
                   ),
-                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -194,47 +204,44 @@ class _ManageRolesScreenState extends State<ManageRolesScreen> {
                   ),
                 )
               else
-                ..._staff.map((s) => Card(
+                ..._staff.map((s) => TealBox(
                       margin: const EdgeInsets.only(bottom: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.teal.withValues(alpha: 0.15),
-                              child: const Icon(Icons.badge, color: Colors.teal),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Colors.teal.withValues(alpha: 0.15),
+                            child: const Icon(Icons.badge, color: Colors.teal),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  s['full_name'] as String? ?? '—',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                Text(
+                                  s['email'] as String? ?? '',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    s['full_name'] as String? ?? '—',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                  ),
-                                  Text(
-                                    s['email'] as String? ?? '',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
+                          ),
+                          const SizedBox(width: 12),
+                          Chip(
+                            backgroundColor: Colors.teal.withValues(alpha: 0.12),
+                            side: BorderSide(color: Colors.teal.shade300),
+                            label: Text(
+                              _roleLabel(s['role'] as String? ?? ''),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
                             ),
-                            const SizedBox(width: 12),
-                            Chip(
-                              backgroundColor: Colors.teal.withValues(alpha: 0.12),
-                              side: BorderSide(color: Colors.teal.shade300),
-                              label: Text(
-                                _roleLabel(s['role'] as String? ?? ''),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     )),
             ],

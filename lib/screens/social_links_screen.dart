@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/site_settings_service.dart';
+import '../widgets/teal_box.dart';
 
 /// Teacher/Admin: landing page کے social media links سیٹ کریں۔
 class SocialLinksScreen extends StatefulWidget {
@@ -94,15 +95,21 @@ class _SocialLinksScreenState extends State<SocialLinksScreen> {
                     ),
                     const SizedBox(height: 20),
                     for (final p in SiteSettingsService.platforms) ...[
-                      TextField(
-                        controller: _ctrls[p],
-                        keyboardType: TextInputType.url,
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                          labelText: _meta[p]!.$1,
-                          prefixIcon: Icon(_meta[p]!.$2),
-                          hintText: _meta[p]!.$3,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      TealBox(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: TextField(
+                          controller: _ctrls[p],
+                          keyboardType: TextInputType.url,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            labelText: _meta[p]!.$1,
+                            prefixIcon: Icon(_meta[p]!.$2),
+                            hintText: _meta[p]!.$3,
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),

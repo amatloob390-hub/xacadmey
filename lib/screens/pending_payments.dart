@@ -104,7 +104,10 @@ class _PendingPaymentsState extends State<PendingPayments> {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.4),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: Container(
@@ -406,16 +409,23 @@ class _PendingPaymentsState extends State<PendingPayments> {
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: theme.cardColor,
+                              gradient: LinearGradient(
+                                colors: theme.isDark
+                                    ? [const Color(0xFF0C2738), const Color(0xFF132A4B)]
+                                    : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                width: 1.4,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
                                   blurRadius: 10,
-                                  offset: const Offset(0, 2),
+                                  offset: const Offset(0, 3),
                                 ),
                               ],
                             ),
