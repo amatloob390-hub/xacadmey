@@ -339,16 +339,16 @@ class PaymentService {
       }
     }
 
-    // Filter out locally dismissed items
+    // Filter out locally dismissed items.
+    // A real payment is hidden ONLY by its own id, so a NEW submission from
+    // a student the teacher previously actioned still shows up. StudentId
+    // dismissal applies only to synthetic enrollment placeholders.
     return result.where((p) {
       if (_dismissedKeys.contains(p.paymentId)) return false;
-      if (_dismissedKeys.contains(p.studentId)) return false;
       if (p.paymentId.startsWith('enrollment_')) {
+        if (_dismissedKeys.contains(p.studentId)) return false;
         final parts = p.paymentId.split('_');
-        if (parts.length >= 3) {
-          final sId = parts[1];
-          if (_dismissedKeys.contains(sId)) return false;
-        }
+        if (parts.length >= 3 && _dismissedKeys.contains(parts[1])) return false;
       }
       return true;
     }).toList();

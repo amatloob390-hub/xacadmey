@@ -112445,9 +112445,9 @@ $S:132}
 A.alR.prototype={
 $1(a){var s,r=a.a
 if($.y0.n(0,r))return!1
-if($.y0.n(0,a.b))return!1
-if(B.c.bz(r,"enrollment_")){s=r.split("_")
-if(s.length>=3)if($.y0.n(0,s[1]))return!1}return!0},
+if(B.c.bz(r,"enrollment_")){if($.y0.n(0,a.b))return!1
+s=r.split("_")
+if(s.length>=3&&$.y0.n(0,s[1]))return!1}return!0},
 $S:288}
 A.ib.prototype={}
 A.alT.prototype={
