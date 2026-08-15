@@ -17,6 +17,7 @@ import 'attendance_report.dart';
 import 'pending_payments.dart';
 import 'pending_students.dart';
 import 'manage_roles.dart';
+import 'search_students.dart';
 
 class TeacherDashboard extends StatefulWidget {
   /// 'teacher' | 'admin' | 'manager'
@@ -165,6 +166,14 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
           ),
           IconButton(
+            icon: const Icon(Icons.search, color: Colors.indigo),
+            tooltip: L.t('اسٹوڈنٹ تلاش کریں', 'Search Students'),
+            onPressed: () => goTo(
+                TeacherPane.search,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SearchStudentsScreen()))),
+          ),
+          IconButton(
             icon: const Icon(Icons.payments_outlined),
             tooltip: L.t('ادائیگیاں', 'Payments'),
             onPressed: () => goTo(
@@ -265,6 +274,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       case TeacherPane.aiChat:
         // اسٹوڈنٹ سائیڈ بار کا پین — ٹیچر ڈیش بورڈ میں کبھی منتخب نہیں ہوتا۔
         return dashboardContent;
+      case TeacherPane.search:
+        return const SearchStudentsScreen();
     }
   }
 

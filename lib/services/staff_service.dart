@@ -264,6 +264,91 @@ class StaffService {
     } catch (_) {}
   }
 
+  /// نام یا ای میل سے اسٹوڈنٹس تلاش کریں — سرور-سائیڈ فلٹر، پوری
+  /// profiles ٹیبل نہیں کھینچتا۔ دو الگ ilike کالز taکہ صارف کے ان پٹ
+  /// میں کوما/بریکٹ ہونے پر بھی .or() فلٹر syntax نہ ٹوٹے۔
+  Future<List<Map<String, dynamic>>> searchStudents(String query) async {
+    final q = query.trim();
+    if (q.isEmpty) return [];
+    try {
+      final results = await Future.wait([
+        _supabase
+            .from('profiles')
+            .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
+            .ilike('full_name', '%$q%')
+            .limit(20),
+        _supabase
+            .from('profiles')
+            .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
+            .ilike('email', '%$q%')
+            .limit(20),
+      ]);
+
+      final Map<String, Map<String, dynamic>> merged = {};
+      for (final rows in results) {
+        for (final r in (rows as List)) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['id']?.toString() ?? '';
+          final role = m['role']?.toString().toLowerCase() ?? '';
+          if (id.isNotEmpty && role != 'teacher' && role != 'admin') {
+            merged[id] = m;
+          }
+        }
+      }
+      final list = merged.values.toList();
+      list.sort((a, b) =>
+          (a['full_name']?.toString() ?? '').compareTo(b['full_name']?.toString() ?? ''));
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// کسی اسٹوڈنٹ کی تمام enrolled کلاسز (عنوان اور فیس کی حالت کے ساتھ)
+  Future<List<Map<String, dynamic>>> getStudentEnrollments(String studentId) async {
+    try {
+      final rows = await _supabase
+          .from('enrollments')
+          .select('class_id, payment_status, grace_until')
+          .or('student_id.eq.$studentId,user_id.eq.$studentId');
+      final list = List<Map<String, dynamic>>.from(rows);
+      if (list.isEmpty) return [];
+
+      final classIds = list
+          .map((r) => r['class_id']?.toString())
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .toSet();
+      if (classIds.isEmpty) return list;
+
+      final classRows = await _supabase
+          .from('classes')
+          .select('id, title')
+          .inFilter('id', classIds.toList());
+      final titles = {
+        for (final c in (classRows as List))
+          c['id'].toString(): c['title']?.toString() ?? 'کلاس',
+      };
+
+      return list
+          .map((r) => {
+                ...r,
+                'class_title': titles[r['class_id']?.toString()] ?? 'کلاس',
+              })
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// اسٹوڈنٹ کا موبائل نمبر محفوظ/اپڈیٹ کریں
+  Future<void> updateStudentPhone(String studentId, String phone) async {
+    await _supabase
+        .from('profiles')
+        .update({'phone': phone.trim()})
+        .eq('id', studentId);
+  }
+
   /// ٹیچر کی اپنی کلاسز (Add-Student ڈائیلاگ میں کلاس منتخب کرنے کیلئے)
   Future<List<Map<String, dynamic>>> myClassesLite() async {
     final teacherId = _supabase.auth.currentUser?.id;

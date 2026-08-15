@@ -8,6 +8,7 @@ import '../screens/manage_roles.dart';
 import '../screens/pending_payments.dart';
 import '../screens/pending_students.dart';
 import '../screens/profile_screen.dart';
+import '../screens/search_students.dart';
 import '../screens/social_links_screen.dart';
 import '../screens/student_approvals.dart';
 import '../services/auth_service.dart';
@@ -16,7 +17,7 @@ import 'theme_selector.dart';
 /// سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
 /// استعمال ہوتا ہے تاکہ صفحہ بدلنے پر بھی سائیڈ بار برقرار رہے)۔
 /// ٹیچر اور اسٹوڈنٹ دونوں سائیڈ بار اسی ایک enum سے پین شیئر کرتے ہیں۔
-enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile, aiChat }
+enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile, aiChat, search }
 
 class AppDrawer extends StatefulWidget {
   final bool isTeacher;
@@ -412,6 +413,29 @@ class _AppDrawerState extends State<AppDrawer> {
                                       MaterialPageRoute(
                                           builder: (_) =>
                                               const StudentApprovalsScreen()),
+                                    )),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // 4b. Search Students
+                          _buildDrawerTile(
+                            icon: Icons.search_rounded,
+                            iconColor: Colors.indigo,
+                            title: L.t('اسٹوڈنٹ تلاش کریں', 'Search Students'),
+                            subtitle: L.t('نام یا ای میل سے تلاش، مکمل تفصیلات',
+                                'Find by name/email, view full details'),
+                            textColor: textColor,
+                            subtextColor: subtextColor,
+                            isDark: isDark,
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.search,
+                            onTap: () => _navTeacher(
+                                TeacherPane.search,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SearchStudentsScreen()),
                                     )),
                           ),
                           const SizedBox(height: 6),
