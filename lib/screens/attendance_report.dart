@@ -115,7 +115,7 @@ class _AttendanceReportState extends State<AttendanceReport> {
             }
             final data = snapshot.data!;
             return ListView(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 20, 12),
               children: [
                 _dateBar(),
                 const SizedBox(height: 8),

@@ -322,7 +322,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 24, 20),
                           itemCount: _pendingStudents.length,
                           itemBuilder: (context, i) {
                             final item = _pendingStudents[i];

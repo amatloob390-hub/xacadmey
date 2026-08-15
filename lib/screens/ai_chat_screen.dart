@@ -90,7 +90,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     thumbVisibility: true,
                     child: ListView.builder(
                       controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 22),
+                      padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 20, 22),
                       itemCount: _messages.length,
                       itemBuilder: (_, i) => _bubble(_messages[i]),
                     ),

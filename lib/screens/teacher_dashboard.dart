@@ -412,7 +412,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         final isWide = constraints.maxWidth > 650;
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
           children: [
             _buildAnalyticsSection(),
             const SizedBox(height: 10),

@@ -245,7 +245,7 @@ class _StudentClassListState extends State<StudentClassList> {
 
                       if (classes.isEmpty) {
                         return ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
                           children: [
                             _emptyState(),
                           ],
@@ -353,7 +353,7 @@ class _StudentClassListState extends State<StudentClassList> {
                       );
 
                       return ListView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
                         children: [
                           analyticsWidget,
                           const SizedBox(height: 16),
