@@ -91,7 +91,10 @@ class PaymentService {
     String? receiptImage,
   }) async {
     final currentUser = _supabase.auth.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      // Surface this instead of silently pretending success.
+      throw Exception('NOT_LOGGED_IN');
+    }
     final studentId = currentUser.id;
 
     final cleanTxn = txnReference.trim();
@@ -133,39 +136,45 @@ class PaymentService {
           .neq('status', 'approved');
     } catch (_) {}
 
-    // 2. نئی درخواست insert کریں (پہلے receipt_url کے ساتھ، ورنہ محفوظ کالمز کے ساتھ)
-    bool inserted = false;
+    // 2. نئی درخواست insert کریں — .select() سے تصدیق کہ واقعی row بنی۔
+    //    (RLS block ہو تو خالی/خطا آئے گی، تب ہم صریح error پھینکیں گے۔)
+    bool ok = false;
+    Object? lastError;
     try {
-      await _supabase.from('payments').insert(payloadFull);
-      inserted = true;
-    } catch (_) {}
-
-    if (!inserted) {
-      try {
-        await _supabase.from('payments').insert(payloadSafe);
-        inserted = true;
-      } catch (_) {}
+      final r = await _supabase.from('payments').insert(payloadFull).select('id');
+      ok = (r as List).isNotEmpty;
+    } catch (e) {
+      lastError = e;
     }
 
-    // 3. اگر insert نہ ہو سکے (مثلاً ڈپلیکیٹ کی یا RLS کی وجہ سے)، تو update کریں
-    if (!inserted) {
+    if (!ok) {
       try {
-        await _supabase
+        final r = await _supabase.from('payments').insert(payloadSafe).select('id');
+        ok = (r as List).isNotEmpty;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    // 3. آخری کوشش: موجودہ (غیر منظور شدہ) row کو update کریں
+    if (!ok) {
+      try {
+        final r = await _supabase
             .from('payments')
-            .update(payloadFull)
+            .update(payloadSafe)
             .eq('student_id', studentId)
             .eq('class_id', classId)
-            .neq('status', 'approved');
-      } catch (_) {
-        try {
-          await _supabase
-              .from('payments')
-              .update(payloadSafe)
-              .eq('student_id', studentId)
-              .eq('class_id', classId)
-              .neq('status', 'approved');
-        } catch (_) {}
+            .neq('status', 'approved')
+            .select('id');
+        ok = (r as List).isNotEmpty;
+      } catch (e) {
+        lastError = e;
       }
+    }
+
+    // کچھ بھی محفوظ نہ ہوا تو صریح خطا — تاکہ اسٹوڈنٹ کو غلط "کامیاب" نہ دکھے۔
+    if (!ok) {
+      throw Exception('PAYMENT_SAVE_FAILED: ${lastError ?? 'no row created'}');
     }
 
     // 4. class_enrollments اور enrollments میں بھی سٹیٹس التوا رکھیں تاکہ ٹیچر پینل کو فوراً ڈیٹا ملے

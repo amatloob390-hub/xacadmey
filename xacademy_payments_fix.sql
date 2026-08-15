@@ -51,10 +51,18 @@ GRANT EXECUTE ON FUNCTION public.is_staff() TO authenticated;
 -- ------------------------------------------------------------
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Allow student insert payment"     ON public.payments;
-DROP POLICY IF EXISTS "Allow student select own payment" ON public.payments;
-DROP POLICY IF EXISTS "Allow student update own payment" ON public.payments;
-DROP POLICY IF EXISTS "Allow staff manage payments"      ON public.payments;
+-- Drop EVERY existing payments policy (including older ones from earlier
+-- migrations that may still linger and block a new student's insert) so
+-- only the clean set defined below remains.
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT policyname FROM pg_policies
+           WHERE schemaname = 'public' AND tablename = 'payments'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.payments', r.policyname);
+  END LOOP;
+END $$;
 
 CREATE POLICY "Allow student insert payment" ON public.payments
   FOR INSERT TO authenticated

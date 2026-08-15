@@ -118,12 +118,17 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
               'Payment submitted — awaiting teacher approval.')),
         ));
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
+        final isAuth = e.toString().contains('NOT_LOGGED_IN');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
-                'Could not submit, please try again.'))));
+            backgroundColor: Colors.red.shade700,
+            content: Text(isAuth
+                ? L.t('سیشن ختم ہو گیا — دوبارہ لاگ اِن کر کے کوشش کریں۔',
+                    'Session expired — please log in again and retry.')
+                : L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
+                    'Could not submit, please try again.'))));
       }
     }
   }
