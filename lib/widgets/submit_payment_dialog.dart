@@ -122,13 +122,17 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
       if (mounted) {
         setState(() => _saving = false);
         final isAuth = e.toString().contains('NOT_LOGGED_IN');
+        final baseMsg = isAuth
+            ? L.t('سیشن ختم ہو گیا — دوبارہ لاگ اِن کر کے کوشش کریں۔',
+                'Session expired — please log in again and retry.')
+            : L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
+                'Could not submit, please try again.');
+        // TEMP diagnostic: show the raw error too so we can see exactly why
+        // the insert failed. Remove this once the payment issue is fixed.
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: Colors.red.shade700,
-            content: Text(isAuth
-                ? L.t('سیشن ختم ہو گیا — دوبارہ لاگ اِن کر کے کوشش کریں۔',
-                    'Session expired — please log in again and retry.')
-                : L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
-                    'Could not submit, please try again.'))));
+            duration: const Duration(seconds: 12),
+            content: Text('$baseMsg\n\n[debug] $e')));
       }
     }
   }
