@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -192,7 +191,21 @@ class PaymentService {
     await _initPrefs();
     List<PendingPayment> result = [];
 
-    // 1. Primary: Direct Table Query on payments (کوئی بھی کالم مس ہونے سے کیوری فیل نہیں ہوتی)
+    // 1. Primary: get_pending_payments RPC — SECURITY DEFINER, so it returns
+    //    real student names, amounts, methods and receipts across RLS, and
+    //    de-duplicates to the latest submission per student+class.
+    try {
+      final rpcRows = await _supabase.rpc('get_pending_payments') as List?;
+      if (rpcRows != null && rpcRows.isNotEmpty) {
+        result = rpcRows
+            .map((r) =>
+                PendingPayment.fromMap(Map<String, dynamic>.from(r as Map)))
+            .toList();
+      }
+    } catch (_) {}
+
+    // 2. Fallback: direct table query if the RPC returned nothing
+    if (result.isEmpty) {
     try {
       final rows = await _supabase
           .from('payments')
@@ -266,17 +279,6 @@ class PaymentService {
         }).toList();
       }
     } catch (_) {}
-
-    // 2. Secondary: RPC Call if direct query yielded empty
-    if (result.isEmpty) {
-      try {
-        final rows = await _supabase.rpc('get_pending_payments') as List?;
-        if (rows != null && rows.isNotEmpty) {
-          result = rows
-              .map((r) => PendingPayment.fromMap(r as Map<String, dynamic>))
-              .toList();
-        }
-      } catch (_) {}
     }
 
     // 3. Fallback: Check pending enrollments if no payment record exists yet

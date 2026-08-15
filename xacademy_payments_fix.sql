@@ -69,6 +69,15 @@ CREATE POLICY "Allow student update own payment" ON public.payments
   USING (auth.uid() = student_id)
   WITH CHECK (auth.uid() = student_id);
 
+-- Student can delete their own NOT-yet-approved payment. This lets the app
+-- clear a previous pending attempt before inserting a new one, so a student
+-- re-submitting doesn't pile up duplicate rows. Approved payments are safe.
+DROP POLICY IF EXISTS "Allow student delete own payment" ON public.payments;
+CREATE POLICY "Allow student delete own payment" ON public.payments
+  FOR DELETE TO authenticated
+  USING (auth.uid() = student_id
+         AND COALESCE(status, 'pending') <> 'approved');
+
 CREATE POLICY "Allow staff manage payments" ON public.payments
   FOR ALL TO authenticated
   USING (public.is_staff())
@@ -94,24 +103,32 @@ RETURNS TABLE (
   amount        NUMERIC,
   created_at    TIMESTAMPTZ
 ) AS $$
-  SELECT
-    p.id,
-    p.student_id,
-    p.class_id,
-    COALESCE(pr.full_name, 'اسٹوڈنٹ'),
-    COALESCE(c.title, 'کلاس'),
-    p.method,
-    p.txn_reference,
-    p.receipt_url,
-    p.amount,
-    p.created_at
-  FROM public.payments p
-  LEFT JOIN public.profiles pr ON pr.id = p.student_id
-  LEFT JOIN public.classes  c  ON c.id  = p.class_id
-  WHERE public.is_staff()
-    -- treat everything not yet decided as pending: pending / submitted / null
-    AND COALESCE(p.status, 'pending') NOT IN ('approved', 'rejected')
-  ORDER BY p.created_at ASC;
+  -- One row per student+class (the latest submission) so duplicate
+  -- re-submissions don't show as repeated cards.
+  SELECT q.payment_id, q.student_id, q.class_id, q.student_name,
+         q.class_title, q.method, q.txn_reference, q.receipt_url,
+         q.amount, q.created_at
+  FROM (
+    SELECT DISTINCT ON (p.student_id, p.class_id)
+      p.id            AS payment_id,
+      p.student_id,
+      p.class_id,
+      COALESCE(pr.full_name, 'اسٹوڈنٹ') AS student_name,
+      COALESCE(c.title, 'کلاس')          AS class_title,
+      p.method,
+      p.txn_reference,
+      p.receipt_url,
+      p.amount,
+      p.created_at
+    FROM public.payments p
+    LEFT JOIN public.profiles pr ON pr.id = p.student_id
+    LEFT JOIN public.classes  c  ON c.id  = p.class_id
+    WHERE public.is_staff()
+      -- treat everything not yet decided as pending: pending / submitted / null
+      AND COALESCE(p.status, 'pending') NOT IN ('approved', 'rejected')
+    ORDER BY p.student_id, p.class_id, p.created_at DESC
+  ) q
+  ORDER BY q.created_at ASC;
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION public.get_pending_payments() TO authenticated;
