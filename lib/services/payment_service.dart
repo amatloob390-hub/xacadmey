@@ -60,27 +60,26 @@ class PendingPayment {
 class PaymentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Track processed/dismissed IDs locally in memory and persistent storage to guarantee filtering across F5 page reloads
+  // Dismissed IDs are kept in memory ONLY (cleared on every reload). The
+  // server already excludes approved/rejected payments via get_pending_payments,
+  // so there is nothing to persist — and persisting used to permanently hide a
+  // student's later, legitimate submissions.
   static final Set<String> _dismissedKeys = {};
-  static bool _loadedFromPrefs = false;
+  static bool _purgedLegacy = false;
 
   static Future<void> _initPrefs() async {
-    if (_loadedFromPrefs) return;
+    if (_purgedLegacy) return;
+    _purgedLegacy = true;
+    // One-time cleanup of any stale persisted list from older builds.
     try {
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList('dismissed_payments_v2') ?? [];
-      _dismissedKeys.addAll(list);
-      _loadedFromPrefs = true;
+      await prefs.remove('dismissed_payments_v2');
     } catch (_) {}
   }
 
   static Future<void> _saveDismissed(String key) async {
     if (key.trim().isEmpty) return;
-    _dismissedKeys.add(key.trim());
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('dismissed_payments_v2', _dismissedKeys.toList());
-    } catch (_) {}
+    _dismissedKeys.add(key.trim()); // in-memory only
   }
 
   /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (تصویر کے ساتھ محفوظ ریسیٹ ہینڈلنگ)
