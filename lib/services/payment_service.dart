@@ -364,13 +364,17 @@ class PaymentService {
     }).toList();
   }
 
+  /// [paymentId] یا تو اصل payments row کا id ہے، یا 'enrollment_' سے شروع
+  /// synthetic placeholder (ابھی کوئی payment row نہیں بنی، صرف pending
+  /// enrollment ہے) — دونوں کیلئے کامیابی کا معیار الگ ہے۔
   Future<void> approve(String paymentId) async {
     await _saveDismissed(paymentId);
 
     String? studentId;
     String? classId;
+    final isEnrollmentPlaceholder = paymentId.startsWith('enrollment_');
 
-    if (paymentId.startsWith('enrollment_')) {
+    if (isEnrollmentPlaceholder) {
       final parts = paymentId.split('_');
       if (parts.length >= 3) {
         studentId = parts[1];
@@ -393,29 +397,38 @@ class PaymentService {
       } catch (_) {}
     }
 
-    // Update payments table
-    if (!paymentId.startsWith('enrollment_')) {
+    // Update payments table — placeholder case has no payments row, so it
+    // trivially counts as "not this method's concern".
+    bool paymentApproved = isEnrollmentPlaceholder;
+    if (!isEnrollmentPlaceholder) {
       try {
         await _supabase.rpc('approve_payment', params: {'p_payment_id': paymentId});
+        paymentApproved = true;
       } catch (_) {}
-      try {
-        await _supabase
-            .from('payments')
-            .update({'status': 'approved'})
-            .eq('id', paymentId);
-      } catch (_) {}
+      if (!paymentApproved) {
+        try {
+          await _supabase
+              .from('payments')
+              .update({'status': 'approved'})
+              .eq('id', paymentId);
+          paymentApproved = true;
+        } catch (_) {}
+      }
     }
 
     // Update class_enrollments and profiles if studentId is known
+    bool studentApproved = false;
     if (studentId != null && studentId.isNotEmpty) {
       try {
         await _supabase.rpc('verify_student', params: {'p_student_id': studentId});
+        studentApproved = true;
       } catch (_) {}
       try {
         await _supabase
             .from('profiles')
             .update({'is_verified': true})
             .eq('id', studentId);
+        studentApproved = true;
       } catch (_) {}
       try {
         var query = _supabase.from('class_enrollments').update({'status': 'approved'}).eq('student_id', studentId);
@@ -423,6 +436,7 @@ class PaymentService {
           query = query.eq('class_id', classId);
         }
         await query;
+        studentApproved = true;
       } catch (_) {}
 
       try {
@@ -431,7 +445,16 @@ class PaymentService {
           query = query.eq('class_id', classId);
         }
         await query;
+        studentApproved = true;
       } catch (_) {}
+    }
+
+    // اصل payment کیلئے کامیابی = payment approve ہوا؛ placeholder کیلئے
+    // کامیابی = طالبِ علم verify ہوا۔ دونوں ناکام تو صریح خطا — جھوٹی
+    // "کامیابی" نہ دکھے۔
+    final ok = isEnrollmentPlaceholder ? studentApproved : paymentApproved;
+    if (!ok) {
+      throw Exception('APPROVE_FAILED: could not confirm the approval was saved');
     }
   }
 
@@ -440,8 +463,9 @@ class PaymentService {
 
     String? studentId;
     String? classId;
+    final isEnrollmentPlaceholder = paymentId.startsWith('enrollment_');
 
-    if (paymentId.startsWith('enrollment_')) {
+    if (isEnrollmentPlaceholder) {
       final parts = paymentId.split('_');
       if (parts.length >= 3) {
         studentId = parts[1];
@@ -465,20 +489,27 @@ class PaymentService {
     }
 
     // 1. Delete/Update payments table
-    if (!paymentId.startsWith('enrollment_')) {
+    bool paymentRejected = isEnrollmentPlaceholder;
+    if (!isEnrollmentPlaceholder) {
       try {
         await _supabase.rpc('reject_payment', params: {'p_payment_id': paymentId});
+        paymentRejected = true;
       } catch (_) {}
-      try {
-        await _supabase.from('payments').delete().eq('id', paymentId);
-      } catch (_) {
+      if (!paymentRejected) {
         try {
-          await _supabase.from('payments').update({'status': 'rejected'}).eq('id', paymentId);
-        } catch (_) {}
+          await _supabase.from('payments').delete().eq('id', paymentId);
+          paymentRejected = true;
+        } catch (_) {
+          try {
+            await _supabase.from('payments').update({'status': 'rejected'}).eq('id', paymentId);
+            paymentRejected = true;
+          } catch (_) {}
+        }
       }
     }
 
     // Also delete/update payments by studentId/classId if available
+    bool studentRejected = false;
     if (studentId != null && studentId.isNotEmpty) {
       try {
         var q = _supabase.from('payments').delete().eq('student_id', studentId);
@@ -497,11 +528,13 @@ class PaymentService {
         var q = _supabase.from('class_enrollments').delete().eq('student_id', studentId);
         if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
         await q;
+        studentRejected = true;
       } catch (_) {
         try {
           var q = _supabase.from('class_enrollments').update({'status': 'rejected'}).eq('student_id', studentId);
           if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
           await q;
+          studentRejected = true;
         } catch (_) {}
       }
 
@@ -510,21 +543,33 @@ class PaymentService {
         var q = _supabase.from('enrollments').delete().eq('student_id', studentId);
         if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
         await q;
+        studentRejected = true;
       } catch (_) {
         try {
           var q = _supabase.from('enrollments').update({'payment_status': 'rejected'}).eq('student_id', studentId);
           if (classId != null && classId.isNotEmpty) q = q.eq('class_id', classId);
           await q;
+          studentRejected = true;
         } catch (_) {}
       }
 
       // Try RPC calls if available
       try {
         await _supabase.rpc('reject_student', params: {'p_student_id': studentId});
+        studentRejected = true;
       } catch (_) {}
       try {
         await _supabase.rpc('staff_reject_student', params: {'p_student_id': studentId});
+        studentRejected = true;
       } catch (_) {}
+    }
+
+    // اصل payment کیلئے کامیابی = payment reject/delete ہوا؛ placeholder
+    // کیلئے کامیابی = طالبِ علم کی enrollment رد ہوئی۔ دونوں ناکام تو
+    // صریح خطا — جھوٹی "کامیابی" نہ دکھے۔
+    final ok = isEnrollmentPlaceholder ? studentRejected : paymentRejected;
+    if (!ok) {
+      throw Exception('REJECT_FAILED: could not confirm the rejection was saved');
     }
   }
 }

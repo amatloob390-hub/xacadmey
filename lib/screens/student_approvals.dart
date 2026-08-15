@@ -134,6 +134,10 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
 
   Future<void> _approveStudent(String userId, String studentEmail,
       {required bool trial}) async {
+    // "کامیابی" کا معیار: RPC یا براہِ راست profiles.is_verified اپڈیٹ —
+    // یہی دو کالز طالبِ علم کے لاگ اِن/رسائی کے اہل ہونے کو حقیقتاً کنٹرول
+    // کرتی ہیں۔ enrollments/class_enrollments صرف اضافی sync ہیں۔
+    bool verified = false;
     try {
       await _supabase.rpc(
         trial ? 'staff_verify_student_trial' : 'staff_verify_student_paid',
@@ -141,6 +145,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             ? {'p_student_id': userId, 'p_days': 7}
             : {'p_student_id': userId},
       );
+      verified = true;
     } catch (_) {}
 
     // Direct DB fallback to ensure instant sync
@@ -152,6 +157,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             ? DateTime.now().add(const Duration(days: 7)).toIso8601String()
             : null,
       }).eq('id', userId);
+      verified = true;
     } catch (_) {}
 
     try {
@@ -167,7 +173,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       }).eq('student_id', userId);
     } catch (_) {}
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (verified) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(trial
             ? L.t('$studentEmail کو 7 دن کی ٹرائل کے ساتھ منظور کر دیا گیا۔ 🎉',
@@ -176,8 +184,15 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                 '$studentEmail approved (with fee slip). 🎉')),
         backgroundColor: Colors.green.shade700,
       ));
-      _loadPendingStudents();
+    } else {
+      // دونوں کوششیں ناکام — جھوٹی "کامیابی" نہ دکھائیں، اصل خطا دکھائیں۔
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('منظوری محفوظ نہیں ہو سکی، دوبارہ کوشش کریں۔',
+            'Could not save the approval, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
     }
+    _loadPendingStudents();
   }
 
   Future<void> _rejectStudent(String userId, String studentEmail) async {
@@ -205,19 +220,24 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     );
     if (ok != true) return;
 
+    bool rejected = false;
     try {
       await _supabase.rpc('staff_reject_student', params: {
         'p_student_id': userId,
       });
+      rejected = true;
     } catch (_) {}
 
     try {
       await _supabase.from('profiles').update({
         'is_verified': false,
       }).eq('id', userId);
+      rejected = true;
     } catch (_) {}
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (rejected) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(L.t(
           '$studentEmail کی رجسٹریشن مسترد کر دی گئی۔',
@@ -225,8 +245,15 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
         )),
         backgroundColor: Colors.orange.shade800,
       ));
-      _loadPendingStudents();
+    } else {
+      // دونوں کوششیں ناکام — جھوٹی "کامیابی" نہ دکھائیں، اصل خطا دکھائیں۔
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('مسترد نہیں ہو سکا، دوبارہ کوشش کریں۔',
+            'Could not reject, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
     }
+    _loadPendingStudents();
   }
 
   TextStyle _ts({

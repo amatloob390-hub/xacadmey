@@ -32,12 +32,19 @@ class _PendingPaymentsState extends State<PendingPayments> {
   void _refresh() => setState(() => _future = _loadPayments());
 
   Future<void> _act(String id, bool approve) async {
-    // Instantly remove from local list so UI updates immediately
+    // Instantly remove from local list so UI updates immediately — restored
+    // below if the server call actually fails, instead of lying about success.
+    PendingPayment? removed;
+    int removedIndex = -1;
     if (_localList != null) {
-      setState(() {
-        _localList!.removeWhere((p) => p.paymentId == id);
-        _future = Future.value(List<PendingPayment>.from(_localList!));
-      });
+      removedIndex = _localList!.indexWhere((p) => p.paymentId == id);
+      if (removedIndex != -1) {
+        removed = _localList![removedIndex];
+        setState(() {
+          _localList!.removeAt(removedIndex);
+          _future = Future.value(List<PendingPayment>.from(_localList!));
+        });
+      }
     }
 
     try {
@@ -46,15 +53,33 @@ class _PendingPaymentsState extends State<PendingPayments> {
       } else {
         await _service.reject(id);
       }
-    } catch (_) {}
-
-    if (mounted) {
-      _refresh();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(approve
-            ? L.t('ادائیگی منظور ہو گئی ✅', 'Payment approved ✅')
-            : L.t('ادائیگی رد ہو گئی', 'Payment rejected')),
-      ));
+      if (mounted) {
+        _refresh();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(approve
+              ? L.t('ادائیگی منظور ہو گئی ✅', 'Payment approved ✅')
+              : L.t('ادائیگی رد ہو گئی', 'Payment rejected')),
+        ));
+      }
+    } catch (_) {
+      // Server call genuinely failed — put the item back instead of
+      // pretending the action succeeded.
+      if (_localList != null && removed != null && removedIndex != -1) {
+        setState(() {
+          _localList!.insert(removedIndex, removed!);
+          _future = Future.value(List<PendingPayment>.from(_localList!));
+        });
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: Text(approve
+              ? L.t('منظوری محفوظ نہیں ہو سکی، دوبارہ کوشش کریں۔',
+                  'Could not save the approval, please try again.')
+              : L.t('ردی محفوظ نہیں ہو سکی، دوبارہ کوشش کریں۔',
+                  'Could not save the rejection, please try again.')),
+        ));
+      }
     }
   }
 
