@@ -1,9 +1,18 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../services/staff_service.dart';
 import '../widgets/teal_box.dart';
+
+/// آسانی سے پڑھا جا سکنے والا رینڈم پاس ورڈ (0/O، 1/I/l جیسے مبہم حروف
+/// نکال کر) — تاکہ ٹیچر اسے آواز سے یا لکھ کر اسٹوڈنٹ کو صحیح بتا سکے۔
+String _generatePassword() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  final rand = Random.secure();
+  return List.generate(8, (_) => chars[rand.nextInt(chars.length)]).join();
+}
 
 /// ٹیچر/ایڈمن: نام یا ای میل سے اسٹوڈنٹ تلاش کریں اور تفصیلات دیکھیں
 /// (نام، ای میل، موبائل، enrolled کلاسز، تصدیق/ٹرائل کی حالت)۔
@@ -248,6 +257,9 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
   bool _savingPhone = false;
   late Future<List<Map<String, dynamic>>> _enrollmentsFuture;
 
+  bool _resettingPassword = false;
+  String? _newPasswordShown; // successful reset ہونے کے بعد یہاں دکھایا جاتا ہے
+
   @override
   void initState() {
     super.initState();
@@ -260,6 +272,88 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
   void dispose() {
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _confirmResetPassword() async {
+    final name = widget.student['full_name']?.toString() ?? 'اسٹوڈنٹ';
+    final suggested = _generatePassword();
+    final ctrl = TextEditingController(text: suggested);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text(L.t('پاس ورڈ ری سیٹ کریں؟', 'Reset password?')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(L.t(
+                '$name کا پرانا پاس ورڈ فوراً کام کرنا بند کر دے گا۔ نیا پاس ورڈ نیچے ہے — اسٹوڈنٹ کو بتا دیں۔',
+                "$name's old password will stop working immediately. The new password is below — share it with the student.",
+              )),
+              const SizedBox(height: 14),
+              TextField(
+                controller: ctrl,
+                decoration: InputDecoration(
+                  labelText: L.t('نیا پاس ورڈ', 'New password'),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: L.t('نیا بنائیں', 'Generate new'),
+                    onPressed: () => setDialogState(() => ctrl.text = _generatePassword()),
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(L.t('منسوخ', 'Cancel')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: ctrl.text.trim().length >= 6 ? () => Navigator.pop(ctx, true) : null,
+              child: Text(L.t('ری سیٹ کریں', 'Reset')),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final newPassword = ctrl.text.trim();
+    setState(() => _resettingPassword = true);
+    try {
+      await widget.service.resetStudentPassword(
+        studentId: widget.student['id']?.toString() ?? '',
+        newPassword: newPassword,
+      );
+      if (!mounted) return;
+      setState(() {
+        _resettingPassword = false;
+        _newPasswordShown = newPassword;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _resettingPassword = false);
+      final msg = e.toString();
+      final friendly = msg.contains('NOT_ALLOWED')
+          ? L.t('آپ کو اجازت نہیں۔', 'You are not allowed to do this.')
+          : msg.contains('AUTH_REQUIRED')
+              ? L.t('سیشن ختم ہو گیا — دوبارہ لاگ اِن کریں۔', 'Session expired — log in again.')
+              : L.t(
+                  'پاس ورڈ ری سیٹ نہیں ہو سکا۔ شاید یہ فیچر ابھی سرور پر فعال نہیں کیا گیا۔',
+                  'Could not reset the password. This feature may not be enabled on the server yet.');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red.shade700,
+        duration: const Duration(seconds: 6),
+        content: Text(friendly),
+      ));
+    }
   }
 
   Future<void> _savePhone() async {
@@ -510,6 +604,58 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
                       }).toList(),
                     );
                   },
+                ),
+                const SizedBox(height: 20),
+                Text(L.t('اکاؤنٹ', 'Account'),
+                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, theme: theme)),
+                const SizedBox(height: 8),
+                if (_newPasswordShown != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          L.t('نیا پاس ورڈ — اسٹوڈنٹ کو بتا دیں:', 'New password — share with the student:'),
+                          style: _ts(fontSize: 12, color: theme.subtextColor, theme: theme),
+                        ),
+                        const SizedBox(height: 4),
+                        SelectableText(
+                          _newPasswordShown!,
+                          style: _ts(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF10B981),
+                              theme: theme),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _resettingPassword ? null : _confirmResetPassword,
+                    icon: _resettingPassword
+                        ? const SizedBox(
+                            width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.lock_reset, size: 18, color: Colors.red),
+                    label: Text(
+                      L.t('پاس ورڈ ری سیٹ کریں (بھول گیا)', 'Reset Password (Forgot)'),
+                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                 ),
               ],
             ),

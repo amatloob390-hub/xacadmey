@@ -349,6 +349,22 @@ class StaffService {
         .eq('id', studentId);
   }
 
+  /// اسٹوڈنٹ کا لاگ اِن پاس ورڈ دستی طور پر ری سیٹ کریں (Edge Function کے
+  /// ذریعے — service role key کبھی app میں نہیں آتی)۔
+  Future<void> resetStudentPassword({
+    required String studentId,
+    required String newPassword,
+  }) async {
+    final res = await _supabase.functions.invoke(
+      'reset-student-password',
+      body: {'student_id': studentId, 'new_password': newPassword},
+    );
+    final data = res.data;
+    if (data is Map && data['error'] != null) {
+      throw Exception(data['error'].toString());
+    }
+  }
+
   /// ٹیچر کی اپنی کلاسز (Add-Student ڈائیلاگ میں کلاس منتخب کرنے کیلئے)
   Future<List<Map<String, dynamic>>> myClassesLite() async {
     final teacherId = _supabase.auth.currentUser?.id;
