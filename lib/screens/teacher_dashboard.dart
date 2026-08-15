@@ -256,6 +256,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         return const SocialLinksScreen();
       case TeacherPane.profile:
         return const ProfileScreen();
+      case TeacherPane.aiChat:
+        // اسٹوڈنٹ سائیڈ بار کا پین — ٹیچر ڈیش بورڈ میں کبھی منتخب نہیں ہوتا۔
+        return dashboardContent;
     }
   }
 

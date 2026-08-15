@@ -13,9 +13,10 @@ import '../screens/student_approvals.dart';
 import '../services/auth_service.dart';
 import 'theme_selector.dart';
 
-/// ٹیچر سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
+/// سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
 /// استعمال ہوتا ہے تاکہ صفحہ بدلنے پر بھی سائیڈ بار برقرار رہے)۔
-enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile }
+/// ٹیچر اور اسٹوڈنٹ دونوں سائیڈ بار اسی ایک enum سے پین شیئر کرتے ہیں۔
+enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile, aiChat }
 
 class AppDrawer extends StatefulWidget {
   final bool isTeacher;
@@ -286,10 +287,12 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            isSelected: true,
-                            onTap: () {
+                            isSelected: !widget.isFixed ||
+                                widget.selectedTeacherPane == null ||
+                                widget.selectedTeacherPane == TeacherPane.dashboard,
+                            onTap: () => _navTeacher(TeacherPane.dashboard, () {
                               if (!widget.isFixed) Navigator.pop(context);
-                            },
+                            }),
                           ),
                           const SizedBox(height: 6),
 
@@ -339,11 +342,15 @@ class _AppDrawerState extends State<AppDrawer> {
                             textColor: textColor,
                             subtextColor: subtextColor,
                             isDark: isDark,
-                            onTap: () => _nav(() => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const AiChatScreen()),
-                                )),
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.aiChat,
+                            onTap: () => _navTeacher(
+                                TeacherPane.aiChat,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => const AiChatScreen()),
+                                    )),
                           ),
                           const SizedBox(height: 6),
                         ] else ...[
@@ -514,18 +521,11 @@ class _AppDrawerState extends State<AppDrawer> {
                           textColor: textColor,
                           subtextColor: subtextColor,
                           isDark: isDark,
-                          isSelected: isStaff &&
-                              widget.isFixed &&
+                          isSelected: widget.isFixed &&
                               widget.selectedTeacherPane == TeacherPane.profile,
-                          onTap: () => isStaff
-                              ? _navTeacher(
-                                  TeacherPane.profile,
-                                  () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) => const ProfileScreen()),
-                                      ))
-                              : _nav(() => Navigator.push(
+                          onTap: () => _navTeacher(
+                              TeacherPane.profile,
+                              () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                         builder: (_) => const ProfileScreen()),

@@ -164,7 +164,7 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
-              color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+              color: const Color(0xFF10B981).withValues(alpha: 0.5),
             ),
           ),
           title: Column(
@@ -205,7 +205,7 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.5),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -234,7 +234,7 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.5),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -259,7 +259,7 @@ class _SubmitPaymentDialogState extends State<SubmitPaymentDialog> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.5),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(

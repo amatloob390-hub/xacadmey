@@ -11,6 +11,7 @@ import '../widgets/submit_payment_dialog.dart';
 import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/teal_box.dart';
 import 'profile_screen.dart';
 import 'ai_chat_screen.dart';
 
@@ -24,6 +25,10 @@ class StudentClassList extends StatefulWidget {
 class _StudentClassListState extends State<StudentClassList> {
   final StudentService _service = StudentService();
   late Future<List<StudentClass>> _future;
+
+  // وسیع (isFixed) لے آؤٹ میں فی الحال کھلا پین — سائیڈ بار سب صفحات پر
+  // برقرار رہنے کیلئے Navigator.push کی بجائے یہاں سے کنٹرول ہوتا ہے۔
+  TeacherPane _pane = TeacherPane.dashboard;
 
   @override
   void initState() {
@@ -206,6 +211,16 @@ class _StudentClassListState extends State<StudentClassList> {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 800;
+
+    // وسیع لے آؤٹ میں AppBar کا Profile icon بھی سائیڈ بار پین ہی بدلے
+    // (Navigator.push نہیں) تاکہ سائیڈ بار برقرار رہے۔
+    void goTo(TeacherPane pane, VoidCallback pushFallback) {
+      if (isWide) {
+        setState(() => _pane = pane);
+      } else {
+        pushFallback();
+      }
+    }
 
     final mainContent = Column(
       children: [
@@ -393,8 +408,10 @@ class _StudentClassListState extends State<StudentClassList> {
           IconButton(
             icon: const Icon(Icons.account_circle),
             tooltip: L.t('پروفائل', 'Profile'),
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            onPressed: () => goTo(
+                TeacherPane.profile,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()))),
           ),
           const LogoutButton(),
         ],
@@ -408,13 +425,28 @@ class _StudentClassListState extends State<StudentClassList> {
                   child: AppDrawer(
                     isFixed: true,
                     onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
+                    selectedTeacherPane: _pane,
+                    onSelectTeacherPane: (p) => setState(() => _pane = p),
                   ),
                 ),
-                Expanded(child: mainContent),
+                Expanded(child: _buildPaneContent(mainContent)),
               ],
             )
           : mainContent,
     );
+  }
+
+  /// وسیع لے آؤٹ میں سائیڈ بار سے منتخب پین کا مواد — سائیڈ بار ہر پین پر
+  /// برقرار رہتا ہے، صفحہ بدلنے پر مکمل route push نہیں ہوتا۔
+  Widget _buildPaneContent(Widget dashboardContent) {
+    switch (_pane) {
+      case TeacherPane.aiChat:
+        return const AiChatScreen();
+      case TeacherPane.profile:
+        return const ProfileScreen();
+      default:
+        return dashboardContent;
+    }
   }
 
   Widget _emptyState() {
@@ -520,13 +552,19 @@ class _StudentClassListState extends State<StudentClassList> {
               style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 14),
-            TextField(
-              controller: ctrl,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'https://.../?class=... / Class ID',
-                prefixIcon: const Icon(Icons.paste_rounded, color: Color(0xFF10B981)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            TealBox(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: TextField(
+                controller: ctrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'https://.../?class=... / Class ID',
+                  prefixIcon: const Icon(Icons.paste_rounded, color: Color(0xFF10B981)),
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
               ),
             ),
           ],
