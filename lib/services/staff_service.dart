@@ -267,41 +267,41 @@ class StaffService {
   /// نام یا ای میل سے اسٹوڈنٹس تلاش کریں — سرور-سائیڈ فلٹر، پوری
   /// profiles ٹیبل نہیں کھینچتا۔ دو الگ ilike کالز taکہ صارف کے ان پٹ
   /// میں کوما/بریکٹ ہونے پر بھی .or() فلٹر syntax نہ ٹوٹے۔
+  /// نوٹ: قصداً کوئی catch(_){} نہیں — اگر query fail ہو (مثلاً 'phone'
+  /// کالم ابھی موجود نہیں کیونکہ migration نہیں چلی)، تو صریح خطا آئے
+  /// تاکہ "کوئی نہیں ملا" اور "تلاش ہی ناکام ہوئی" میں فرق نظر آئے۔
   Future<List<Map<String, dynamic>>> searchStudents(String query) async {
     final q = query.trim();
     if (q.isEmpty) return [];
-    try {
-      final results = await Future.wait([
-        _supabase
-            .from('profiles')
-            .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
-            .ilike('full_name', '%$q%')
-            .limit(20),
-        _supabase
-            .from('profiles')
-            .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
-            .ilike('email', '%$q%')
-            .limit(20),
-      ]);
 
-      final Map<String, Map<String, dynamic>> merged = {};
-      for (final rows in results) {
-        for (final r in (rows as List)) {
-          final m = Map<String, dynamic>.from(r as Map);
-          final id = m['id']?.toString() ?? '';
-          final role = m['role']?.toString().toLowerCase() ?? '';
-          if (id.isNotEmpty && role != 'teacher' && role != 'admin') {
-            merged[id] = m;
-          }
+    final results = await Future.wait([
+      _supabase
+          .from('profiles')
+          .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
+          .ilike('full_name', '%$q%')
+          .limit(20),
+      _supabase
+          .from('profiles')
+          .select('id, full_name, email, phone, role, is_verified, is_trial, trial_until')
+          .ilike('email', '%$q%')
+          .limit(20),
+    ]);
+
+    final Map<String, Map<String, dynamic>> merged = {};
+    for (final rows in results) {
+      for (final r in (rows as List)) {
+        final m = Map<String, dynamic>.from(r as Map);
+        final id = m['id']?.toString() ?? '';
+        final role = m['role']?.toString().toLowerCase() ?? '';
+        if (id.isNotEmpty && role != 'teacher' && role != 'admin') {
+          merged[id] = m;
         }
       }
-      final list = merged.values.toList();
-      list.sort((a, b) =>
-          (a['full_name']?.toString() ?? '').compareTo(b['full_name']?.toString() ?? ''));
-      return list;
-    } catch (_) {
-      return [];
     }
+    final list = merged.values.toList();
+    list.sort((a, b) =>
+        (a['full_name']?.toString() ?? '').compareTo(b['full_name']?.toString() ?? ''));
+    return list;
   }
 
   /// کسی اسٹوڈنٹ کی تمام enrolled کلاسز (عنوان اور فیس کی حالت کے ساتھ)

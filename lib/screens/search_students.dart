@@ -31,6 +31,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
   List<Map<String, dynamic>> _results = [];
   bool _searching = false;
   bool _searched = false;
+  String? _searchError;
 
   @override
   void dispose() {
@@ -53,14 +54,27 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
       });
       return;
     }
-    setState(() => _searching = true);
-    final rows = await _service.searchStudents(query);
-    if (!mounted) return;
     setState(() {
-      _results = rows;
-      _searching = false;
-      _searched = true;
+      _searching = true;
+      _searchError = null;
     });
+    try {
+      final rows = await _service.searchStudents(query);
+      if (!mounted) return;
+      setState(() {
+        _results = rows;
+        _searching = false;
+        _searched = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _results = [];
+        _searching = false;
+        _searched = true;
+        _searchError = e.toString();
+      });
+    }
   }
 
   void _openDetails(Map<String, dynamic> student) {
@@ -161,6 +175,17 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
                                     textAlign: TextAlign.center,
                                   ),
                                 )
+                              : _searchError != null
+                                  ? Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Text(
+                                          '${L.t('تلاش ناکام ہوئی', 'Search failed')}\n\n${_searchError!}',
+                                          style: _ts(fontSize: 13, color: Colors.red),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    )
                               : _results.isEmpty
                                   ? Center(
                                       child: Text(
