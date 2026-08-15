@@ -176,14 +176,16 @@ class _AppDrawerState extends State<AppDrawer> {
                   // Header / User Profile Banner Section
                   Container(
                     width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(10, 10, 10, 4),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 20),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
+                        horizontal: 16, vertical: 18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
                         colors: [Color(0xFF10B981), Color(0xFF2563EB)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,8 +256,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   // Scrollable Action Items
                   Expanded(
                     child: ListView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 10),
+                      padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 18, 10),
                       children: [
                         // 1. Home / Landing Website
                         _buildDrawerTile(
