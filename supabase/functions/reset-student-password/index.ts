@@ -55,10 +55,12 @@ Deno.serve(async (req) => {
       return fail("NOT_ALLOWED", 403);
     }
 
-    // 3. ان پٹ کی توثیق
-    const { student_id, new_password } = await req.json();
+    // 3. ان پٹ کی توثیق (trim کے بعد — ورنہ صرف خالی جگہوں والا پاس ورڈ
+    //    لمبائی کا چیک پاس کر سکتا تھا)
+    const { student_id, new_password: rawPassword } = await req.json();
+    const new_password = typeof rawPassword === "string" ? rawPassword.trim() : "";
     if (!student_id || typeof student_id !== "string") return fail("INVALID_STUDENT", 400);
-    if (!new_password || typeof new_password !== "string" || new_password.length < 6) {
+    if (new_password.length < 6) {
       return fail("PASSWORD_TOO_SHORT", 400);
     }
 
@@ -76,7 +78,11 @@ Deno.serve(async (req) => {
     const { error: updateErr } = await admin.auth.admin.updateUserById(student_id, {
       password: new_password,
     });
-    if (updateErr) return fail(updateErr.message, 500);
+    if (updateErr) {
+      // خام اندرونی خطا کلائنٹ کو نہیں بھیجتے (تفصیل صرف server logs میں)۔
+      console.error("reset-student-password updateUserById failed:", updateErr);
+      return fail("RESET_FAILED", 500);
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...cors, "Content-Type": "application/json" },

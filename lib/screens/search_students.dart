@@ -32,6 +32,9 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
   bool _searching = false;
   bool _searched = false;
   String? _searchError;
+  // ہر نئی تلاش کا ترتیبی نمبر — سست/پرانی درخواست کا جواب دیر سے آئے تو
+  // اسے نظرانداز کریں تاکہ نتائج غلط ترتیب میں اسکرین پر نہ آئیں۔
+  int _searchToken = 0;
 
   @override
   void dispose() {
@@ -47,6 +50,8 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
 
   Future<void> _runSearch(String q) async {
     final query = q.trim();
+    final myToken = ++_searchToken;
+
     if (query.isEmpty) {
       setState(() {
         _results = [];
@@ -60,14 +65,15 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
     });
     try {
       final rows = await _service.searchStudents(query);
-      if (!mounted) return;
+      // اگر اس دوران کوئی نئی تلاش شروع ہو چکی، تو یہ (پرانا) جواب نظرانداز کریں۔
+      if (!mounted || myToken != _searchToken) return;
       setState(() {
         _results = rows;
         _searching = false;
         _searched = true;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || myToken != _searchToken) return;
       setState(() {
         _results = [];
         _searching = false;
@@ -321,6 +327,7 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
               const SizedBox(height: 14),
               TextField(
                 controller: ctrl,
+                onChanged: (_) => setDialogState(() {}),
                 decoration: InputDecoration(
                   labelText: L.t('نیا پاس ورڈ', 'New password'),
                   suffixIcon: IconButton(
@@ -348,9 +355,10 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
       ),
     );
 
+    final newPassword = ctrl.text.trim();
+    ctrl.dispose();
     if (confirmed != true) return;
 
-    final newPassword = ctrl.text.trim();
     setState(() => _resettingPassword = true);
     try {
       await widget.service.resetStudentPassword(
@@ -388,8 +396,8 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
         widget.student['id']?.toString() ?? '',
         _phoneCtrl.text,
       );
-      widget.onPhoneUpdated(_phoneCtrl.text.trim());
       if (mounted) {
+        widget.onPhoneUpdated(_phoneCtrl.text.trim());
         setState(() {
           _editingPhone = false;
           _savingPhone = false;

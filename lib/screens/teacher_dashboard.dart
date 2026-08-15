@@ -110,7 +110,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 580),
-                child: _buildBody(),
+                child: _buildBody(goTo),
               ),
             ),
           ),
@@ -279,7 +279,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     }
   }
 
-  Widget _buildAnalyticsSection() {
+  Widget _buildAnalyticsSection(void Function(TeacherPane, VoidCallback) goTo) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -360,21 +360,24 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   icon: Icons.how_to_reg,
                   color: Colors.green,
                   label: L.t('نئی تصدیقیں', 'Approvals'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentApprovalsScreen())),
+                  onTap: () => goTo(TeacherPane.approvals,
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
                 ),
                 const SizedBox(width: 10),
                 _quickActionButton(
                   icon: Icons.receipt_long_outlined,
                   color: Colors.purple,
                   label: L.t('فیس ادائیگیاں', 'Pending Claims'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingPayments())),
+                  onTap: () => goTo(TeacherPane.payments,
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingPayments()))),
                 ),
                 const SizedBox(width: 10),
                 _quickActionButton(
                   icon: Icons.person_remove_outlined,
                   color: Colors.amber.shade900,
                   label: L.t('زیرِ التوا فیس و ٹرائلز', 'Trial Grace Management'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingStudents())),
+                  onTap: () => goTo(TeacherPane.pendingFees,
+                      () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingStudents()))),
                 ),
               ],
             ),
@@ -415,7 +418,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(void Function(TeacherPane, VoidCallback) goTo) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -431,7 +434,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         return ListView(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
           children: [
-            _buildAnalyticsSection(),
+            _buildAnalyticsSection(goTo),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

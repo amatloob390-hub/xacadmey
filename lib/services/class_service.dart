@@ -58,7 +58,10 @@ class ClassService {
       } catch (_) {}
     }
 
-    // 3. Primary: RPC join_class
+    // 3. صرف join_class RPC ہی حتمی فیصلہ کرے — ادائیگی/مہلت/ڈیوائس/فعال
+    //    ہونے کے چیک وہیں ہوتے ہیں۔ RPC ناکام ہو (چاہے کسی بھی وجہ سے) تو
+    //    کبھی بھی متبادل ذریعے سے zoom_link ڈھونڈ کر "کامیابی" نہ دیں —
+    //    ورنہ یہی چیک مکمل طور پر نظرانداز ہو جاتے۔
     try {
       final link = await _supabase.rpc('join_class', params: {
         'p_class_id': cleanId,
@@ -68,54 +71,9 @@ class ClassService {
       if (link != null && (link as String).isNotEmpty) {
         return JoinResult.ok(link);
       }
+      return JoinResult.fail(
+          L.t('لنک حاصل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not get the link, try again.'));
     } catch (e) {
-      // 4. Check get_available_classes RPC for zoom_link
-      try {
-        final avail = await _supabase.rpc('get_available_classes') as List?;
-        if (avail != null) {
-          for (var a in avail) {
-            final m = Map<String, dynamic>.from(a as Map);
-            final cId = (m['class_id'] ?? m['id'])?.toString();
-            if (cId == cleanId) {
-              final z = m['zoom_link']?.toString();
-              if (z != null && z.isNotEmpty) {
-                return JoinResult.ok(z);
-              }
-            }
-          }
-        }
-      } catch (_) {}
-
-      // 5. Check get_my_classes RPC for zoom_link
-      try {
-        final myCls = await _supabase.rpc('get_my_classes') as List?;
-        if (myCls != null) {
-          for (var c in myCls) {
-            final m = Map<String, dynamic>.from(c as Map);
-            final cId = (m['class_id'] ?? m['id'])?.toString();
-            if (cId == cleanId) {
-              final z = m['zoom_link']?.toString();
-              if (z != null && z.isNotEmpty) {
-                return JoinResult.ok(z);
-              }
-            }
-          }
-        }
-      } catch (_) {}
-
-      // 6. Direct lookup on classes table
-      try {
-        final cRow = await _supabase
-            .from('classes')
-            .select('zoom_link, is_active')
-            .eq('id', cleanId)
-            .maybeSingle();
-        final zLink = cRow?['zoom_link'] as String?;
-        if (zLink != null && zLink.isNotEmpty) {
-          return JoinResult.ok(zLink);
-        }
-      } catch (_) {}
-
       if (e is PostgrestException) {
         return JoinResult.fail(_mapError(e.message));
       }
@@ -123,9 +81,6 @@ class ClassService {
           L.t('کلاس میں شمولیت کے لیے ٹیچر سے منظوری درکار ہے۔',
               'Teacher approval is required to join this class.'));
     }
-
-    return JoinResult.fail(
-        L.t('لنک حاصل نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not get the link, try again.'));
   }
 
   String _mapError(String raw) {

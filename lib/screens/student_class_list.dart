@@ -164,23 +164,14 @@ class _StudentClassListState extends State<StudentClassList> {
                         runSpacing: 8,
                         children: [
                           ActionChip(
-                            avatar: const Icon(Icons.edit_note, size: 16, color: Colors.teal),
-                            label: Text(L.t('Mark as Note', 'Mark as Note')),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(L.t('لیکچر نوٹس میں سیو ہو گیا 📝', 'Saved to Lecture Notes 📝')),
-                              ));
-                            },
-                          ),
-                          ActionChip(
                             avatar: const Icon(Icons.psychology, size: 16, color: Colors.purple),
                             label: Text(L.t('Ask AI Assistant to Explain', 'Ask AI Assistant to Explain')),
-                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen())),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AiChatScreen(messages: _aiChatHistory))),
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.summarize, size: 16, color: Colors.blue),
                             label: Text(L.t('لیکچر کا خلاصہ (Summary)', 'Lecture Summary')),
-                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen())),
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AiChatScreen(messages: _aiChatHistory))),
                           ),
                         ],
                       ),
@@ -194,13 +185,13 @@ class _StudentClassListState extends State<StudentClassList> {
                         leading: const Icon(Icons.help_outline, color: Colors.teal),
                         title: Text(L.t('اس سبق کے بنیادی نکات کیا ہیں؟', 'What are the main concepts of this lesson?')),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen())),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AiChatScreen(messages: _aiChatHistory))),
                       ),
                       ListTile(
                         leading: const Icon(Icons.help_outline, color: Colors.teal),
                         title: Text(L.t('مجھے اس ٹاپک کا ایک آسان کوئز دیں۔', 'Give me a quick quiz on this topic.')),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen())),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AiChatScreen(messages: _aiChatHistory))),
                       ),
                     ],
                   ),
@@ -620,6 +611,7 @@ class _StudentClassListState extends State<StudentClassList> {
         }
       } catch (_) {}
     }
+    ctrl.dispose();
   }
 
   Widget _messageList(String msg) => ListView(

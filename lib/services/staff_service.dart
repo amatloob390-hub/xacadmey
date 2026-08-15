@@ -283,39 +283,62 @@ class StaffService {
   }
 
   /// کسی اسٹوڈنٹ کی تمام enrolled کلاسز (عنوان اور فیس کی حالت کے ساتھ)
+  /// دو ٹیبلز (enrollments + class_enrollments) کو ملا کر مکمل فہرست دے —
+  /// یہ دونوں اس ایپ میں الگ الگ جگہوں سے، ایک دوسرے سے آزاد لکھی جاتی ہیں
+  /// (student_service.dart کا get_my_classes بھی یہی وجہ سے دونوں ملاتا
+  /// ہے)، اس لیے صرف ایک پڑھنا کچھ enrollments کو چھپا سکتا تھا۔ ہر
+  /// کوئری کی ناکامی الگ سے پکڑی جاتی ہے تاکہ ایک ٹیبل کا مسئلہ دوسرے کا
+  /// ڈیٹا نہ چھپائے۔
   Future<List<Map<String, dynamic>>> getStudentEnrollments(String studentId) async {
+    final Map<String, Map<String, dynamic>> byClass = {};
+
     try {
       final rows = await _supabase
           .from('enrollments')
           .select('class_id, payment_status, grace_until')
           .or('student_id.eq.$studentId,user_id.eq.$studentId');
-      final list = List<Map<String, dynamic>>.from(rows);
-      if (list.isEmpty) return [];
+      for (final r in (rows as List)) {
+        final m = Map<String, dynamic>.from(r as Map);
+        final cId = m['class_id']?.toString();
+        if (cId != null && cId.isNotEmpty) byClass[cId] = m;
+      }
+    } catch (_) {}
 
-      final classIds = list
-          .map((r) => r['class_id']?.toString())
-          .whereType<String>()
-          .where((s) => s.isNotEmpty)
-          .toSet();
-      if (classIds.isEmpty) return list;
+    try {
+      final rows = await _supabase
+          .from('class_enrollments')
+          .select('class_id, status')
+          .or('student_id.eq.$studentId,user_id.eq.$studentId');
+      for (final r in (rows as List)) {
+        final m = Map<String, dynamic>.from(r as Map);
+        final cId = m['class_id']?.toString();
+        if (cId == null || cId.isEmpty) continue;
+        byClass.putIfAbsent(cId, () => {
+              'class_id': cId,
+              'payment_status': m['status'] == 'approved' ? 'paid' : 'pending',
+            });
+      }
+    } catch (_) {}
 
+    if (byClass.isEmpty) return [];
+
+    try {
       final classRows = await _supabase
           .from('classes')
           .select('id, title')
-          .inFilter('id', classIds.toList());
+          .inFilter('id', byClass.keys.toList());
       final titles = {
         for (final c in (classRows as List))
           c['id'].toString(): c['title']?.toString() ?? 'کلاس',
       };
-
-      return list
+      return byClass.values
           .map((r) => {
                 ...r,
                 'class_title': titles[r['class_id']?.toString()] ?? 'کلاس',
               })
           .toList();
     } catch (_) {
-      return [];
+      return byClass.values.toList();
     }
   }
 
