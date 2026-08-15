@@ -30,6 +30,18 @@ ALTER TABLE public.payments ALTER COLUMN txn_reference TYPE TEXT;
 ALTER TABLE public.payments ALTER COLUMN receipt_url   TYPE TEXT;
 
 -- ------------------------------------------------------------
+-- 1b. THE ACTUAL ROOT CAUSE: payments_status_check rejected 'pending'.
+--     The app always inserts status='pending' on submit, so EVERY
+--     student's payment insert failed this CHECK constraint — the
+--     only reason Hammad's test rows exist is they predate this
+--     constraint or were entered differently. Relax the constraint to
+--     allow every status value the app and RPCs actually use.
+-- ------------------------------------------------------------
+ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS payments_status_check;
+ALTER TABLE public.payments ADD CONSTRAINT payments_status_check
+  CHECK (status IN ('pending', 'submitted', 'approved', 'rejected'));
+
+-- ------------------------------------------------------------
 -- 2. Ensure the role helpers exist (self-contained, idempotent)
 --    so the policies / RPC below never fail on a missing function.
 -- ------------------------------------------------------------
