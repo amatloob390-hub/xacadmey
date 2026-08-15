@@ -5,7 +5,9 @@ import '../services/ai_chat_service.dart';
 class _Msg {
   final String text;
   final bool fromUser;
-  _Msg(this.text, this.fromUser);
+  // ناکام/خطا کا پیغام — گفتگو کی history میں AI کو نہیں بھیجا جاتا۔
+  final bool isError;
+  _Msg(this.text, this.fromUser, {this.isError = false});
 }
 
 /// فری لانسنگ AI مدد — سوال پوچھیں، AI جواب دے۔
@@ -42,7 +44,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _scrollDown();
 
     try {
-      final reply = await _service.ask(text);
+      // پوری گفتگو بھیجیں (خطا کے bubbles نکال کر) تاکہ AI کو سیاق یاد رہے۔
+      final history = _messages
+          .where((m) => !m.isError)
+          .map((m) => ChatMessage(m.fromUser ? 'user' : 'assistant', m.text))
+          .toList();
+      final reply = await _service.ask(history);
       if (!mounted) return;
       setState(() => _messages.add(_Msg(reply, false)));
     } catch (e) {
@@ -50,7 +57,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() => _messages.add(_Msg(
           L.t('معذرت، جواب نہیں مل سکا۔ دوبارہ کوشش کریں۔',
               'Sorry, could not get a reply. Please try again.'),
-          false)));
+          false,
+          isError: true)));
     } finally {
       if (mounted) setState(() => _sending = false);
       _scrollDown();
