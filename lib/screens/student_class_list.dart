@@ -248,6 +248,8 @@ class _StudentClassListState extends State<StudentClassList> {
                         );
                       }
 
+                      final featuredClass = _pickFeaturedClass(classes);
+
                       final totalClasses = classes.length;
                       final activeClasses =
                           classes.where((c) => c.isActive).length;
@@ -351,6 +353,10 @@ class _StudentClassListState extends State<StudentClassList> {
                       return ListView(
                         padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
                         children: [
+                          if (featuredClass != null) ...[
+                            _liveClassHero(featuredClass),
+                            const SizedBox(height: 16),
+                          ],
                           analyticsWidget,
                           const SizedBox(height: 16),
                           Text(
@@ -461,6 +467,135 @@ class _StudentClassListState extends State<StudentClassList> {
       default:
         return dashboardContent;
     }
+  }
+
+  /// نمایاں کرنے کیلئے ایک کلاس چنیں — پہلے کوئی لائیو/جوائن کے قابل، ورنہ
+  /// جس کا وقت سب سے قریب ہو۔
+  StudentClass? _pickFeaturedClass(List<StudentClass> classes) {
+    if (classes.isEmpty) return null;
+    final joinable = classes.where((c) => c.canJoin).toList();
+    if (joinable.isNotEmpty) return joinable.first;
+    final accessible = classes.where((c) => c.canAccess).toList()
+      ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return accessible.isNotEmpty ? accessible.first : classes.first;
+  }
+
+  Widget _liveClassHero(StudentClass item) {
+    final isLive = item.canJoin;
+    final scheduleText = isLive
+        ? L.t('ابھی لائیو', 'Live now')
+        : '${item.scheduledAt.day}/${item.scheduledAt.month}  ${item.scheduledAt.hour}:${item.scheduledAt.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLive) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      isLive ? L.t('لائیو', 'LIVE') : L.t('اگلی کلاس', 'NEXT'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                scheduleText,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            isLive
+                ? L.t('موجودہ لائیو کلاس:', 'Current Live Class:')
+                : L.t('آنے والی کلاس:', 'Upcoming Class:'),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: JoinClassButton(classId: item.id),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () => _openAiOverlay(item.title),
+                icon: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                label: Text(
+                  L.t('AI مدد', 'AI Help'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _emptyState() {

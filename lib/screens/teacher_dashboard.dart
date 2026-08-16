@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../services/teacher_service.dart';
+import '../services/payment_service.dart';
 import '../widgets/create_class_dialog.dart';
 import '../widgets/add_student_dialog.dart';
 import '../widgets/logout_button.dart';
@@ -45,6 +47,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   bool _loading = true;
   bool _error = false;
 
+  // ڈیش بورڈ کے اینالیٹکس رنگز کیلئے — منتظر تصدیقیں اور ادائیگیاں۔
+  int _pendingApprovalsCount = 0;
+  int _pendingPaymentsCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +76,23 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         _error = true;
       });
     }
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    try {
+      final rows = await Supabase.instance.client
+          .from('profiles')
+          .select('id')
+          .eq('role', 'student')
+          .eq('is_verified', false);
+      if (mounted) setState(() => _pendingApprovalsCount = (rows as List).length);
+    } catch (_) {}
+
+    try {
+      final list = await PaymentService().getPending();
+      if (mounted) setState(() => _pendingPaymentsCount = list.length);
+    } catch (_) {}
   }
 
   Future<void> _toggle(int index, bool active) async {
@@ -356,6 +379,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       progress: activeRatio.clamp(0.05, 1.0),
                       primaryColor: const Color(0xFF10B981),
                       icon: Icons.groups_outlined,
+                    ),
+                  ),
+                  SizedBox(
+                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    child: RadialGaugeCard(
+                      title: L.t('نئی تصدیقیں', 'Pending Approvals'),
+                      valueText: '$_pendingApprovalsCount',
+                      subtext: _pendingApprovalsCount > 0
+                          ? L.t('منظوری کے منتظر اسٹوڈنٹس', 'Students awaiting approval')
+                          : L.t('کوئی زیرِ التوا تصدیق نہیں', 'All caught up'),
+                      progress: _pendingApprovalsCount > 0
+                          ? (_pendingApprovalsCount / 10).clamp(0.15, 1.0)
+                          : 0.08,
+                      primaryColor: const Color(0xFF2563EB),
+                      icon: Icons.how_to_reg_rounded,
+                    ),
+                  ),
+                  SizedBox(
+                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    child: RadialGaugeCard(
+                      title: L.t('زیرِ التوا ادائیگیاں', 'Pending Payments'),
+                      valueText: '$_pendingPaymentsCount',
+                      subtext: _pendingPaymentsCount > 0
+                          ? L.t('فیس تصدیق کے منتظر', 'Payments awaiting review')
+                          : L.t('کوئی زیرِ التوا ادائیگی نہیں', 'All caught up'),
+                      progress: _pendingPaymentsCount > 0
+                          ? (_pendingPaymentsCount / 10).clamp(0.15, 1.0)
+                          : 0.08,
+                      primaryColor: const Color(0xFF10B981),
+                      icon: Icons.payments_outlined,
                     ),
                   ),
                 ],

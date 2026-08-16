@@ -201,17 +201,36 @@ class _AppDrawerState extends State<AppDrawer> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                displayName.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  color: Color(0xFF10B981),
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CircleAvatar(
+                                  radius: 26,
+                                  backgroundColor: Colors.white,
+                                  child: Text(
+                                    displayName.substring(0, 1).toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Color(0xFF10B981),
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                // آن لائن حیثیت کا سبز نقطہ
+                                Positioned(
+                                  bottom: -2,
+                                  right: -2,
+                                  child: Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: const Color(0xFF10B981),
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(

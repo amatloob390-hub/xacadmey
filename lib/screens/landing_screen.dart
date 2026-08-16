@@ -169,7 +169,7 @@ class _LandingScreenState extends State<LandingScreen> {
             final isLoggedIn = session != null;
 
             return Scaffold(
-              backgroundColor: theme.bgColor,
+              backgroundColor: Colors.transparent,
               appBar: PreferredSize(
                 preferredSize: Size.fromHeight(isWide ? 75 : 62),
                 child: Container(

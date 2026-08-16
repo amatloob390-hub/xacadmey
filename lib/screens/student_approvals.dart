@@ -282,7 +282,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       valueListenable: AppTheme.currentTheme,
       builder: (context, theme, _) {
         return Scaffold(
-          backgroundColor: theme.bgColor,
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
             backgroundColor: theme.cardColor,
             elevation: 2,

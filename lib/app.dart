@@ -6,6 +6,7 @@ import 'app_theme.dart';
 import 'config.dart';
 import 'pending_class.dart';
 import 'screens/auth_gate.dart';
+import 'widgets/cosmic_background.dart';
 
 /// دونوں entry points (admin/student) اِسی فنکشن سے ایپ چلاتے ہیں۔
 Future<void> bootstrap(AppMode mode) async {
@@ -81,7 +82,10 @@ class XacademyApp extends StatelessWidget {
             final base = ThemeData(
               useMaterial3: true,
               colorScheme: scheme,
-              scaffoldBackgroundColor: theme.bgColor,
+              // Scaffold کا اپنا background شفاف — پوری ایپ میں ایک ہی
+              // کائناتی/glow پس منظر (نیچے builder میں CosmicBackground)
+              // نظر آئے، ہر Scaffold اسے دوبارہ نہ ڈھانپے۔
+              scaffoldBackgroundColor: Colors.transparent,
               fontFamily: fontFamily,
               fontFamilyFallback: const ['Roboto', 'Arial', 'sans-serif'],
               appBarTheme: AppBarTheme(
@@ -223,7 +227,7 @@ class XacademyApp extends StatelessWidget {
                   : base,
               builder: (context, child) => Directionality(
                 textDirection: AppLang.dir,
-                child: child!,
+                child: CosmicBackground(theme: theme, child: child!),
               ),
               home: KeyedSubtree(
                 key: ValueKey<String>('${urdu}_${theme.id}'),
