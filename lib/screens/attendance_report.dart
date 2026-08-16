@@ -115,25 +115,30 @@ class _AttendanceReportState extends State<AttendanceReport> {
               return _msg(L.t('رپورٹ لوڈ نہیں ہو سکی۔', 'Could not load the report.'));
             }
             final data = snapshot.data!;
-            return ListView(
-              padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 20, 12),
-              children: [
-                _dateBar(),
-                const SizedBox(height: 8),
-                _summaryCard(data.summary),
-                const SizedBox(height: 12),
-                if (data.records.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: Center(
-                        child: Text(L.t('اس دن کوئی حاضری نہیں ہوئی۔',
-                            'No attendance on this day.'))),
-                  )
-                else
-                  ...data.records.asMap().entries.map(
-                        (e) => _recordTile(e.key + 1, e.value),
-                      ),
-              ],
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 580),
+                child: ListView(
+                  padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 20, 12),
+                  children: [
+                    _dateBar(),
+                    const SizedBox(height: 8),
+                    _summaryCard(data.summary),
+                    const SizedBox(height: 12),
+                    if (data.records.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 40),
+                        child: Center(
+                            child: Text(L.t('اس دن کوئی حاضری نہیں ہوئی۔',
+                                'No attendance on this day.'))),
+                      )
+                    else
+                      ...data.records.asMap().entries.map(
+                            (e) => _recordTile(e.key + 1, e.value),
+                          ),
+                  ],
+                ),
+              ),
             );
           },
         ),
