@@ -12,7 +12,6 @@ import '../screens/search_students.dart';
 import '../screens/social_links_screen.dart';
 import '../screens/student_approvals.dart';
 import '../services/auth_service.dart';
-import 'theme_selector.dart';
 
 /// سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
 /// استعمال ہوتا ہے تاکہ صفحہ بدلنے پر بھی سائیڈ بار برقرار رہے)۔
@@ -568,46 +567,6 @@ class _AppDrawerState extends State<AppDrawer> {
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Divider(height: 1),
-                        ),
-
-                        // Settings Header
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: Text(
-                            L.t('سیٹنگز اور ترجیحات', 'Settings & Preferences'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: subtextColor,
-                            ),
-                          ),
-                        ),
-
-                        // Theme Selector
-                        _buildDrawerTile(
-                          icon: Icons.palette_rounded,
-                          iconColor: const Color(0xFFEC4899),
-                          title: L.t('تھیم اور رنگ تبدیل کریں', 'Change Theme & Colors'),
-                          subtitle: isUrdu
-                              ? theme.nameUrdu
-                              : theme.nameEnglish,
-                          textColor: textColor,
-                          subtextColor: subtextColor,
-                          isDark: isDark,
-                          trailing: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.primaryColor,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          onTap: () => ThemeSelectorDialog.show(context),
                         ),
 
                         // Logout — end of the scrollable menu (not pinned)

@@ -181,15 +181,16 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
       return name.contains(_searchQuery) || email.contains(_searchQuery);
     }).toList();
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Column(
+    final titleBlock = Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             L.t('اسٹوڈنٹ شامل کریں', 'Add Student'),
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold) ??
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
           const SizedBox(height: 12),
           // Toggle Tabs between Registered Student vs New Email Invite
@@ -250,8 +251,11 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
           ),
         ],
       ),
-      content: SingleChildScrollView(
-        child: _loadingData
+    );
+
+    final contentBlock = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      child: _loadingData
             ? const Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(child: CircularProgressIndicator()),
@@ -451,36 +455,62 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                       ],
                     ),
                   ),
+    );
+
+    final actionsBlock = Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: Text(L.t('منسوخ', 'Cancel')),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _busy
+                ? null
+                : (_mode == 0 ? _submitEnrollExisting : _submitInviteNew),
+            icon: _busy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.check, size: 18),
+            label: Text(
+              _busy
+                  ? L.t('جاری ہے...', 'Saving...')
+                  : L.t('کلاس میں شامل کریں', 'Enroll in Class'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: Text(L.t('منسوخ', 'Cancel')),
+    );
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 480,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        ElevatedButton.icon(
-          onPressed: _busy
-              ? null
-              : (_mode == 0 ? _submitEnrollExisting : _submitInviteNew),
-          icon: _busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.check, size: 18),
-          label: Text(
-            _busy
-                ? L.t('جاری ہے...', 'Saving...')
-                : L.t('کلاس میں شامل کریں', 'Enroll in Class'),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.teal,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            titleBlock,
+            Flexible(child: contentBlock),
+            actionsBlock,
+          ],
         ),
-      ],
+      ),
     );
   }
 }

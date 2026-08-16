@@ -246,6 +246,18 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     onSelectTeacherPane: (p) => setState(() => _pane = p),
                   ),
                 ),
+                if (_pane != TeacherPane.dashboard)
+                  SizedBox(
+                    width: 44,
+                    child: Center(
+                      child: IconButton(
+                        icon: const BackButtonIcon(),
+                        color: const Color(0xFF10B981),
+                        tooltip: L.t('ڈیش بورڈ پر واپس', 'Back to Dashboard'),
+                        onPressed: () => setState(() => _pane = TeacherPane.dashboard),
+                      ),
+                    ),
+                  ),
                 Expanded(child: _buildPaneContent(mainContent)),
               ],
             )
