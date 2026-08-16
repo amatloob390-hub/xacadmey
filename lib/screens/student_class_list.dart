@@ -804,25 +804,31 @@ class _StudentClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subtextColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+    final accent = item.isActive ? const Color(0xFF10B981) : const Color(0xFF2563EB);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF0C2738), const Color(0xFF132A4B)]
+              : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.6),
-          width: 2.0,
+          color: accent.withValues(alpha: item.isActive ? 0.7 : 0.4),
+          width: item.isActive ? 2.0 : 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.35),
-            blurRadius: 22,
-            offset: const Offset(0, 8),
+            color: accent.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -903,11 +909,11 @@ class _StudentClassCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                  border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.5),
                 ),
-                child: const Icon(Icons.school_rounded, color: Colors.white, size: 24),
+                child: Icon(Icons.school_rounded, color: accent, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -918,10 +924,10 @@ class _StudentClassCard extends StatelessWidget {
                     Text(
                       item.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: textColor,
                         height: 1.2,
                       ),
                     ),
@@ -929,13 +935,13 @@ class _StudentClassCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF6EE7B7)),
+                        Icon(Icons.access_time_rounded, size: 14, color: accent),
                         const SizedBox(width: 6),
                         Text(
                           '${L.t('وقت', 'Time')}: ${_fmt(item.scheduledAt)}  •  ${item.durationMin} ${L.t('منٹ', 'min')}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.95),
+                            color: subtextColor,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),

@@ -217,15 +217,15 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                   Wrap(
                     spacing: 8,
                     children: [
-                      ChoiceChip(
-                        label: Text(L.t('مفت (Free)', 'Free')),
+                      _choiceChip(
+                        label: L.t('مفت (Free)', 'Free'),
                         selected: _isFree,
-                        onSelected: (_) => setState(() => _isFree = true),
+                        onSelected: () => setState(() => _isFree = true),
                       ),
-                      ChoiceChip(
-                        label: Text(L.t('ادا شدہ (Paid)', 'Paid')),
+                      _choiceChip(
+                        label: L.t('ادا شدہ (Paid)', 'Paid'),
                         selected: !_isFree,
-                        onSelected: (_) => setState(() => _isFree = false),
+                        onSelected: () => setState(() => _isFree = false),
                       ),
                     ],
                   ),
@@ -239,10 +239,10 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                   Wrap(
                     spacing: 8,
                     children: [30, 45, 60, 90, 120].map((m) {
-                      return ChoiceChip(
-                        label: Text('$m ${L.t('منٹ', 'min')}'),
+                      return _choiceChip(
+                        label: '$m ${L.t('منٹ', 'min')}',
                         selected: _durationMin == m,
-                        onSelected: (_) => setState(() => _durationMin = m),
+                        onSelected: () => setState(() => _durationMin = m),
                       );
                     }).toList(),
                   ),
@@ -304,6 +304,29 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// عام ChoiceChip کا غیر منتخب رنگ اس dark پس منظر پر تقریباً غائب ہو
+  /// جاتا تھا (کالے پر کالا) — اسی لیے صاف نظر آنے والے رنگ خود دیتے ہیں۔
+  Widget _choiceChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      backgroundColor: const Color(0xFF334155),
+      selectedColor: const Color(0xFF10B981),
+      labelStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+      ),
+      side: BorderSide(
+        color: selected ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.2),
       ),
     );
   }
