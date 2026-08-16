@@ -173,92 +173,103 @@ class _AppDrawerState extends State<AppDrawer> {
             final content = SafeArea(
               child: Column(
                 children: [
-                  // Header / User Profile Banner Section
+                  // Header / User Profile Card — درمیان میں avatar (رنگین
+                  // چمکتی انگوٹھی + آن لائن نقطہ)، نیچے role pill، پھر
+                  // نام/ای میل — mockup کے سائیڈ بار پروفائل کارڈ جیسا۔
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.fromLTRB(10, 10, 10, 4),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 18),
+                        horizontal: 16, vertical: 20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [const Color(0xFF0C2738), const Color(0xFF132A4B)]
+                            : [const Color(0xFFE0F2FE), const Color(0xFFF0FDFA)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.4),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                CircleAvatar(
-                                  radius: 26,
-                                  backgroundColor: Colors.white,
-                                  child: Text(
-                                    displayName.substring(0, 1).toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFF10B981),
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                                // آن لائن حیثیت کا سبز نقطہ
-                                Positioned(
-                                  bottom: -2,
-                                  right: -2,
-                                  child: Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF10B981),
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.all(3),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.4),
+                                shape: BoxShape.circle,
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF10B981), Color(0xFF2563EB)],
                                 ),
                               ),
-                              child: Text(
-                                roleLabel,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                              child: CircleAvatar(
+                                radius: 30,
+                                backgroundColor: textColor,
+                                child: Text(
+                                  displayName.substring(0, 1).toUpperCase(),
+                                  style: TextStyle(
+                                    color: drawerBg,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // آن لائن حیثیت کا سبز نقطہ
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFF10B981),
+                                  border: Border.all(color: drawerBg, width: 2.5),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Text(
+                            roleLabel.toUpperCase(),
+                            style: const TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         Text(
-                          '${L.t('خوش آمدید', 'Welcome')}، $displayName',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
+                          displayName,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -268,9 +279,10 @@ class _AppDrawerState extends State<AppDrawer> {
                           const SizedBox(height: 2),
                           Text(
                             emailText,
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.88),
-                              fontSize: 13,
+                              color: subtextColor,
+                              fontSize: 12,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
+import '../app_theme.dart';
 import '../services/teacher_service.dart';
 import '../services/payment_service.dart';
 import '../widgets/create_class_dialog.dart';
@@ -254,35 +255,51 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             )
           : null,
       body: isWide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 290,
-                  child: AppDrawer(
-                    isFixed: true,
-                    isTeacher: true,
-                    role: widget.role,
-                    onAddStudent: _openAddStudentDialog,
-                    onRefresh: _load,
-                    selectedTeacherPane: _pane,
-                    onSelectTeacherPane: (p) => setState(() => _pane = p),
+          ? Container(
+              margin: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              decoration: BoxDecoration(
+                color: AppTheme.currentTheme.value.bgColor,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
-                ),
-                if (_pane != TeacherPane.dashboard)
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   SizedBox(
-                    width: 44,
-                    child: Center(
-                      child: IconButton(
-                        icon: const BackButtonIcon(),
-                        color: const Color(0xFF10B981),
-                        tooltip: L.t('ڈیش بورڈ پر واپس', 'Back to Dashboard'),
-                        onPressed: () => setState(() => _pane = TeacherPane.dashboard),
-                      ),
+                    width: 260,
+                    child: AppDrawer(
+                      isFixed: true,
+                      isTeacher: true,
+                      role: widget.role,
+                      onAddStudent: _openAddStudentDialog,
+                      onRefresh: _load,
+                      selectedTeacherPane: _pane,
+                      onSelectTeacherPane: (p) => setState(() => _pane = p),
                     ),
                   ),
-                Expanded(child: _buildPaneContent(mainContent)),
-              ],
+                  if (_pane != TeacherPane.dashboard)
+                    SizedBox(
+                      width: 44,
+                      child: Center(
+                        child: IconButton(
+                          icon: const BackButtonIcon(),
+                          color: const Color(0xFF10B981),
+                          tooltip: L.t('ڈیش بورڈ پر واپس', 'Back to Dashboard'),
+                          onPressed: () => setState(() => _pane = TeacherPane.dashboard),
+                        ),
+                      ),
+                    ),
+                  Expanded(child: _buildPaneContent(mainContent)),
+                ],
+              ),
             )
           : mainContent,
     );
@@ -358,7 +375,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 runSpacing: 12,
                 children: [
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
                     child: RadialGaugeCard(
                       title: L.t('کلاسز کا وقت', 'Class Duration'),
                       valueText: '$totalHours ${L.t('گھنٹے', 'hrs')}',
@@ -371,7 +388,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     ),
                   ),
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
                     child: RadialGaugeCard(
                       title: L.t('فعال کلاسز کا تناسب', 'Active Classes Rate'),
                       valueText: activePercent,
@@ -382,7 +399,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     ),
                   ),
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
                     child: RadialGaugeCard(
                       title: L.t('نئی تصدیقیں', 'Pending Approvals'),
                       valueText: '$_pendingApprovalsCount',
@@ -397,7 +414,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     ),
                   ),
                   SizedBox(
-                    width: isWide ? (constraints.maxWidth * 0.48 - 10) : constraints.maxWidth,
+                    width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
                     child: RadialGaugeCard(
                       title: L.t('زیرِ التوا ادائیگیاں', 'Pending Payments'),
                       valueText: '$_pendingPaymentsCount',

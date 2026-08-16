@@ -112,8 +112,10 @@ class RadialGaugeCard extends StatelessWidget {
                   Text(
                     subtext,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: subtextColor.withValues(alpha: 0.9),
                     ),

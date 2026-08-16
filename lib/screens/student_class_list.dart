@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
+import '../app_theme.dart';
 import '../pending_class.dart';
 import '../services/student_service.dart';
 import '../widgets/dashboard_analytics_card.dart';
@@ -425,32 +426,48 @@ class _StudentClassListState extends State<StudentClassList> {
         ],
       ),
       body: isWide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 290,
-                  child: AppDrawer(
-                    isFixed: true,
-                    onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
-                    selectedTeacherPane: _pane,
-                    onSelectTeacherPane: (p) => setState(() => _pane = p),
+          ? Container(
+              margin: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              decoration: BoxDecoration(
+                color: AppTheme.currentTheme.value.bgColor,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
-                ),
-                if (_pane != TeacherPane.dashboard)
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   SizedBox(
-                    width: 44,
-                    child: Center(
-                      child: IconButton(
-                        icon: const BackButtonIcon(),
-                        color: const Color(0xFF10B981),
-                        tooltip: L.t('ڈیش بورڈ پر واپس', 'Back to Dashboard'),
-                        onPressed: () => setState(() => _pane = TeacherPane.dashboard),
-                      ),
+                    width: 260,
+                    child: AppDrawer(
+                      isFixed: true,
+                      onOpenAiAssistant: () => _openAiOverlay('XAcademy Tutors'),
+                      selectedTeacherPane: _pane,
+                      onSelectTeacherPane: (p) => setState(() => _pane = p),
                     ),
                   ),
-                Expanded(child: _buildPaneContent(mainContent)),
-              ],
+                  if (_pane != TeacherPane.dashboard)
+                    SizedBox(
+                      width: 44,
+                      child: Center(
+                        child: IconButton(
+                          icon: const BackButtonIcon(),
+                          color: const Color(0xFF10B981),
+                          tooltip: L.t('ڈیش بورڈ پر واپس', 'Back to Dashboard'),
+                          onPressed: () => setState(() => _pane = TeacherPane.dashboard),
+                        ),
+                      ),
+                    ),
+                  Expanded(child: _buildPaneContent(mainContent)),
+                ],
+              ),
             )
           : mainContent,
     );
