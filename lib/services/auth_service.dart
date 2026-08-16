@@ -29,28 +29,48 @@ class AuthService {
 
     final user = response.user;
     if (user != null) {
-      // Profile — is_verified=false (teacher approval درکار)
+      // 'trial' منتخب کرنے والا فوراً 7 دن کیلئے خودکار تصدیق شدہ — ٹیچر
+      // منظوری کی ضرورت نہیں۔ باقی (paid/premier) is_verified=false ہی
+      // رہتے ہیں — فیس سلپ جمع کروانے اور ٹیچر منظوری کے منتظر۔
+      final isTrialPlan = plan == 'trial';
+
+      // Profile
       try {
         await _supabase.from('profiles').upsert({
           'id': user.id,
           'full_name': fullName,
           'email': email,
-          'is_verified': false,
+          'is_verified': isTrialPlan,
+          'is_trial': isTrialPlan,
+          if (isTrialPlan)
+            'trial_until':
+                DateTime.now().add(const Duration(days: 7)).toIso8601String(),
           'role': 'student',
           'plan': plan,
           if (classId != null && classId.isNotEmpty) 'registered_class_id': classId,
         }, onConflict: 'id');
       } catch (_) {}
 
-      // Admin notification entry (verification queue)
-      try {
-        await _supabase.from('verification_requests').insert({
-          'user_id': user.id,
-          'email': email,
-          'full_name': fullName,
-          'status': 'pending',
-        });
-      } catch (_) {}
+      // خودکار ٹرائل — SECURITY DEFINER RPC (self_start_trial) حتمی/مستند
+      // ذریعہ ہے، اوپر والا upsert صرف فوری/optimistic قدر کیلئے۔
+      if (isTrialPlan) {
+        try {
+          await _supabase.rpc('self_start_trial', params: {'p_days': 7});
+        } catch (_) {}
+      }
+
+      // Admin notification entry (verification queue) — صرف paid/premier
+      // کیلئے، چونکہ trial کو کسی منظوری کی ضرورت نہیں۔
+      if (!isTrialPlan) {
+        try {
+          await _supabase.from('verification_requests').insert({
+            'user_id': user.id,
+            'email': email,
+            'full_name': fullName,
+            'status': 'pending',
+          });
+        } catch (_) {}
+      }
 
       // link سے آیا ہو تو اُسی class میں enroll کر دیں
       if (classId != null && classId.isNotEmpty) {
@@ -60,7 +80,7 @@ class AuthService {
             'user_id': user.id,
             'class_id': classId,
             'grace_until': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-            'payment_status': 'pending',
+            'payment_status': isTrialPlan ? 'trial' : 'pending',
           }, onConflict: 'student_id,class_id');
         } catch (_) {}
 
@@ -69,7 +89,7 @@ class AuthService {
             'student_id': user.id,
             'user_id': user.id,
             'class_id': classId,
-            'status': 'pending',
+            'status': isTrialPlan ? 'approved' : 'pending',
             'created_at': DateTime.now().toIso8601String(),
           }, onConflict: 'student_id,class_id');
         } catch (_) {}

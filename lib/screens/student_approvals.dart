@@ -64,8 +64,11 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
           if (id.isNotEmpty) {
             final isVerified = m['is_verified'] == true;
             final isTrial = m['is_trial'] == true;
-            // Add if not verified or in trial or not in map yet
-            if (!isVerified || isTrial || !map.containsKey(id)) {
+            // خودکار ٹرائل والے (signup پر self_start_trial سے فوراً
+            // تصدیق شدہ) یہاں نہیں دکھتے — ان کیلئے کچھ منظور کرنا باقی
+            // نہیں۔ صرف واقعی غیر-تصدیق شدہ (paid/premier، فیس کے منتظر)
+            // دکھائیں۔
+            if (!isVerified) {
               map[id] ??= {
                 'id': id,
                 'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
