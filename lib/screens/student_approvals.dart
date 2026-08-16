@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
+import '../widgets/teal_box.dart';
 
 class StudentApprovalsScreen extends StatefulWidget {
   const StudentApprovalsScreen({super.key});
@@ -357,23 +358,10 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                             final email = item['email'] ?? '—';
                             final id = item['id'] as String;
 
-                            return Container(
+                            return TealBox(
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: theme.cardColor,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: theme.isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
+                              borderRadius: 18,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [

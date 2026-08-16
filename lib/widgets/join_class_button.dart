@@ -219,7 +219,7 @@ class _JoinClassButtonState extends State<JoinClassButton> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0E9F91),
+          backgroundColor: const Color(0xFF10B981),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

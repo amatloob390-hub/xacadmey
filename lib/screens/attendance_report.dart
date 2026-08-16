@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/attendance_service.dart';
+import '../widgets/teal_box.dart';
 
 class AttendanceReport extends StatefulWidget {
   final String classId;
@@ -142,15 +143,12 @@ class _AttendanceReportState extends State<AttendanceReport> {
 
   Widget _dateBar() => InkWell(
         onTap: _pickDate,
-        child: Container(
+        borderRadius: BorderRadius.circular(16),
+        child: TealBox(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.indigo.shade50,
-            borderRadius: BorderRadius.circular(10),
-          ),
           child: Row(
             children: [
-              const Icon(Icons.event, size: 18, color: Colors.indigo),
+              const Icon(Icons.event, size: 18, color: Color(0xFF10B981)),
               const SizedBox(width: 8),
               Text(
                 '${L.t('دن', 'Day')}: ${_date.day}/${_date.month}/${_date.year}'
@@ -159,7 +157,7 @@ class _AttendanceReportState extends State<AttendanceReport> {
               ),
               const Spacer(),
               Text(L.t('بدلیں', 'Change'),
-                  style: const TextStyle(color: Colors.indigo)),
+                  style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -168,18 +166,15 @@ class _AttendanceReportState extends State<AttendanceReport> {
   Widget _summaryCard(AttendanceSummary s) {
     final absent =
         (s.totalEnrolled - s.totalPresent).clamp(0, s.totalEnrolled);
-    return Card(
-      color: Colors.blue.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _stat(L.t('کل انرول', 'Enrolled'), '${s.totalEnrolled}', Colors.blue),
-            _stat(L.t('حاضر', 'Present'), '${s.totalPresent}', Colors.green),
-            _stat(L.t('غیر حاضر', 'Absent'), '$absent', Colors.red),
-          ],
-        ),
+    return TealBox(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _stat(L.t('کل انرول', 'Enrolled'), '${s.totalEnrolled}', const Color(0xFF2563EB)),
+          _stat(L.t('حاضر', 'Present'), '${s.totalPresent}', const Color(0xFF10B981)),
+          _stat(L.t('غیر حاضر', 'Absent'), '$absent', Colors.red),
+        ],
       ),
     );
   }
@@ -193,29 +188,39 @@ class _AttendanceReportState extends State<AttendanceReport> {
         ],
       );
 
-  Widget _recordTile(int index, AttendanceRecord r) => Card(
-        margin: const EdgeInsets.only(bottom: 6),
-        child: ListTile(
-          leading: CircleAvatar(child: Text('$index')),
-          title: Text(r.fullName),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (r.email.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    r.email,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
+  Widget _recordTile(int index, AttendanceRecord r) => TealBox(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+              child: Text('$index', style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(r.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  if (r.email.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 2),
+                      child: Text(
+                        r.email,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              Text('${L.t('جوائن کیا', 'Joined')}: ${_fmt(r.joinedAt)}'),
-            ],
-          ),
-          trailing: const Icon(Icons.check_circle, color: Colors.green),
+                  Text('${L.t('جوائن کیا', 'Joined')}: ${_fmt(r.joinedAt)}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                ],
+              ),
+            ),
+            const Icon(Icons.check_circle, color: Color(0xFF10B981)),
+          ],
         ),
       );
 

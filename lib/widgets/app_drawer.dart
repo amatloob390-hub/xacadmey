@@ -187,6 +187,14 @@ class _AppDrawerState extends State<AppDrawer> {
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +309,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           // 3. AI Teaching Assistant
                           _buildDrawerTile(
                             icon: Icons.auto_awesome_rounded,
-                            iconColor: Colors.teal,
+                            iconColor: const Color(0xFF10B981),
                             title: L.t('AI تدریسی اسسٹنٹ', 'AI Teaching Assistant'),
                             subtitle: L.t('سبق کا خلاصہ، اہم نکات اور فوری کوئز',
                                 'Lecture summary & quick quiz'),
@@ -312,17 +320,17 @@ class _AppDrawerState extends State<AppDrawer> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.teal.withValues(alpha: 0.15),
+                                color: const Color(0xFF10B981).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                    color: Colors.teal.withValues(alpha: 0.5)),
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.5)),
                               ),
                               child: const Text(
                                 'AI',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.teal,
+                                  color: Color(0xFF10B981),
                                 ),
                               ),
                             ),
@@ -337,7 +345,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           // 4. AI Chat Screen
                           _buildDrawerTile(
                             icon: Icons.psychology_rounded,
-                            iconColor: Colors.purple,
+                            iconColor: const Color(0xFF2563EB),
                             title: L.t('AI اسٹڈی چیٹ', 'AI Study Chat'),
                             subtitle: L.t('تعلیمی سوالات کے فوری جوابات حاصل کریں',
                                 'Get instant academic explanations'),
@@ -380,7 +388,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           if (widget.onAddStudent != null)
                             _buildDrawerTile(
                               icon: Icons.person_add_alt_1_rounded,
-                              iconColor: Colors.teal,
+                              iconColor: const Color(0xFF10B981),
                               title: L.t('نیا اسٹوڈنٹ شامل کریں', 'Add New Student'),
                               subtitle: L.t('اسٹوڈنٹ کو براہِ راست انرول کریں',
                                   'Directly enroll student in class'),
@@ -397,7 +405,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           // 4. Student Approvals
                           _buildDrawerTile(
                             icon: Icons.how_to_reg_rounded,
-                            iconColor: Colors.green,
+                            iconColor: const Color(0xFF2563EB),
                             title: L.t('نئی تصدیقیں (Approvals)', 'Student Approvals'),
                             subtitle: L.t('رجسٹرڈ طلباء کی تصدیق اور کلاس تفویض',
                                 'Verify registrations and assign class'),
@@ -420,7 +428,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           // 4b. Search Students
                           _buildDrawerTile(
                             icon: Icons.search_rounded,
-                            iconColor: Colors.indigo,
+                            iconColor: const Color(0xFF10B981),
                             title: L.t('اسٹوڈنٹ تلاش کریں', 'Search Students'),
                             subtitle: L.t('نام یا ای میل سے تلاش، مکمل تفصیلات',
                                 'Find by name/email, view full details'),
@@ -576,42 +584,6 @@ class _AppDrawerState extends State<AppDrawer> {
                           ),
                         ),
 
-                        // Language Toggle
-                        _buildDrawerTile(
-                          icon: Icons.language_rounded,
-                          iconColor: const Color(0xFFF59E0B),
-                          title: isUrdu ? 'اردو (Urdu)' : 'English',
-                          subtitle: isUrdu
-                              ? 'Switch to English'
-                              : 'اردو میں تبدیل کریں',
-                          textColor: textColor,
-                          subtextColor: subtextColor,
-                          isDark: isDark,
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B)
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: const Color(0xFFF59E0B)
-                                    .withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Text(
-                              isUrdu ? 'EN' : 'اردو',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFF59E0B),
-                              ),
-                            ),
-                          ),
-                          onTap: () => AppLang.toggle(),
-                        ),
-                        const SizedBox(height: 6),
-
                         // Theme Selector
                         _buildDrawerTile(
                           icon: Icons.palette_rounded,
@@ -715,9 +687,12 @@ class _AppDrawerState extends State<AppDrawer> {
     Widget? trailing,
     bool isSelected = false,
   }) {
+    // منتخب حالت کا رنگ ہمیشہ برانڈ ٹِیل ہو (ہر ٹائل کے iconColor سے نہیں)
+    // تاکہ سائیڈ بار کے سبھی آئٹمز ایک ہی نظام کا حصہ لگیں۔
+    const selectedAccent = Color(0xFF10B981);
     return Material(
       color: isSelected
-          ? iconColor.withValues(alpha: isDark ? 0.2 : 0.1)
+          ? selectedAccent.withValues(alpha: isDark ? 0.2 : 0.1)
           : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
@@ -728,7 +703,7 @@ class _AppDrawerState extends State<AppDrawer> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: isSelected
-                ? Border.all(color: iconColor.withValues(alpha: 0.5), width: 1.2)
+                ? Border.all(color: selectedAccent.withValues(alpha: 0.5), width: 1.2)
                 : null,
           ),
           child: Row(

@@ -153,12 +153,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             onPressed: _load,
           ),
           IconButton(
-            icon: const Icon(Icons.person_add_alt_1, color: Colors.teal),
+            icon: const Icon(Icons.person_add_alt_1, color: Color(0xFF10B981)),
             tooltip: L.t('اسٹوڈنٹ شامل کریں', 'Add Student'),
             onPressed: _openAddStudentDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.how_to_reg, color: Colors.green),
+            icon: const Icon(Icons.how_to_reg, color: Color(0xFF2563EB)),
             tooltip: L.t('نئی تصدیقیں', 'Student Approvals'),
             onPressed: () => goTo(
                 TeacherPane.approvals,
@@ -166,7 +166,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
           ),
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.indigo),
+            icon: const Icon(Icons.search, color: Color(0xFF10B981)),
             tooltip: L.t('اسٹوڈنٹ تلاش کریں', 'Search Students'),
             onPressed: () => goTo(
                 TeacherPane.search,
@@ -225,7 +225,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       floatingActionButton: _canManageClasses && (!isWide || _pane == TeacherPane.dashboard)
           ? FloatingActionButton.extended(
               onPressed: _openCreateDialog,
-              backgroundColor: Colors.teal,
+              backgroundColor: const Color(0xFF10B981),
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(L.t('نئی کلاس بنائیں۔', 'New Class'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
@@ -297,7 +297,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 icon: const Icon(Icons.person_add, size: 16),
                 label: Text(L.t('اسٹوڈنٹ شامل کریں', 'Add Student')),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
+                  backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -358,7 +358,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               children: [
                 _quickActionButton(
                   icon: Icons.how_to_reg,
-                  color: Colors.green,
+                  color: const Color(0xFF2563EB),
                   label: L.t('نئی تصدیقیں', 'Approvals'),
                   onTap: () => goTo(TeacherPane.approvals,
                       () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
@@ -366,7 +366,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 const SizedBox(width: 10),
                 _quickActionButton(
                   icon: Icons.receipt_long_outlined,
-                  color: Colors.purple,
+                  color: const Color(0xFF10B981),
                   label: L.t('فیس ادائیگیاں', 'Pending Claims'),
                   onTap: () => goTo(TeacherPane.payments,
                       () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PendingPayments()))),
@@ -446,8 +446,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 if (_canManageClasses)
                   TextButton.icon(
                     onPressed: _openCreateDialog,
-                    icon: const Icon(Icons.add_circle_outline, color: Colors.teal),
-                    label: Text(L.t('نئی کلاس بنائیں', 'Create Class'), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.add_circle_outline, color: Color(0xFF10B981)),
+                    label: Text(L.t('نئی کلاس بنائیں', 'Create Class'), style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -690,7 +690,7 @@ class _ClassCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.edit_note_rounded, color: Colors.orange),
+                icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF2563EB)),
                 tooltip: L.t('ایڈٹ کریں', 'Edit'),
                 onPressed: onEdit,
               ),
