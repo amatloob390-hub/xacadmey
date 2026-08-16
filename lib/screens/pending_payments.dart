@@ -125,39 +125,36 @@ class _PendingPaymentsState extends State<PendingPayments> {
       );
     }
 
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.4),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${L.t('فیس تصدیق و رسید', 'Fee Verification')}: ${p.studentName}',
-                      style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+    final headerBlock = Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '${L.t('فیس تصدیق و رسید', 'Fee Verification')}: ${p.studentName}',
+                  style: _ts(fontSize: 16, fontWeight: FontWeight.bold, theme: theme),
+                ),
               ),
-              const Divider(),
-              const SizedBox(height: 10),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const Divider(),
+        ],
+      ),
+    );
 
+    final middleBlock = SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
               // Highlighted Transaction ID / Reference Banner
               Container(
                 width: double.infinity,
@@ -215,27 +212,54 @@ class _PendingPaymentsState extends State<PendingPayments> {
                 ),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(
-                    L.t('بند کریں', 'Close'),
-                    style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              ),
+        ],
+      ),
+    );
+
+    final closeButtonBlock = Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Text(
+            L.t('بند کریں', 'Close'),
+            style: _ts(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1.4),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 500,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              headerBlock,
+              Flexible(child: middleBlock),
+              closeButtonBlock,
             ],
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _errorImage(ThemePreset theme) {

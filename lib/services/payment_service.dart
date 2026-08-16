@@ -416,6 +416,23 @@ class PaymentService {
       }
     }
 
+    // اگر اسی طالبِ علم/کلاس کی کوئی پرانی ڈپلیکیٹ pending/submitted row باقی
+    // رہ گئی ہو (مثلاً ایک ناکام حذف کے سبب دوبارہ جمع کرانے پر) تو اسے بھی
+    // منظور کر دیں — ورنہ منظوری کے باوجود وہی طالبِ علم دوبارہ لسٹ میں آ جاتا ہے۔
+    if (studentId != null && studentId.isNotEmpty) {
+      try {
+        var q = _supabase
+            .from('payments')
+            .update({'status': 'approved'})
+            .eq('student_id', studentId)
+            .neq('status', 'approved');
+        if (classId != null && classId.isNotEmpty) {
+          q = q.eq('class_id', classId);
+        }
+        await q;
+      } catch (_) {}
+    }
+
     // Update class_enrollments and profiles if studentId is known
     bool studentApproved = false;
     if (studentId != null && studentId.isNotEmpty) {
