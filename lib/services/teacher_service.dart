@@ -21,6 +21,7 @@ class TeacherService {
     required String zoomLink,
     required DateTime scheduledAt,
     int durationMin = 60,
+    bool isFree = false,
   }) async {
     final teacherId = _supabase.auth.currentUser!.id;
     await _supabase.from('classes').insert({
@@ -30,6 +31,7 @@ class TeacherService {
       'scheduled_at': scheduledAt.toIso8601String(),
       'duration_min': durationMin,
       'is_active': false,
+      'is_free': isFree,
     });
   }
 
@@ -39,12 +41,14 @@ class TeacherService {
     required String zoomLink,
     required DateTime scheduledAt,
     required int durationMin,
+    bool isFree = false,
   }) async {
     await _supabase.from('classes').update({
       'title': title,
       'zoom_link': zoomLink,
       'scheduled_at': scheduledAt.toIso8601String(),
       'duration_min': durationMin,
+      'is_free': isFree,
     }).eq('id', classId);
   }
 

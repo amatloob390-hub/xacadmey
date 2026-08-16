@@ -74,13 +74,26 @@ class AuthService {
 
       // link سے آیا ہو تو اُسی class میں enroll کر دیں
       if (classId != null && classId.isNotEmpty) {
+        // کلاس خود ٹیچر کی طرف سے "Free" مارک ہو تو کوئی فیس درکار نہیں —
+        // پلان (trial/paid) سے قطع نظر یہ enrollment ہمیشہ paid/approved۔
+        bool classIsFree = false;
+        try {
+          final row = await _supabase
+              .from('classes')
+              .select('is_free')
+              .eq('id', classId)
+              .maybeSingle();
+          classIsFree = row?['is_free'] == true;
+        } catch (_) {}
+
         try {
           await _supabase.from('enrollments').upsert({
             'student_id': user.id,
             'user_id': user.id,
             'class_id': classId,
             'grace_until': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-            'payment_status': isTrialPlan ? 'trial' : 'pending',
+            'payment_status':
+                classIsFree ? 'paid' : (isTrialPlan ? 'trial' : 'pending'),
           }, onConflict: 'student_id,class_id');
         } catch (_) {}
 
@@ -89,7 +102,7 @@ class AuthService {
             'student_id': user.id,
             'user_id': user.id,
             'class_id': classId,
-            'status': isTrialPlan ? 'approved' : 'pending',
+            'status': (classIsFree || isTrialPlan) ? 'approved' : 'pending',
             'created_at': DateTime.now().toIso8601String(),
           }, onConflict: 'student_id,class_id');
         } catch (_) {}

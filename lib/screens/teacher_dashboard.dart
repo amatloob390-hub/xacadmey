@@ -629,6 +629,7 @@ class _ClassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isActive = data['is_active'] as bool? ?? false;
+    final isFree = data['is_free'] as bool? ?? false;
     final title = data['title'] as String? ?? '—';
     final scheduled = DateTime.tryParse(data['scheduled_at'] ?? '');
 
@@ -701,6 +702,21 @@ class _ClassCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (isFree)
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          L.t('مفت', 'FREE'),
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                        ),
+                      ),
                     if (scheduled != null)
                       Text(
                         '${L.t('وقت', 'Time')}: ${scheduled.day}/${scheduled.month} ${scheduled.hour}:${scheduled.minute.toString().padLeft(2, '0')}',

@@ -37,6 +37,18 @@ class ClassService {
       try {
         await _supabase.rpc('enroll_in_class', params: {'p_class_id': cleanId});
       } catch (_) {}
+
+      // کلاس خود "Free" مارک ہو تو کوئی فیس درکار نہیں — ہمیشہ paid۔
+      bool classIsFree = false;
+      try {
+        final row = await _supabase
+            .from('classes')
+            .select('is_free')
+            .eq('id', cleanId)
+            .maybeSingle();
+        classIsFree = row?['is_free'] == true;
+      } catch (_) {}
+
       try {
         await _supabase.from('enrollments').upsert({
           'student_id': userId,
@@ -44,7 +56,7 @@ class ClassService {
           'class_id': cleanId,
           'grace_until':
               DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-          'payment_status': 'trial',
+          'payment_status': classIsFree ? 'paid' : 'trial',
         }, onConflict: 'student_id,class_id');
       } catch (_) {}
       try {

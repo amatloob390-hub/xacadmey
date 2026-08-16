@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../services/teacher_service.dart';
+import 'teal_box.dart';
 
 class CreateClassDialog extends StatefulWidget {
   final TeacherService service;
@@ -17,6 +18,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
   final _linkCtrl = TextEditingController();
   DateTime _scheduledAt = _roundToNextHour();
   int _durationMin = 60;
+  bool _isFree = false;
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
@@ -34,6 +36,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
       _titleCtrl.text = e['title'] as String? ?? '';
       _linkCtrl.text = e['zoom_link'] as String? ?? '';
       _durationMin = e['duration_min'] as int? ?? 60;
+      _isFree = e['is_free'] as bool? ?? false;
       final s = DateTime.tryParse(e['scheduled_at'] ?? '');
       if (s != null) _scheduledAt = s;
     }
@@ -87,6 +90,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
           zoomLink: _linkCtrl.text.trim(),
           scheduledAt: _scheduledAt,
           durationMin: _durationMin,
+          isFree: _isFree,
         );
       } else {
         await widget.service.createClass(
@@ -94,6 +98,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
           zoomLink: _linkCtrl.text.trim(),
           scheduledAt: _scheduledAt,
           durationMin: _durationMin,
+          isFree: _isFree,
         );
       }
       if (mounted) {
@@ -154,42 +159,75 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                     ],
                   ),
                   const Divider(height: 24),
-                  TextFormField(
-                    controller: _titleCtrl,
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: L.t('کلاس کا عنوان', 'Class title'),
-                      hintText: L.t('مثلاً: ریاضی — باب ۳', 'e.g. Maths — Ch 3'),
-                      prefixIcon: const Icon(Icons.title),
-                      border: const OutlineInputBorder(),
+                  TealBox(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: TextFormField(
+                      controller: _titleCtrl,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: L.t('کلاس کا عنوان', 'Class title'),
+                        hintText: L.t('مثلاً: ریاضی — باب ۳', 'e.g. Maths — Ch 3'),
+                        prefixIcon: const Icon(Icons.title),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? L.t('عنوان ضروری ہے', 'Title is required')
+                          : null,
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? L.t('عنوان ضروری ہے', 'Title is required')
-                        : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _linkCtrl,
-                    keyboardType: TextInputType.url,
-                    decoration: InputDecoration(
-                      labelText: L.t('زوم لنک', 'Zoom link'),
-                      hintText: 'https://zoom.us/j/...',
-                      prefixIcon: const Icon(Icons.link),
-                      helperText: L.t('یہ لنک اسٹوڈنٹس کو کبھی نظر نہیں آئے گا',
-                          'Students will never see this link'),
-                      border: const OutlineInputBorder(),
+                  TealBox(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: TextFormField(
+                      controller: _linkCtrl,
+                      keyboardType: TextInputType.url,
+                      decoration: InputDecoration(
+                        labelText: L.t('زوم لنک', 'Zoom link'),
+                        hintText: 'https://zoom.us/j/...',
+                        prefixIcon: const Icon(Icons.link),
+                        helperText: L.t('یہ لنک اسٹوڈنٹس کو کبھی نظر نہیں آئے گا',
+                            'Students will never see this link'),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return L.t('زوم لنک درج کریں', 'Enter the Zoom link');
+                        }
+                        final uri = Uri.tryParse(v.trim());
+                        if (uri == null || !uri.isAbsolute || !v.contains('http')) {
+                          return L.t('درست لنک درج کریں (http سے شروع)',
+                              'Enter a valid link (starts with http)');
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return L.t('زوم لنک درج کریں', 'Enter the Zoom link');
-                      }
-                      final uri = Uri.tryParse(v.trim());
-                      if (uri == null || !uri.isAbsolute || !v.contains('http')) {
-                        return L.t('درست لنک درج کریں (http سے شروع)',
-                            'Enter a valid link (starts with http)');
-                      }
-                      return null;
-                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(L.t('قیمت کی قسم', 'Pricing'), style: theme.textTheme.labelLarge),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: Text(L.t('مفت (Free)', 'Free')),
+                        selected: _isFree,
+                        onSelected: (_) => setState(() => _isFree = true),
+                      ),
+                      ChoiceChip(
+                        label: Text(L.t('ادا شدہ (Paid)', 'Paid')),
+                        selected: !_isFree,
+                        onSelected: (_) => setState(() => _isFree = false),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   Align(
@@ -217,14 +255,10 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: _pickDateTime,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
+                    borderRadius: BorderRadius.circular(16),
+                    child: TealBox(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 14),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                       child: Row(
                         children: [
                           Icon(Icons.event, color: theme.colorScheme.primary),
@@ -238,8 +272,8 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                                         fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 2),
                                 Text(_fmtTime(_scheduledAt),
-                                    style:
-                                        TextStyle(color: Colors.grey.shade700)),
+                                    style: TextStyle(
+                                        color: theme.colorScheme.onSurfaceVariant)),
                               ],
                             ),
                           ),

@@ -977,7 +977,8 @@ class _StudentClassCard extends StatelessWidget {
               border: Border.all(color: Colors.amber.shade300, width: 1.2),
             ),
             child: Text(
-              L.t('⏳ مفت مہلت: $days دن $hours گھنٹے باقی', '⏳ Free grace: $days d $hours h left'),
+              L.t('⏳ ٹرائل ختم ہونے میں: $days دن $hours گھنٹے',
+                  '⏳ Trial ending in: $days d $hours h'),
               style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
