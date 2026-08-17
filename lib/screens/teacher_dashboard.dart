@@ -235,84 +235,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ),
           const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(92),
-          child: NeonIconTileBar(
-            tiles: [
-              NeonIconTile(
-                icon: Icons.person_add_alt_1,
-                label: L.t('نیا اسٹوڈنٹ', 'Add Student'),
-                color: const Color(0xFF10B981),
-                onTap: _openAddStudentDialog,
-              ),
-              NeonIconTile(
-                icon: Icons.how_to_reg,
-                label: L.t('تصدیقیں', 'Approvals'),
-                color: const Color(0xFF2563EB),
-                selected: _pane == TeacherPane.approvals,
-                onTap: () => goTo(
-                    TeacherPane.approvals,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
-              ),
-              NeonIconTile(
-                icon: Icons.search,
-                label: L.t('تلاش', 'Search'),
-                color: const Color(0xFF10B981),
-                selected: _pane == TeacherPane.search,
-                onTap: () => goTo(
-                    TeacherPane.search,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const SearchStudentsScreen()))),
-              ),
-              NeonIconTile(
-                icon: Icons.payments_outlined,
-                label: L.t('ادائیگیاں', 'Payments'),
-                color: const Color(0xFF2563EB),
-                selected: _pane == TeacherPane.payments,
-                onTap: () => goTo(
-                    TeacherPane.payments,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const PendingPayments()))),
-              ),
-              NeonIconTile(
-                icon: Icons.timelapse,
-                label: L.t('زیرِ التوا فیس', 'Pending Fees'),
-                color: const Color(0xFF10B981),
-                selected: _pane == TeacherPane.pendingFees,
-                onTap: () => goTo(
-                    TeacherPane.pendingFees,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const PendingStudents()))),
-              ),
-              if (_canAssignRoles)
-                NeonIconTile(
-                  icon: Icons.admin_panel_settings,
-                  label: L.t('رولز', 'Roles'),
-                  color: const Color(0xFF2563EB),
-                  selected: _pane == TeacherPane.roles,
-                  onTap: () => goTo(
-                      TeacherPane.roles,
-                      () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ManageRolesScreen(
-                                  isAdmin: widget.role == 'admin')))),
-                ),
-              if (_canAssignRoles)
-                NeonIconTile(
-                  icon: Icons.share_outlined,
-                  label: L.t('سوشل', 'Social'),
-                  color: const Color(0xFF10B981),
-                  selected: _pane == TeacherPane.social,
-                  onTap: () => goTo(
-                      TeacherPane.social,
-                      () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const SocialLinksScreen()))),
-                ),
-            ],
-          ),
-        ),
       ),
       floatingActionButton: _canManageClasses && (!isWide || _pane == TeacherPane.dashboard)
           ? FloatingActionButton.extended(
@@ -568,6 +490,86 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
+  /// فوری نیوی گیشن ٹائلز — سکرول ہونے والے مواد کا حصہ (AppBar میں نہیں)
+  /// تاکہ اسکرول کرنے پر یہ صفحے کے ساتھ اوپر چلی جائیں، ہمیشہ fix نہ رہیں۔
+  Widget _quickNavTileBar(void Function(TeacherPane, VoidCallback) goTo) {
+    return NeonIconTileBar(
+      tiles: [
+        NeonIconTile(
+          icon: Icons.person_add_alt_1,
+          label: L.t('نیا اسٹوڈنٹ', 'Add Student'),
+          color: const Color(0xFF10B981),
+          onTap: _openAddStudentDialog,
+        ),
+        NeonIconTile(
+          icon: Icons.how_to_reg,
+          label: L.t('تصدیقیں', 'Approvals'),
+          color: const Color(0xFF2563EB),
+          selected: _pane == TeacherPane.approvals,
+          onTap: () => goTo(
+              TeacherPane.approvals,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
+        ),
+        NeonIconTile(
+          icon: Icons.search,
+          label: L.t('تلاش', 'Search'),
+          color: const Color(0xFF10B981),
+          selected: _pane == TeacherPane.search,
+          onTap: () => goTo(
+              TeacherPane.search,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const SearchStudentsScreen()))),
+        ),
+        NeonIconTile(
+          icon: Icons.payments_outlined,
+          label: L.t('ادائیگیاں', 'Payments'),
+          color: const Color(0xFF2563EB),
+          selected: _pane == TeacherPane.payments,
+          onTap: () => goTo(
+              TeacherPane.payments,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PendingPayments()))),
+        ),
+        NeonIconTile(
+          icon: Icons.timelapse,
+          label: L.t('زیرِ التوا فیس', 'Pending Fees'),
+          color: const Color(0xFF10B981),
+          selected: _pane == TeacherPane.pendingFees,
+          onTap: () => goTo(
+              TeacherPane.pendingFees,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PendingStudents()))),
+        ),
+        if (_canAssignRoles)
+          NeonIconTile(
+            icon: Icons.admin_panel_settings,
+            label: L.t('رولز', 'Roles'),
+            color: const Color(0xFF2563EB),
+            selected: _pane == TeacherPane.roles,
+            onTap: () => goTo(
+                TeacherPane.roles,
+                () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            ManageRolesScreen(isAdmin: widget.role == 'admin')))),
+          ),
+        if (_canAssignRoles)
+          NeonIconTile(
+            icon: Icons.share_outlined,
+            label: L.t('سوشل', 'Social'),
+            color: const Color(0xFF10B981),
+            selected: _pane == TeacherPane.social,
+            onTap: () => goTo(
+                TeacherPane.social,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SocialLinksScreen()))),
+          ),
+      ],
+    );
+  }
+
   Widget _buildBody(void Function(TeacherPane, VoidCallback) goTo) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -584,6 +586,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         return ListView(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
           children: [
+            _quickNavTileBar(goTo),
             _buildAnalyticsSection(goTo),
             const SizedBox(height: 10),
             Row(

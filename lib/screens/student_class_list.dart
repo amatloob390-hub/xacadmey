@@ -245,6 +245,7 @@ class _StudentClassListState extends State<StudentClassList> {
                         return ListView(
                           padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
                           children: [
+                            _quickNavTileBar(goTo),
                             _emptyState(),
                           ],
                         );
@@ -355,6 +356,7 @@ class _StudentClassListState extends State<StudentClassList> {
                       return ListView(
                         padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
                         children: [
+                          _quickNavTileBar(goTo),
                           if (featuredClass != null) ...[
                             _liveClassHero(featuredClass),
                             const SizedBox(height: 16),
@@ -419,20 +421,6 @@ class _StudentClassListState extends State<StudentClassList> {
           ),
           const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(92),
-          child: NeonIconTileBar(
-            tiles: [
-              NeonIconTile(
-                icon: Icons.auto_awesome,
-                label: L.t('AI مدد', 'AI Help'),
-                color: const Color(0xFF10B981),
-                selected: _pane == TeacherPane.aiChat,
-                onTap: () => _openAiOverlay('XAcademy Tutors'),
-              ),
-            ],
-          ),
-        ),
       ),
       body: isWide
           ? Container(
@@ -497,6 +485,22 @@ class _StudentClassListState extends State<StudentClassList> {
 
   /// نمایاں کرنے کیلئے ایک کلاس چنیں — پہلے کوئی لائیو/جوائن کے قابل، ورنہ
   /// جس کا وقت سب سے قریب ہو۔
+  /// فوری نیوی گیشن ٹائلز — سکرول ہونے والے مواد کا حصہ (AppBar میں نہیں)
+  /// تاکہ اسکرول کرنے پر یہ صفحے کے ساتھ اوپر چلی جائیں، ہمیشہ fix نہ رہیں۔
+  Widget _quickNavTileBar(void Function(TeacherPane, VoidCallback) goTo) {
+    return NeonIconTileBar(
+      tiles: [
+        NeonIconTile(
+          icon: Icons.auto_awesome,
+          label: L.t('AI مدد', 'AI Help'),
+          color: const Color(0xFF10B981),
+          selected: _pane == TeacherPane.aiChat,
+          onTap: () => _openAiOverlay('XAcademy Tutors'),
+        ),
+      ],
+    );
+  }
+
   StudentClass? _pickFeaturedClass(List<StudentClass> classes) {
     if (classes.isEmpty) return null;
     final joinable = classes.where((c) => c.canJoin).toList();
