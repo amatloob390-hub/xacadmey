@@ -7,13 +7,13 @@ import '../services/teacher_service.dart';
 import '../services/payment_service.dart';
 import '../widgets/create_class_dialog.dart';
 import '../widgets/add_student_dialog.dart';
-import '../widgets/logout_button.dart';
 import '../widgets/landing_button.dart';
 import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/dashboard_analytics_card.dart';
 import '../widgets/neon_icon_tile.dart';
+import '../widgets/profile_menu_button.dart';
 import 'profile_screen.dart';
 import 'social_links_screen.dart';
 import 'student_approvals.dart';
@@ -168,7 +168,55 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
-        title: Text(L.t('ٹیچر کمانڈ سینٹر و ڈیش بورڈ', 'Teacher Command Center & Dashboard')),
+        title: Row(
+          children: [
+            Text(L.t('ٹیچر کمانڈ سینٹر', 'Teacher Command Center')),
+            if (isWide) ...[
+              const SizedBox(width: 20),
+              Expanded(
+                child: InkWell(
+                  onTap: () => goTo(
+                      TeacherPane.search,
+                      () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const SearchStudentsScreen()))),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 8),
+                        Text(
+                          L.t('اسٹوڈنٹ تلاش کریں...', 'Search students...'),
+                          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (_canManageClasses)
+                OutlinedButton.icon(
+                  onPressed: _openCreateDialog,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text(L.t('کلاس بنائیں', 'Create Class')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF10B981),
+                    side: const BorderSide(color: Color(0xFF10B981)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+            ] else
+              const Spacer(),
+          ],
+        ),
         actions: [
           const LandingButton(),
           const LanguageToggle(),
@@ -178,7 +226,14 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             onPressed: _load,
           ),
           const ThemeSelectorButton(),
-          const LogoutButton(),
+          const SizedBox(width: 6),
+          ProfileMenuButton(
+            onProfileTap: () => goTo(
+                TeacherPane.profile,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          ),
+          const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(92),
@@ -255,16 +310,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       () => Navigator.push(context,
                           MaterialPageRoute(builder: (_) => const SocialLinksScreen()))),
                 ),
-              NeonIconTile(
-                icon: Icons.account_circle,
-                label: L.t('پروفائل', 'Profile'),
-                color: const Color(0xFF2563EB),
-                selected: _pane == TeacherPane.profile,
-                onTap: () => goTo(
-                    TeacherPane.profile,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()))),
-              ),
             ],
           ),
         ),

@@ -6,7 +6,6 @@ import '../pending_class.dart';
 import '../services/student_service.dart';
 import '../widgets/dashboard_analytics_card.dart';
 import '../widgets/join_class_button.dart';
-import '../widgets/logout_button.dart';
 import '../widgets/landing_button.dart';
 import '../widgets/submit_payment_dialog.dart';
 import '../widgets/user_banner.dart';
@@ -14,6 +13,7 @@ import '../widgets/theme_selector.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/teal_box.dart';
 import '../widgets/neon_icon_tile.dart';
+import '../widgets/profile_menu_button.dart';
 import 'profile_screen.dart';
 import 'ai_chat_screen.dart';
 
@@ -410,7 +410,14 @@ class _StudentClassListState extends State<StudentClassList> {
           const LandingButton(),
           const LanguageToggle(),
           const ThemeSelectorButton(),
-          const LogoutButton(),
+          const SizedBox(width: 6),
+          ProfileMenuButton(
+            onProfileTap: () => goTo(
+                TeacherPane.profile,
+                () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          ),
+          const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(92),
@@ -422,16 +429,6 @@ class _StudentClassListState extends State<StudentClassList> {
                 color: const Color(0xFF10B981),
                 selected: _pane == TeacherPane.aiChat,
                 onTap: () => _openAiOverlay('XAcademy Tutors'),
-              ),
-              NeonIconTile(
-                icon: Icons.account_circle,
-                label: L.t('پروفائل', 'Profile'),
-                color: const Color(0xFF2563EB),
-                selected: _pane == TeacherPane.profile,
-                onTap: () => goTo(
-                    TeacherPane.profile,
-                    () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()))),
               ),
             ],
           ),
