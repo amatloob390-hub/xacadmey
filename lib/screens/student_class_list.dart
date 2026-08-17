@@ -13,6 +13,7 @@ import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/teal_box.dart';
+import '../widgets/neon_icon_tile.dart';
 import 'profile_screen.dart';
 import 'ai_chat_screen.dart';
 
@@ -409,21 +410,32 @@ class _StudentClassListState extends State<StudentClassList> {
           const LandingButton(),
           const LanguageToggle(),
           const ThemeSelectorButton(),
-          IconButton(
-            icon: const Icon(Icons.auto_awesome, color: Colors.teal),
-            tooltip: L.t('AI Teaching Assistant', 'AI Teaching Assistant'),
-            onPressed: () => _openAiOverlay('XAcademy Tutors'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            tooltip: L.t('پروفائل', 'Profile'),
-            onPressed: () => goTo(
-                TeacherPane.profile,
-                () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()))),
-          ),
           const LogoutButton(),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(92),
+          child: NeonIconTileBar(
+            tiles: [
+              NeonIconTile(
+                icon: Icons.auto_awesome,
+                label: L.t('AI مدد', 'AI Help'),
+                color: const Color(0xFF10B981),
+                selected: _pane == TeacherPane.aiChat,
+                onTap: () => _openAiOverlay('XAcademy Tutors'),
+              ),
+              NeonIconTile(
+                icon: Icons.account_circle,
+                label: L.t('پروفائل', 'Profile'),
+                color: const Color(0xFF2563EB),
+                selected: _pane == TeacherPane.profile,
+                onTap: () => goTo(
+                    TeacherPane.profile,
+                    () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+              ),
+            ],
+          ),
+        ),
       ),
       body: isWide
           ? Container(
