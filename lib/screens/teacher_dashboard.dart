@@ -768,11 +768,25 @@ class _ClassCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Switch(
-                    value: isActive,
-                    onChanged: onToggle,
-                    activeTrackColor: const Color(0xFF10B981).withValues(alpha: 0.4),
-                    activeThumbColor: const Color(0xFF10B981),
+                  Container(
+                    decoration: isActive
+                        ? BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.55),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          )
+                        : null,
+                    child: Switch(
+                      value: isActive,
+                      onChanged: onToggle,
+                      activeTrackColor: const Color(0xFF10B981).withValues(alpha: 0.4),
+                      activeThumbColor: const Color(0xFF10B981),
+                    ),
                   ),
                 ],
               ),
