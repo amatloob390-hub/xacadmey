@@ -71,8 +71,12 @@ class _PendingStudentsState extends State<PendingStudents> {
               children: [3, 7, 15]
                   .map((d) => ActionChip(
                         label: Text('$d ${L.t('دن', 'd')}'),
-                        backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
-                        side: BorderSide(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                        labelStyle: const TextStyle(
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.18),
+                        side: const BorderSide(color: Color(0xFF10B981), width: 1.2),
                         onPressed: () => Navigator.pop(context, d),
                       ))
                   .toList(),

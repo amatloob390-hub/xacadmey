@@ -85,7 +85,8 @@ class _PendingPaymentsState extends State<PendingPayments> {
 
   void _showReceiptDialog(PendingPayment p, ThemePreset theme) {
     Widget contentWidget;
-    if (p.receiptUrl != null && p.receiptUrl!.trim().isNotEmpty) {
+    final hasImage = p.receiptUrl != null && p.receiptUrl!.trim().isNotEmpty;
+    if (hasImage) {
       try {
         final str = p.receiptUrl!.trim();
         if (str.startsWith('http://') || str.startsWith('https://')) {
@@ -208,7 +209,31 @@ class _PendingPaymentsState extends State<PendingPayments> {
                 constraints: const BoxConstraints(maxHeight: 380),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: contentWidget,
+                  child: hasImage
+                      ? Stack(
+                          fit: StackFit.passthrough,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _openZoomedImage(context, contentWidget),
+                              child: contentWidget,
+                            ),
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: IgnorePointer(
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.zoom_in, color: Colors.white, size: 18),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : contentWidget,
                 ),
               ),
               const SizedBox(height: 16),
@@ -256,6 +281,33 @@ class _PendingPaymentsState extends State<PendingPayments> {
               Flexible(child: middleBlock),
               closeButtonBlock,
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// رسید/اسکرین شاٹ کو پورے اسکرین پر pinch/scroll سے zoom کر کے دیکھیں۔
+  void _openZoomedImage(BuildContext context, Widget imageWidget) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: InteractiveViewer(
+            minScale: 1,
+            maxScale: 5,
+            child: Center(child: imageWidget),
           ),
         ),
       ),
