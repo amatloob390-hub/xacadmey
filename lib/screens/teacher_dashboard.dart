@@ -14,6 +14,7 @@ import '../widgets/app_drawer.dart';
 import '../widgets/dashboard_analytics_card.dart';
 import '../widgets/neon_icon_tile.dart';
 import '../widgets/profile_menu_button.dart';
+import '../widgets/keyboard_scrollable.dart';
 import 'profile_screen.dart';
 import 'social_links_screen.dart';
 import 'student_approvals.dart';
@@ -49,6 +50,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   bool _loading = true;
   bool _error = false;
 
+  // مین باڈی کی فہرست کو mouse/touch کے ساتھ ساتھ کی بورڈ کے تیروں سے بھی
+  // اسکرول کرنے کیلئے۔
+  final ScrollController _bodyScrollController = ScrollController();
+
   // ڈیش بورڈ کے اینالیٹکس رنگز کیلئے — منتظر تصدیقیں اور ادائیگیاں۔
   int _pendingApprovalsCount = 0;
   int _pendingPaymentsCount = 0;
@@ -57,6 +62,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _bodyScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -134,7 +145,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             onRefresh: _load,
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 580),
+                constraints: BoxConstraints(maxWidth: isWide ? 1400 : 580),
                 child: _buildBody(goTo),
               ),
             ),
@@ -583,7 +594,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 650;
 
-        return ListView(
+        return KeyboardScrollable(
+          controller: _bodyScrollController,
+          child: ListView(
+          controller: _bodyScrollController,
           padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
           children: [
             _quickNavTileBar(goTo),
@@ -640,6 +654,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 );
               }),
           ],
+          ),
         );
       },
     );

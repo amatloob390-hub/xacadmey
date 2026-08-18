@@ -14,6 +14,7 @@ import '../widgets/app_drawer.dart';
 import '../widgets/teal_box.dart';
 import '../widgets/neon_icon_tile.dart';
 import '../widgets/profile_menu_button.dart';
+import '../widgets/keyboard_scrollable.dart';
 import 'profile_screen.dart';
 import 'ai_chat_screen.dart';
 
@@ -37,11 +38,21 @@ class _StudentClassListState extends State<StudentClassList> {
   // گفتگو یاد رہتی ہے۔
   final List<ChatMsg> _aiChatHistory = [];
 
+  // مین باڈی کی فہرست کو mouse/touch کے ساتھ ساتھ کی بورڈ کے تیروں سے بھی
+  // اسکرول کرنے کیلئے۔
+  final ScrollController _bodyScrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _future = _service.getMyClasses();
     _checkPendingClass();
+  }
+
+  @override
+  void dispose() {
+    _bodyScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkPendingClass() async {
@@ -228,7 +239,7 @@ class _StudentClassListState extends State<StudentClassList> {
             onRefresh: _refresh,
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 580),
+                constraints: BoxConstraints(maxWidth: isWide ? 1400 : 580),
                   child: FutureBuilder<List<StudentClass>>(
                     future: _future,
                     builder: (context, snapshot) {
@@ -242,12 +253,16 @@ class _StudentClassListState extends State<StudentClassList> {
                       final classes = snapshot.data ?? [];
 
                       if (classes.isEmpty) {
-                        return ListView(
-                          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
-                          children: [
-                            _quickNavTileBar(goTo),
-                            _emptyState(),
-                          ],
+                        return KeyboardScrollable(
+                          controller: _bodyScrollController,
+                          child: ListView(
+                            controller: _bodyScrollController,
+                            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
+                            children: [
+                              _quickNavTileBar(goTo),
+                              _emptyState(),
+                            ],
+                          ),
                         );
                       }
 
@@ -353,28 +368,32 @@ class _StudentClassListState extends State<StudentClassList> {
                         ),
                       );
 
-                      return ListView(
-                        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
-                        children: [
-                          _quickNavTileBar(goTo),
-                          if (featuredClass != null) ...[
-                            _liveClassHero(featuredClass),
+                      return KeyboardScrollable(
+                        controller: _bodyScrollController,
+                        child: ListView(
+                          controller: _bodyScrollController,
+                          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
+                          children: [
+                            _quickNavTileBar(goTo),
+                            if (featuredClass != null) ...[
+                              _liveClassHero(featuredClass),
+                              const SizedBox(height: 16),
+                            ],
+                            analyticsWidget,
                             const SizedBox(height: 16),
+                            Text(
+                              L.t('میری کلاسز اور لیکچرز', 'My Classes & Lectures'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 14),
+                            ...classes.map((c) => _StudentClassCard(
+                                  item: c,
+                                  onChanged: _refresh,
+                                  onOpenAi: _openAiOverlay,
+                                )),
                           ],
-                          analyticsWidget,
-                          const SizedBox(height: 16),
-                          Text(
-                            L.t('میری کلاسز اور لیکچرز', 'My Classes & Lectures'),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 14),
-                          ...classes.map((c) => _StudentClassCard(
-                                item: c,
-                                onChanged: _refresh,
-                                onOpenAi: _openAiOverlay,
-                              )),
-                        ],
+                        ),
                       );
                     },
                   ),
