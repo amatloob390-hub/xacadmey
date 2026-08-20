@@ -6,6 +6,12 @@
       "runtimeExecutable": "flutter",
       "runtimeArgs": ["run", "-d", "web-server", "--web-port", "8765", "--web-hostname", "127.0.0.1"],
       "port": 8765
+    },
+    {
+      "name": "flutter-web-release",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "-l", "8766", "build/web"],
+      "port": 8766
     }
   ]
 }

@@ -78,24 +78,29 @@ class RadialGaugeCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 16, color: primaryColor),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: subtextColor,
+                SizedBox(
+                  height: 36,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 16, color: primaryColor),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: subtextColor,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -109,15 +114,18 @@ class RadialGaugeCard extends StatelessWidget {
                 ),
                 if (subtext.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    subtext,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: subtextColor.withValues(alpha: 0.9),
+                  SizedBox(
+                    height: 28,
+                    child: Text(
+                      subtext,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: subtextColor.withValues(alpha: 0.9),
+                      ),
                     ),
                   ),
                 ],

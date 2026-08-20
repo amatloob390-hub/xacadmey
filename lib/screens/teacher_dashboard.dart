@@ -377,6 +377,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 children: [
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
+                    height: 148,
                     child: RadialGaugeCard(
                       title: L.t('کلاسز کا وقت', 'Class Duration'),
                       valueText: '$totalHours ${L.t('گھنٹے', 'hrs')}',
@@ -390,6 +391,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
+                    height: 148,
                     child: RadialGaugeCard(
                       title: L.t('فعال کلاسز کا تناسب', 'Active Classes Rate'),
                       valueText: activePercent,
@@ -401,6 +403,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
+                    height: 148,
                     child: RadialGaugeCard(
                       title: L.t('نئی تصدیقیں', 'Pending Approvals'),
                       valueText: '$_pendingApprovalsCount',
@@ -410,12 +413,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       progress: _pendingApprovalsCount > 0
                           ? (_pendingApprovalsCount / 10).clamp(0.15, 1.0)
                           : 0.08,
-                      primaryColor: const Color(0xFF2563EB),
+                      primaryColor: const Color(0xFF10B981),
                       icon: Icons.how_to_reg_rounded,
                     ),
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
+                    height: 148,
                     child: RadialGaugeCard(
                       title: L.t('زیرِ التوا ادائیگیاں', 'Pending Payments'),
                       valueText: '$_pendingPaymentsCount',
@@ -441,7 +445,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               children: [
                 _quickActionButton(
                   icon: Icons.how_to_reg,
-                  color: const Color(0xFF2563EB),
+                  color: const Color(0xFF10B981),
                   label: L.t('نئی تصدیقیں', 'Approvals'),
                   onTap: () => goTo(TeacherPane.approvals,
                       () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StudentApprovalsScreen()))),
@@ -515,7 +519,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         NeonIconTile(
           icon: Icons.how_to_reg,
           label: L.t('تصدیقیں', 'Approvals'),
-          color: const Color(0xFF2563EB),
+          color: const Color(0xFF10B981),
           selected: _pane == TeacherPane.approvals,
           onTap: () => goTo(
               TeacherPane.approvals,
@@ -535,7 +539,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         NeonIconTile(
           icon: Icons.payments_outlined,
           label: L.t('ادائیگیاں', 'Payments'),
-          color: const Color(0xFF2563EB),
+          color: const Color(0xFF10B981),
           selected: _pane == TeacherPane.payments,
           onTap: () => goTo(
               TeacherPane.payments,
@@ -556,7 +560,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           NeonIconTile(
             icon: Icons.admin_panel_settings,
             label: L.t('رولز', 'Roles'),
-            color: const Color(0xFF2563EB),
+            color: const Color(0xFF10B981),
             selected: _pane == TeacherPane.roles,
             onTap: () => goTo(
                 TeacherPane.roles,
@@ -749,16 +753,12 @@ class _ClassCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isActive
-              ? const Color(0xFF10B981)
-              : (isDark ? const Color(0xFF2563EB).withValues(alpha: 0.5) : const Color(0xFF93C5FD)),
+          color: const Color(0xFF10B981).withValues(alpha: isActive ? 0.9 : 0.4),
           width: isActive ? 2.0 : 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: isActive
-                ? const Color(0xFF10B981).withValues(alpha: 0.22)
-                : const Color(0xFF2563EB).withValues(alpha: 0.12),
+            color: const Color(0xFF10B981).withValues(alpha: isActive ? 0.22 : 0.1),
             blurRadius: 16,
             offset: const Offset(0, 5),
           ),

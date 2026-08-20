@@ -91,10 +91,20 @@ class NeonIconTileBar extends StatelessWidget {
           color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: tiles),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: tiles,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

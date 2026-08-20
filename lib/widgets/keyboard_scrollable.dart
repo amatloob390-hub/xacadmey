@@ -4,7 +4,11 @@ import 'package:flutter/services.dart';
 /// اسکرول ایبل مواد کو کی بورڈ کے اوپر/نیچے تیر اور Page Up/Down سے بھی
 /// اسکرول کے قابل بناتا ہے — ماؤس/ٹریک پیڈ کے ساتھ ساتھ۔ [controller] وہی
 /// ہونا چاہیے جو اندر موجود ListView/CustomScrollView استعمال کر رہا ہو۔
-class KeyboardScrollable extends StatelessWidget {
+///
+/// خود اپنا FocusNode رکھتا ہے اور مواد پر کوئی بھی pointer-down پر focus
+/// دوبارہ حاصل کرتا ہے — تاکہ زبان بدلنے (RTL/LTR rebuild) یا کسی dialog/
+/// بٹن کے focus لے جانے کے بعد بھی تیر کی کیز کام کرتی رہیں۔
+class KeyboardScrollable extends StatefulWidget {
   final ScrollController controller;
   final Widget child;
 
@@ -13,6 +17,19 @@ class KeyboardScrollable extends StatelessWidget {
     required this.controller,
     required this.child,
   });
+
+  @override
+  State<KeyboardScrollable> createState() => _KeyboardScrollableState();
+}
+
+class _KeyboardScrollableState extends State<KeyboardScrollable> {
+  final FocusNode _focusNode = FocusNode(debugLabel: 'KeyboardScrollable');
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
@@ -31,11 +48,11 @@ class KeyboardScrollable extends StatelessWidget {
       return KeyEventResult.ignored;
     }
 
-    if (!controller.hasClients) return KeyEventResult.ignored;
-    final position = controller.position;
-    final target = (controller.offset + delta)
+    if (!widget.controller.hasClients) return KeyEventResult.ignored;
+    final position = widget.controller.position;
+    final target = (widget.controller.offset + delta)
         .clamp(position.minScrollExtent, position.maxScrollExtent);
-    controller.animateTo(
+    widget.controller.animateTo(
       target,
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
@@ -46,9 +63,16 @@ class KeyboardScrollable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _onKeyEvent,
-      child: child,
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (_) {
+          if (!_focusNode.hasFocus) _focusNode.requestFocus();
+        },
+        child: widget.child,
+      ),
     );
   }
 }

@@ -1249,6 +1249,7 @@ class _LandingScreenState extends State<LandingScreen> {
         'subUrdu': 'بغیر ادائیگی اسکلز سیکھنا شروع کریں۔',
         'subEn': 'Start learning skills without any payment.',
         'btnText': 'مفت شروع کریں',
+        'btnTextEn': 'Start Free',
         'isPopular': false,
         'features': [
           L.t('7 دن کی لائیو ٹرائل کلاسز', '7 days live trial classes'),
@@ -1264,6 +1265,7 @@ class _LandingScreenState extends State<LandingScreen> {
         'subUrdu': 'مکمل کورس تک رسائی — ماہانہ۔',
         'subEn': 'Full course access — monthly.',
         'btnText': 'ابھی داخلہ لیں',
+        'btnTextEn': 'Enroll Now',
         'isPopular': true,
         'features': [
           L.t('آپ کے کورس کی تمام لائیو کلاسز', 'All live classes for your course'),
@@ -1279,6 +1281,7 @@ class _LandingScreenState extends State<LandingScreen> {
         'subUrdu': 'ایڈوانس اور خصوصی کورسز کے لیے۔',
         'subEn': 'For advanced and special courses.',
         'btnText': 'Premier دیکھیں',
+        'btnTextEn': 'View Premier',
         'isPopular': false,
         'features': [
           L.t('Premier ایڈوانس بیچ', 'Premier advance batch'),
@@ -1420,7 +1423,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   elevation: 6,
                 ),
                 child: Text(
-                  p['btnText'] as String,
+                  L.t(p['btnText'] as String, p['btnTextEn'] as String),
                   style: _ts(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
