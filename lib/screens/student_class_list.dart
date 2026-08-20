@@ -337,6 +337,7 @@ class _StudentClassListState extends State<StudentClassList> {
                               children: [
                                 SizedBox(
                                   width: 260,
+                                  height: 148,
                                   child: RadialGaugeCard(
                                     title: L.t('کلاس وقت', 'Class Time'),
                                     valueText:
@@ -352,6 +353,7 @@ class _StudentClassListState extends State<StudentClassList> {
                                 ),
                                 SizedBox(
                                   width: 260,
+                                  height: 148,
                                   child: RadialGaugeCard(
                                     title: L.t('فعال کلاسز', 'Active Classes'),
                                     valueText: activePercent,
@@ -839,7 +841,7 @@ class _StudentClassCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final subtextColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
-    final accent = item.isActive ? const Color(0xFF10B981) : const Color(0xFF2563EB);
+    const accent = Color(0xFF10B981);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
