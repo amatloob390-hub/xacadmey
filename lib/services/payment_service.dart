@@ -119,6 +119,63 @@ class PaymentService {
     });
   }
 
+  /// Membership card کی درخواست — یا تو پہلے سے موجود کارڈ کی تفصیل درج
+  /// کرے (تصدیق کیلئے)، یا نیا کارڈ apply کرے (رسید کے ساتھ)۔ [userId]
+  /// نہ دیا جائے تو موجودہ لاگ اِن اسٹوڈنٹ فرض کیا جاتا ہے (signup کے
+  /// فوراً بعد نئے صارف کیلئے [userId] دینا ضروری ہے تاکہ auth state کی
+  /// دوڑ سے بچا جا سکے)۔
+  Future<void> submitCardApplication({
+    required String cardKey,
+    required double cardFee,
+    required bool isExistingHolder,
+    String? userId,
+    String? nameOnCard,
+    String? cardNumber,
+    DateTime? issueDate,
+    DateTime? expiryDate,
+    String? pin,
+    String? receiptImageBase64,
+  }) async {
+    final uid = userId ?? _supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('NOT_LOGGED_IN');
+
+    String fullName = '';
+    String email = '';
+    String? phone;
+    try {
+      final row = await _supabase
+          .from('profiles')
+          .select('full_name, email, phone')
+          .eq('id', uid)
+          .maybeSingle();
+      fullName = (row?['full_name'] as String?) ?? '';
+      email = (row?['email'] as String?) ?? '';
+      phone = row?['phone'] as String?;
+    } catch (_) {}
+
+    await _supabase.from('verification_requests').insert({
+      'user_id': uid,
+      'email': email,
+      'full_name': fullName,
+      'status': 'pending',
+      'membership_card': cardKey,
+      'membership_fee': cardFee,
+      'is_existing_card_holder': isExistingHolder,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (isExistingHolder) ...{
+        'name_on_card': nameOnCard,
+        'card_number': cardNumber,
+        if (issueDate != null) 'card_issue_date': issueDate.toIso8601String(),
+        if (expiryDate != null) 'card_expiry_date': expiryDate.toIso8601String(),
+        'card_pin': pin,
+      },
+      if (!isExistingHolder &&
+          receiptImageBase64 != null &&
+          receiptImageBase64.isNotEmpty)
+        'receipt_image': receiptImageBase64,
+    });
+  }
+
   /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (تصویر کے ساتھ محفوظ ریسیٹ ہینڈلنگ)
   Future<void> submitPayment({
     required String classId,

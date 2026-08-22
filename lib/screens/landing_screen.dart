@@ -6,10 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../membership_cards.dart';
-import '../services/payment_service.dart';
 import '../widgets/account_fee_slip_dialog.dart';
 import '../widgets/theme_selector.dart';
 import 'auth_screen.dart';
+import 'membership_application_screen.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -61,10 +61,15 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں۔ اگر پہلے
-  /// سے لاگ اِن ہے تو موجودہ اکاؤنٹ کیلئے upgrade درخواست جمع کریں، ورنہ
-  /// نئے سائن اپ کی طرف بھیجیں۔
+  /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں، پھر
+  /// اگلے صفحے پر تفصیلات بھری جائیں (پہلے سے کارڈ ہولڈر یا نیا apply)۔
+  /// ہلکے/minimalist premium SaaS انداز میں — لینڈنگ پیج کے باقی سیکشنز
+  /// کے dark theme سے الگ، تاکہ کارڈز واضح اور premium نظر آئیں۔
   void _showMembershipCardPicker({bool isLoggedIn = false}) {
+    const bg = Color(0xFFFAFAF8);
+    const slate = Color(0xFF1E293B);
+    const slateMuted = Color(0xFF64748B);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -73,8 +78,11 @@ class _LandingScreenState extends State<LandingScreen> {
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           decoration: const BoxDecoration(
-            color: Color(0xFF0F172A),
+            color: bg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(color: Color(0x1A000000), blurRadius: 30, offset: Offset(0, -8)),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -86,97 +94,84 @@ class _LandingScreenState extends State<LandingScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade600,
+                    color: const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               Text(
-                L.t('Membership card منتخب کریں', 'Choose a membership card'),
+                L.t('Membership card منتخب کریں', 'Choose a Membership Card'),
                 textAlign: TextAlign.center,
-                style: _ts(
-                    fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+                style: _ts(fontSize: 20, fontWeight: FontWeight.w900, color: slate),
               ),
               const SizedBox(height: 4),
               Text(
                 L.t('ہر کارڈ کی الگ ممبرشپ فیس ہے۔',
                     'Each card has its own membership fee.'),
                 textAlign: TextAlign.center,
-                style: _ts(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)),
+                style: _ts(fontSize: 13, color: slateMuted),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
               ...MembershipCard.all.map((c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Material(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        if (isLoggedIn) {
-                          try {
-                            await PaymentService().submitAccountUpgradeRequest(
-                              membershipCard: c.key,
-                              membershipFee: c.fee,
-                            );
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(L.t(
-                                    'درخواست جمع ہو گئی — ٹیچر کی تصدیق کا انتظار کریں۔',
-                                    'Request submitted — awaiting teacher approval.')),
-                                backgroundColor: Colors.green.shade700,
-                              ));
-                            }
-                          } catch (_) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
-                                    'Could not submit, please try again.')),
-                                backgroundColor: Colors.red.shade700,
-                              ));
-                            }
-                          }
-                        } else {
-                          _navigateToAuth(
-                            isSignUp: true,
-                            initialPlan: 'premier',
-                            initialMembershipCard: c.key,
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: c.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: c.color.withValues(alpha: 0.6)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.card_membership_rounded,
-                                color: c.color, size: 28),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    L.t(c.labelUrdu, c.labelEn),
-                                    style: _ts(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white),
-                                  ),
-                                  Text(
-                                    L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
-                                    style: _ts(
-                                        fontSize: 13,
-                                        color: Colors.white.withValues(alpha: 0.75)),
-                                  ),
-                                ],
-                              ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => MembershipApplicationScreen(
+                              card: c,
+                              isLoggedIn: isLoggedIn,
                             ),
-                            Icon(Icons.arrow_forward_ios_rounded,
-                                color: c.color, size: 16),
-                          ],
+                          ));
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: c.color.withValues(alpha: 0.5), width: 1.4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: c.color,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      L.t(c.labelUrdu, c.labelEn),
+                                      style: _ts(
+                                          fontSize: 17, fontWeight: FontWeight.w800, color: slate),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                                      style: _ts(fontSize: 13, color: slateMuted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right_rounded, color: c.color, size: 26),
+                            ],
+                          ),
                         ),
                       ),
                     ),

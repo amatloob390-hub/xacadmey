@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../membership_cards.dart';
 import '../pending_class.dart';
+import '../pending_membership.dart';
 import '../services/auth_service.dart';
+import '../services/payment_service.dart';
 
 // Conditional import: on web use dart:html directly, on native use stub
 import '../utils/web_file_picker_stub.dart'
@@ -166,6 +168,28 @@ class _AuthScreenState extends State<AuthScreen> {
           membershipCard: _plan == 'premier' ? _membershipCard : null,
           membershipFee: _plan == 'premier' ? selectedCard?.fee : null,
         );
+
+        // اگر لینڈنگ پیج کے membership card application سے آئے ہیں تو اب
+        // نئے (فوراً authenticated) اکاؤنٹ کیلئے وہ درخواست جمع کریں۔
+        if (PendingMembership.hasPending) {
+          try {
+            await PaymentService().submitCardApplication(
+              cardKey: PendingMembership.cardKey!,
+              cardFee: PendingMembership.cardFee ?? 0,
+              isExistingHolder: PendingMembership.isExistingHolder,
+              nameOnCard: PendingMembership.nameOnCard,
+              cardNumber: PendingMembership.cardNumber,
+              issueDate: PendingMembership.issueDate,
+              expiryDate: PendingMembership.expiryDate,
+              pin: PendingMembership.pin,
+              receiptImageBase64: PendingMembership.receiptBytes != null
+                  ? base64Encode(PendingMembership.receiptBytes!)
+                  : null,
+            );
+          } catch (_) {}
+          PendingMembership.clear();
+        }
+
         if (mounted) {
           _showMsg(L.t(
             'اکاؤنٹ رجسٹر ہو گیا! ٹرائل ختم ہونے پر ٹیچر کو فیس سلپ دکھا کر تصدیق کروائیں — پھر لاگ اِن اور کلاس جوائن ہو سکے گی۔',
@@ -195,6 +219,11 @@ class _AuthScreenState extends State<AuthScreen> {
       return L.t(
         'آپ کی ٹرائل مدت ختم ہو چکی ہے۔ رسائی جاری رکھنے کے لیے ٹیچر کو فیس سلپ دکھا کر تصدیق کروائیں۔',
         'Your trial has ended. Show your fee slip to the teacher to continue access.'
+      );
+    } else if (raw.contains('MEMBERSHIP_EXPIRED')) {
+      return L.t(
+        'آپ کے membership card کی میعاد ختم ہو چکی ہے۔ دوبارہ رسائی کیلئے تجدید کروائیں۔',
+        'Your membership card has expired. Please renew to regain access.'
       );
     } else if (raw.contains('Invalid login')) {
       return L.t('ای میل یا پاس ورڈ غلط ہے۔', 'Invalid email or password.');

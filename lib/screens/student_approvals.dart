@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
@@ -88,20 +89,27 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     //    یہیں آتی ہیں (لینڈنگ پیج سے) — اسی لیے صرف موجود entries کو
     //    enrich نہیں کرتے، نئے (already-verified) entries بھی شامل کرتے ہیں۔
     try {
-      final rows = await _supabase
-          .from('verification_requests')
-          .select('user_id, phone, receipt_image, membership_card, membership_fee, email, full_name')
-          .eq('status', 'pending');
+      final rows = await _supabase.from('verification_requests').select(
+          'user_id, phone, receipt_image, membership_card, membership_fee, email, full_name, is_existing_card_holder, name_on_card, card_number, card_issue_date, card_expiry_date').eq(
+          'status', 'pending');
       if (rows is List && rows.isNotEmpty) {
         for (var r in rows) {
           final m = Map<String, dynamic>.from(r as Map);
           final id = m['user_id']?.toString() ?? '';
           if (id.isEmpty) continue;
+          final fields = {
+            'phone': m['phone'],
+            'receipt_image': m['receipt_image'],
+            'membership_card': m['membership_card'],
+            'membership_fee': m['membership_fee'],
+            'is_existing_card_holder': m['is_existing_card_holder'] == true,
+            'name_on_card': m['name_on_card'],
+            'card_number': m['card_number'],
+            'card_issue_date': m['card_issue_date'],
+            'card_expiry_date': m['card_expiry_date'],
+          };
           if (map.containsKey(id)) {
-            map[id]!['phone'] = m['phone'];
-            map[id]!['receipt_image'] = m['receipt_image'];
-            map[id]!['membership_card'] = m['membership_card'];
-            map[id]!['membership_fee'] = m['membership_fee'];
+            map[id]!.addAll(fields);
           } else {
             // ابھی map میں نہیں — یعنی profiles.is_verified پہلے ہی true ہے
             // (ورنہ اوپر والا !isVerified query اسے شامل کر چکا ہوتا)۔
@@ -111,11 +119,8 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
               'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
               'email': m['email']?.toString() ?? '',
               'is_trial': false,
-              'phone': m['phone'],
-              'receipt_image': m['receipt_image'],
-              'membership_card': m['membership_card'],
-              'membership_fee': m['membership_fee'],
               'is_upgrade': true,
+              ...fields,
             };
           }
         }
@@ -345,14 +350,51 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
   }
 
   /// پہلے سے تصدیق شدہ اسٹوڈنٹ کی Premier/Paid upgrade درخواست منظور کریں —
+  /// 16 ہندسوں کا منفرد کارڈ نمبر (وقت + بے ترتیب ہندسے) — "XXXX XXXX XXXX XXXX"۔
+  String _generateCardNumber() {
+    final ts = DateTime.now().millisecondsSinceEpoch.toString();
+    final base = ts.substring(ts.length - 10);
+    final suffix = List.generate(6, (_) => Random().nextInt(10)).join();
+    final full = '$base$suffix';
+    final groups = <String>[];
+    for (var i = 0; i < full.length; i += 4) {
+      groups.add(full.substring(i, (i + 4).clamp(0, full.length)));
+    }
+    return groups.join(' ');
+  }
+
   /// is_verified/is_trial کو ہاتھ نہیں لگاتے، صرف verification_requests کو
   /// approved مارک کرتے ہیں (وہی اس درخواست کا حتمی ریکارڈ ہے)۔
-  Future<void> _approveUpgrade(String userId, String studentEmail) async {
+  Future<void> _approveUpgrade(
+      String userId, String studentEmail, Map<String, dynamic> item) async {
+    final hasCard = item['membership_card'] != null;
+    final isExistingCard = item['is_existing_card_holder'] == true;
+
+    final Map<String, dynamic> updates = {
+      'status': 'approved',
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    // نیا card apply کرنے والے کیلئے — منظوری کے ساتھ ہی کارڈ خودکار جاری
+    // کریں: نمبر بنائیں، اجراء = ابھی، میعاد = 1 سال بعد۔ پہلے سے موجود
+    // کارڈ ہولڈر کی درج کردہ تفصیل بدلی نہیں جاتی، صرف تصدیق ہوتی ہے۔
+    if (hasCard && !isExistingCard) {
+      final now = DateTime.now();
+      updates['card_number'] = _generateCardNumber();
+      updates['card_issue_date'] = now.toIso8601String();
+      updates['card_expiry_date'] =
+          now.add(const Duration(days: 365)).toIso8601String();
+      final existingName = (item['name_on_card'] as String?)?.trim();
+      if (existingName == null || existingName.isEmpty) {
+        updates['name_on_card'] = item['full_name'] ?? studentEmail;
+      }
+    }
+
     bool ok = false;
     try {
       await _supabase
           .from('verification_requests')
-          .update({'status': 'approved', 'updated_at': DateTime.now().toIso8601String()})
+          .update(updates)
           .eq('user_id', userId)
           .eq('status', 'pending');
       ok = true;
@@ -524,6 +566,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                             final receiptImage = (item['receipt_image'] as String?)?.trim();
                             final card = MembershipCard.byKey(item['membership_card'] as String?);
                             final isUpgrade = item['is_upgrade'] == true;
+                            final isExistingCardHolder = item['is_existing_card_holder'] == true;
 
                             return TealBox(
                               margin: const EdgeInsets.only(bottom: 12),
@@ -605,10 +648,24 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                                 Icon(Icons.card_membership_rounded, size: 14, color: card.color),
                                                 const SizedBox(width: 6),
                                                 Text(
-                                                  '${L.t(card.labelUrdu, card.labelEn)} — ${L.t('روپے', 'Rs')} ${card.fee.toInt()}',
+                                                  '${L.t(card.labelUrdu, card.labelEn)} — ${L.t('روپے', 'Rs')} ${card.fee.toInt()}'
+                                                  '${isExistingCardHolder ? L.t(' (پہلے سے ہولڈر)', ' (already holder)') : ''}',
                                                   style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: card.color),
                                                 ),
                                               ],
+                                            ),
+                                          ),
+                                        if (isExistingCardHolder &&
+                                            (item['card_number'] as String?)?.trim().isNotEmpty == true)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              '${item['name_on_card'] ?? ''} — ${item['card_number']}',
+                                              style: _ts(fontSize: 11, color: theme.subtextColor),
                                             ),
                                           ),
                                         if (receiptImage != null && receiptImage.isNotEmpty)
@@ -663,7 +720,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                           style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                                         ),
                                         onPressed: () => isUpgrade
-                                            ? _approveUpgrade(id, email)
+                                            ? _approveUpgrade(id, email, item)
                                             : _chooseApproval(id, email),
                                       ),
                                     ],

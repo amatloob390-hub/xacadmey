@@ -149,6 +149,7 @@ class AuthService {
 
     final user = response.user;
     if (user != null) {
+      String role = 'student';
       // Profile se is_verified aur role چیک کریں
       try {
         final profile = await _supabase
@@ -159,7 +160,7 @@ class AuthService {
 
         if (profile != null) {
           final isVerified = profile['is_verified'];
-          final role = (profile['role'] as String?) ?? 'student';
+          role = (profile['role'] as String?) ?? 'student';
 
           // صرف اگر is_verified واضع طور پر false ہو، تب ہی بلاک کریں
           if (role == 'student' && isVerified == false) {
@@ -192,6 +193,33 @@ class AuthService {
         throw const AuthException(
           'VERIFICATION_CHECK_FAILED: تصدیق چیک نہیں ہو سکی، دوبارہ کوشش کریں۔',
         );
+      }
+
+      // Membership card کی میعاد ختم ہونے پر رسائی بند — الگ try/catch
+      // (خاموش ناکامی) تاکہ card-issuance migration نہ چلی ہو تب بھی
+      // عام طلبہ کا لاگ اِن متاثر نہ ہو۔
+      if (role == 'student') {
+        try {
+          final cardRow = await _supabase
+              .from('verification_requests')
+              .select('card_expiry_date')
+              .eq('user_id', user.id)
+              .eq('status', 'approved')
+              .not('card_expiry_date', 'is', null)
+              .order('card_expiry_date', ascending: false)
+              .limit(1)
+              .maybeSingle();
+          final expiryStr = cardRow?['card_expiry_date'] as String?;
+          final expiry = expiryStr != null ? DateTime.tryParse(expiryStr) : null;
+          if (expiry != null && DateTime.now().isAfter(expiry)) {
+            await signOut();
+            throw const AuthException(
+              'MEMBERSHIP_EXPIRED: آپ کے membership card کی میعاد ختم ہو چکی ہے۔ دوبارہ رسائی کیلئے تجدید کروائیں۔',
+            );
+          }
+        } catch (e) {
+          if (e is AuthException) rethrow;
+        }
       }
     }
 
