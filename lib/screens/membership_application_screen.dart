@@ -15,9 +15,11 @@ import 'auth_screen.dart';
 import '../utils/web_file_picker_stub.dart'
     if (dart.library.html) '../utils/web_file_picker.dart';
 
-const _bg = Color(0xFFFAFAF8);
-const _slate = Color(0xFF1E293B);
-const _slateMuted = Color(0xFF64748B);
+const _bg = Color(0xFF0A0A0A);
+const _cardBg = Color(0xFF1A1A1A);
+const _slate = Colors.white;
+const _slateMuted = Color(0xFFA0A0A0);
+const _borderMuted = Color(0x26FFFFFF);
 
 /// منتخب کردہ membership card کیلئے تفصیلات کا صفحہ — پہلے پوچھا جاتا ہے
 /// "کیا آپ پہلے سے کارڈ ہولڈر ہیں؟":
@@ -213,32 +215,53 @@ class _MembershipApplicationScreenState
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _cardBg,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: c.color.withValues(alpha: 0.5)),
+                    border: Border.all(color: c.color.withValues(alpha: 0.8), width: 1.4),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4)),
+                          color: c.color.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: 1),
                     ],
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(Icons.card_membership_rounded, color: c.color, size: 32),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(L.t(c.labelUrdu, c.labelEn),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w800, fontSize: 16, color: _slate)),
-                            Text(L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
-                                style: const TextStyle(color: _slateMuted, fontSize: 13)),
-                          ],
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.card_membership_rounded, color: c.color, size: 32),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(L.t(c.labelUrdu, c.labelEn),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800, fontSize: 16, color: _slate)),
+                                Text(L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                                    style: const TextStyle(color: _slateMuted, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 12),
+                      Divider(color: c.color.withValues(alpha: 0.2), height: 1),
+                      const SizedBox(height: 12),
+                      ...c.features(AppLang.ur).map((f) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle_rounded, color: c.color, size: 14),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(f,
+                                      style: const TextStyle(color: _slateMuted, fontSize: 12.5)),
+                                ),
+                              ],
+                            ),
+                          )),
                     ],
                   ),
                 ),
@@ -372,10 +395,10 @@ class _MembershipApplicationScreenState
         padding: const EdgeInsets.symmetric(vertical: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? widget.card.color.withValues(alpha: 0.12) : Colors.white,
+          color: selected ? widget.card.color.withValues(alpha: 0.14) : _cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? widget.card.color : const Color(0xFFE2E8F0),
+            color: selected ? widget.card.color : _borderMuted,
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -399,12 +422,12 @@ class _MembershipApplicationScreenState
       style: const TextStyle(color: _slate),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _cardBg,
         labelText: label,
         labelStyle: const TextStyle(color: _slateMuted),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderSide: const BorderSide(color: _borderMuted),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -423,12 +446,12 @@ class _MembershipApplicationScreenState
       child: InputDecorator(
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: _cardBg,
           labelText: label,
           labelStyle: const TextStyle(color: _slateMuted),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderSide: const BorderSide(color: _borderMuted),
           ),
           suffixIcon: Icon(Icons.calendar_month_outlined, color: widget.card.color),
         ),

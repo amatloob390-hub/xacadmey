@@ -63,12 +63,11 @@ class _LandingScreenState extends State<LandingScreen> {
 
   /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں، پھر
   /// اگلے صفحے پر تفصیلات بھری جائیں (پہلے سے کارڈ ہولڈر یا نیا apply)۔
-  /// ہلکے/minimalist premium SaaS انداز میں — لینڈنگ پیج کے باقی سیکشنز
-  /// کے dark theme سے الگ، تاکہ کارڈز واضح اور premium نظر آئیں۔
+  /// گہرے، چمکدار (glow-border) premium academy-membership کارڈز کے
+  /// انداز میں — ہر tier کا اپنا اثر (silver/gold/platinum) رنگ۔
   void _showMembershipCardPicker({bool isLoggedIn = false}) {
-    const bg = Color(0xFFFAFAF8);
-    const slate = Color(0xFF1E293B);
-    const slateMuted = Color(0xFF64748B);
+    const cardBg = Color(0xFF1A1A1A);
+    const sheetBg = Color(0xFF0A0A0A);
 
     showModalBottomSheet(
       context: context,
@@ -76,107 +75,149 @@ class _LandingScreenState extends State<LandingScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
           decoration: const BoxDecoration(
-            color: bg,
+            color: sheetBg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            boxShadow: [
-              BoxShadow(color: Color(0x1A000000), blurRadius: 30, offset: Offset(0, -8)),
-            ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                L.t('Membership card منتخب کریں', 'Choose a Membership Card'),
-                textAlign: TextAlign.center,
-                style: _ts(fontSize: 20, fontWeight: FontWeight.w900, color: slate),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                L.t('ہر کارڈ کی الگ ممبرشپ فیس ہے۔',
-                    'Each card has its own membership fee.'),
-                textAlign: TextAlign.center,
-                style: _ts(fontSize: 13, color: slateMuted),
-              ),
-              const SizedBox(height: 22),
-              ...MembershipCard.all.map((c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Material(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => MembershipApplicationScreen(
-                              card: c,
-                              isLoggedIn: isLoggedIn,
+                Center(
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.06),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                    child: const Icon(Icons.workspace_premium_rounded,
+                        color: Colors.white70, size: 24),
+                  ),
+                ),
+                Text(
+                  L.t('Membership card منتخب کریں', 'Choose a Membership Card'),
+                  textAlign: TextAlign.center,
+                  style: _ts(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  L.t('ہر کارڈ کی الگ ممبرشپ فیس ہے۔',
+                      'Each card has its own membership fee.'),
+                  textAlign: TextAlign.center,
+                  style: _ts(fontSize: 13, color: Colors.white.withValues(alpha: 0.55)),
+                ),
+                const SizedBox(height: 24),
+                ...MembershipCard.all.map((c) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(22),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => MembershipApplicationScreen(
+                                card: c,
+                                isLoggedIn: isLoggedIn,
+                              ),
+                            ));
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: c.color.withValues(alpha: 0.8), width: 1.4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: c.color.withValues(alpha: 0.35),
+                                  blurRadius: 22,
+                                  spreadRadius: 1,
+                                ),
+                              ],
                             ),
-                          ));
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: c.color.withValues(alpha: 0.5), width: 1.4),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: c.color,
-                                  borderRadius: BorderRadius.circular(2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.card_membership_rounded, color: c.color, size: 26),
+                                const SizedBox(height: 10),
+                                Text(
+                                  L.t(c.labelUrdu, c.labelEn).toUpperCase(),
+                                  textAlign: TextAlign.center,
+                                  style: _ts(
+                                      fontSize: 17, fontWeight: FontWeight.w900, color: c.color),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      L.t(c.labelUrdu, c.labelEn),
-                                      style: _ts(
-                                          fontSize: 17, fontWeight: FontWeight.w800, color: slate),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
-                                      style: _ts(fontSize: 13, color: slateMuted),
-                                    ),
-                                  ],
+                                Text(
+                                  L.t('اکیڈمی ممبرشپ', 'ACADEMY MEMBERSHIP'),
+                                  textAlign: TextAlign.center,
+                                  style: _ts(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white.withValues(alpha: 0.85)),
                                 ),
-                              ),
-                              Icon(Icons.chevron_right_rounded, color: c.color, size: 26),
-                            ],
+                                const SizedBox(height: 16),
+                                ...c.features(AppLang.ur).map((f) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.check_circle_rounded, color: c.color, size: 15),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              f,
+                                              style: _ts(
+                                                  fontSize: 12.5,
+                                                  color: Colors.white.withValues(alpha: 0.75)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                                const SizedBox(height: 6),
+                                Text(
+                                  L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                                  style: _ts(fontSize: 24, fontWeight: FontWeight.w900, color: c.color),
+                                ),
+                                const SizedBox(height: 14),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(color: c.color.withValues(alpha: 0.6)),
+                                  ),
+                                  child: Text(
+                                    '${L.t('منتخب کریں', 'SELECT')} ${L.t(c.labelUrdu, c.labelEn).toUpperCase()}',
+                                    textAlign: TextAlign.center,
+                                    style: _ts(
+                                        fontSize: 12.5, fontWeight: FontWeight.w800, color: c.color),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )),
-            ],
+                    )),
+              ],
+            ),
           ),
         );
       },
