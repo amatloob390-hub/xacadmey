@@ -213,45 +213,70 @@ class _MembershipApplicationScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.fromLTRB(24, 22, 24, 26),
                   decoration: BoxDecoration(
                     color: _cardBg,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: c.color.withValues(alpha: 0.8), width: 1.4),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: c.color.withValues(alpha: 0.8), width: 1.6),
                     boxShadow: [
                       BoxShadow(
-                          color: c.color.withValues(alpha: 0.3),
-                          blurRadius: 20,
+                          color: c.color.withValues(alpha: 0.35),
+                          blurRadius: 26,
                           spreadRadius: 1),
                     ],
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.card_membership_rounded, color: c.color, size: 32),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(L.t(c.labelUrdu, c.labelEn),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800, fontSize: 16, color: _slate)),
-                                Text(L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
-                                    style: const TextStyle(color: _slateMuted, fontSize: 13)),
-                              ],
-                            ),
-                          ),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: c.color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: c.color.withValues(alpha: 0.6)),
+                        ),
+                        child: Text(
+                          L.t('ممبرشپ کارڈ', 'MEMBERSHIP CARD'),
+                          style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: c.color),
+                        ),
                       ),
                       const SizedBox(height: 12),
+                      Text(
+                        L.t(c.labelUrdu, c.labelEn).toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 20, color: c.color),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        L.t('اکیڈمی ممبر', 'ACADEMY MEMBER'),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 12, color: _slateMuted),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 34, color: c.color),
+                      ),
+                      Text(
+                        L.t('یک بار ممبرشپ فیس — 1 سال کارآمد', 'One-time membership fee — valid 1 year'),
+                        style: const TextStyle(color: _slateMuted, fontSize: 12),
+                      ),
+                      const SizedBox(height: 18),
                       Divider(color: c.color.withValues(alpha: 0.2), height: 1),
-                      const SizedBox(height: 12),
-                      ...c.features(AppLang.ur).map((f) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: c.features(AppLang.ur).map((f) {
+                          return SizedBox(
+                            width: 210,
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(Icons.check_circle_rounded, color: c.color, size: 14),
                                 const SizedBox(width: 8),
@@ -261,7 +286,9 @@ class _MembershipApplicationScreenState
                                 ),
                               ],
                             ),
-                          )),
+                          );
+                        }).toList(),
+                      ),
                     ],
                   ),
                 ),
@@ -269,15 +296,16 @@ class _MembershipApplicationScreenState
                 Text(
                   L.t('کیا آپ پہلے سے کارڈ ہولڈر ہیں؟',
                       'Are you already a card holder?'),
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w700, color: _slate),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
                       child: _choiceButton(
-                        label: L.t('جی ہاں', 'Yes'),
+                        label: L.t('جی ہاں، میرا کارڈ ہے', 'Yes, I have this card'),
                         selected: _isExistingHolder == true,
                         onTap: () => setState(() => _isExistingHolder = true),
                       ),
@@ -285,7 +313,7 @@ class _MembershipApplicationScreenState
                     const SizedBox(width: 12),
                     Expanded(
                       child: _choiceButton(
-                        label: L.t('نہیں، نیا apply کروں', 'No, apply for a card'),
+                        label: L.t('نہیں، apply کروں', 'No, apply for a card'),
                         selected: _isExistingHolder == false,
                         onTap: () => setState(() => _isExistingHolder = false),
                       ),
@@ -389,14 +417,14 @@ class _MembershipApplicationScreenState
       {required String label, required bool selected, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(30),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(vertical: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? widget.card.color.withValues(alpha: 0.14) : _cardBg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(
             color: selected ? widget.card.color : _borderMuted,
             width: selected ? 1.6 : 1,
@@ -407,7 +435,7 @@ class _MembershipApplicationScreenState
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 13,
+            fontSize: 12.5,
             color: selected ? widget.card.color : _slateMuted,
           ),
         ),
