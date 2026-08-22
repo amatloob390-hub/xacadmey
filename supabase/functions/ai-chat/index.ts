@@ -56,6 +56,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!GROQ_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "GROQ_API_KEY secret is not set on this function" }),
+        { status: 500, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -73,7 +80,23 @@ Deno.serve(async (req) => {
     });
 
     const data = await r.json();
+
+    // Groq نے خطا دی (غلط/غائب key، decommissioned model وغیرہ) — اصل وجہ آگے بھیجیں،
+    // خالی جواب کے ساتھ خاموش نہ رہیں۔
+    if (!r.ok || data?.error) {
+      return new Response(
+        JSON.stringify({ error: data?.error?.message ?? `Groq API error (status ${r.status})` }),
+        { status: 502, headers: { ...cors, "Content-Type": "application/json" } },
+      );
+    }
+
     const reply = data?.choices?.[0]?.message?.content ?? "";
+    if (!reply) {
+      return new Response(JSON.stringify({ error: "Groq returned an empty reply" }), {
+        status: 502,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ reply }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
