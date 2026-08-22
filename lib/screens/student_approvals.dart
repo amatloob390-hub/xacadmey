@@ -83,29 +83,44 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       }
     } catch (_) {}
 
-    // 3. verification_requests سے فون نمبر، فیس سلپ، اور membership card
-    //    کی تفصیل لائیں — یہ صرف signup پر paid/premier چننے والوں کیلئے
-    //    بنتی ہے، اسی لیے یہاں فقط enrich کرتے ہیں، خالی ہونا معمول ہے۔
-    if (map.isNotEmpty) {
-      try {
-        final rows = await _supabase
-            .from('verification_requests')
-            .select('user_id, phone, receipt_image, membership_card, membership_fee')
-            .inFilter('user_id', map.keys.toList());
-        if (rows is List) {
-          for (var r in rows) {
-            final m = Map<String, dynamic>.from(r as Map);
-            final id = m['user_id']?.toString() ?? '';
-            if (id.isNotEmpty && map.containsKey(id)) {
-              map[id]!['phone'] = m['phone'];
-              map[id]!['receipt_image'] = m['receipt_image'];
-              map[id]!['membership_card'] = m['membership_card'];
-              map[id]!['membership_fee'] = m['membership_fee'];
-            }
+    // 3. verification_requests (status='pending') — نئی رجسٹریشن کے علاوہ،
+    //    پہلے سے تصدیق شدہ اسٹوڈنٹس کی Premier/Paid upgrade درخواستیں بھی
+    //    یہیں آتی ہیں (لینڈنگ پیج سے) — اسی لیے صرف موجود entries کو
+    //    enrich نہیں کرتے، نئے (already-verified) entries بھی شامل کرتے ہیں۔
+    try {
+      final rows = await _supabase
+          .from('verification_requests')
+          .select('user_id, phone, receipt_image, membership_card, membership_fee, email, full_name')
+          .eq('status', 'pending');
+      if (rows is List && rows.isNotEmpty) {
+        for (var r in rows) {
+          final m = Map<String, dynamic>.from(r as Map);
+          final id = m['user_id']?.toString() ?? '';
+          if (id.isEmpty) continue;
+          if (map.containsKey(id)) {
+            map[id]!['phone'] = m['phone'];
+            map[id]!['receipt_image'] = m['receipt_image'];
+            map[id]!['membership_card'] = m['membership_card'];
+            map[id]!['membership_fee'] = m['membership_fee'];
+          } else {
+            // ابھی map میں نہیں — یعنی profiles.is_verified پہلے ہی true ہے
+            // (ورنہ اوپر والا !isVerified query اسے شامل کر چکا ہوتا)۔
+            // یہ ایک upgrade درخواست ہے۔
+            map[id] = {
+              'id': id,
+              'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
+              'email': m['email']?.toString() ?? '',
+              'is_trial': false,
+              'phone': m['phone'],
+              'receipt_image': m['receipt_image'],
+              'membership_card': m['membership_card'],
+              'membership_fee': m['membership_fee'],
+              'is_upgrade': true,
+            };
           }
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     if (mounted) {
       setState(() {
@@ -329,6 +344,82 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     _loadPendingStudents();
   }
 
+  /// پہلے سے تصدیق شدہ اسٹوڈنٹ کی Premier/Paid upgrade درخواست منظور کریں —
+  /// is_verified/is_trial کو ہاتھ نہیں لگاتے، صرف verification_requests کو
+  /// approved مارک کرتے ہیں (وہی اس درخواست کا حتمی ریکارڈ ہے)۔
+  Future<void> _approveUpgrade(String userId, String studentEmail) async {
+    bool ok = false;
+    try {
+      await _supabase
+          .from('verification_requests')
+          .update({'status': 'approved', 'updated_at': DateTime.now().toIso8601String()})
+          .eq('user_id', userId)
+          .eq('status', 'pending');
+      ok = true;
+    } catch (_) {}
+
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('$studentEmail کی درخواست منظور کر دی گئی۔ 🎉',
+            '$studentEmail\'s request approved. 🎉')),
+        backgroundColor: Colors.green.shade700,
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('منظوری محفوظ نہیں ہو سکی، دوبارہ کوشش کریں۔',
+            'Could not save the approval, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
+    }
+    _loadPendingStudents();
+  }
+
+  Future<void> _rejectUpgrade(String userId, String studentEmail) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(L.t('درخواست مسترد کریں؟', 'Reject this request?')),
+        content: Text(L.t(
+          '$studentEmail کا اکاؤنٹ متاثر نہیں ہوگا — صرف یہ upgrade درخواست مسترد ہوگی۔',
+          '$studentEmail\'s account is unaffected — only this upgrade request is rejected.',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(L.t('واپس', 'Cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(L.t('مسترد کریں', 'Reject')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    bool rejected = false;
+    try {
+      await _supabase
+          .from('verification_requests')
+          .update({'status': 'rejected', 'updated_at': DateTime.now().toIso8601String()})
+          .eq('user_id', userId)
+          .eq('status', 'pending');
+      rejected = true;
+    } catch (_) {}
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(rejected
+          ? L.t('درخواست مسترد کر دی گئی۔', 'Request rejected.')
+          : L.t('مسترد نہیں ہو سکا، دوبارہ کوشش کریں۔', 'Could not reject, please try again.')),
+      backgroundColor: rejected ? Colors.orange.shade800 : Colors.red.shade700,
+    ));
+    _loadPendingStudents();
+  }
+
   TextStyle _ts({
     required double fontSize,
     FontWeight fontWeight = FontWeight.normal,
@@ -432,6 +523,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                             final phone = (item['phone'] as String?)?.trim();
                             final receiptImage = (item['receipt_image'] as String?)?.trim();
                             final card = MembershipCard.byKey(item['membership_card'] as String?);
+                            final isUpgrade = item['is_upgrade'] == true;
 
                             return TealBox(
                               margin: const EdgeInsets.only(bottom: 12),
@@ -473,12 +565,32 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                       ),
                                     ],
                                   ),
-                                  if (card != null || (receiptImage != null && receiptImage.isNotEmpty)) ...[
+                                  if (isUpgrade || card != null || (receiptImage != null && receiptImage.isNotEmpty)) ...[
                                     const SizedBox(height: 10),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
+                                        if (isUpgrade)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(color: Colors.amber.withValues(alpha: 0.6)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.upgrade_rounded, size: 14, color: Colors.amber),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  L.t('اپ گریڈ درخواست', 'Upgrade Request'),
+                                                  style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade800),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         if (card != null)
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -531,7 +643,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                         icon: const Icon(Icons.cancel_outlined, size: 16),
                                         label: Text(L.t('مسترد', 'Reject'),
                                             style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
-                                        onPressed: () => _rejectStudent(id, email),
+                                        onPressed: () => isUpgrade
+                                            ? _rejectUpgrade(id, email)
+                                            : _rejectStudent(id, email),
                                       ),
                                       const SizedBox(width: 10),
                                       ElevatedButton.icon(
@@ -548,7 +662,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                           L.t('منظوری دیں', 'Approve'),
                                           style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                                         ),
-                                        onPressed: () => _chooseApproval(id, email),
+                                        onPressed: () => isUpgrade
+                                            ? _approveUpgrade(id, email)
+                                            : _chooseApproval(id, email),
                                       ),
                                     ],
                                   ),

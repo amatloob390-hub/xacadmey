@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../membership_cards.dart';
+import '../services/payment_service.dart';
+import '../widgets/account_fee_slip_dialog.dart';
 import '../widgets/theme_selector.dart';
 import 'auth_screen.dart';
 
@@ -59,8 +61,10 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں، پھر signup۔
-  void _showMembershipCardPicker() {
+  /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں۔ اگر پہلے
+  /// سے لاگ اِن ہے تو موجودہ اکاؤنٹ کیلئے upgrade درخواست جمع کریں، ورنہ
+  /// نئے سائن اپ کی طرف بھیجیں۔
+  void _showMembershipCardPicker({bool isLoggedIn = false}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -105,13 +109,38 @@ class _LandingScreenState extends State<LandingScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () {
+                      onTap: () async {
                         Navigator.pop(ctx);
-                        _navigateToAuth(
-                          isSignUp: true,
-                          initialPlan: 'premier',
-                          initialMembershipCard: c.key,
-                        );
+                        if (isLoggedIn) {
+                          try {
+                            await PaymentService().submitAccountUpgradeRequest(
+                              membershipCard: c.key,
+                              membershipFee: c.fee,
+                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(L.t(
+                                    'درخواست جمع ہو گئی — ٹیچر کی تصدیق کا انتظار کریں۔',
+                                    'Request submitted — awaiting teacher approval.')),
+                                backgroundColor: Colors.green.shade700,
+                              ));
+                            }
+                          } catch (_) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(L.t('جمع نہیں ہو سکی، دوبارہ کوشش کریں۔',
+                                    'Could not submit, please try again.')),
+                                backgroundColor: Colors.red.shade700,
+                              ));
+                            }
+                          }
+                        } else {
+                          _navigateToAuth(
+                            isSignUp: true,
+                            initialPlan: 'premier',
+                            initialMembershipCard: c.key,
+                          );
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -1517,15 +1546,24 @@ class _LandingScreenState extends State<LandingScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  final planKey = p['planKey'] as String?;
+                  if (planKey == 'premier') {
+                    _showMembershipCardPicker(isLoggedIn: isLoggedIn);
+                    return;
+                  }
+                  if (planKey == 'paid' && isLoggedIn) {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const AccountFeeSlipDialog(),
+                    );
+                    return;
+                  }
                   if (isLoggedIn) {
                     if (Navigator.of(context).canPop()) {
                       Navigator.of(context).pop();
                     }
-                  } else if (p['planKey'] == 'premier') {
-                    _showMembershipCardPicker();
                   } else {
-                    _navigateToAuth(
-                        isSignUp: true, initialPlan: p['planKey'] as String?);
+                    _navigateToAuth(isSignUp: true, initialPlan: planKey);
                   }
                 },
                 style: ElevatedButton.styleFrom(

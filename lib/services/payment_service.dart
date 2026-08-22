@@ -82,6 +82,43 @@ class PaymentService {
     _dismissedKeys.add(key.trim()); // in-memory only
   }
 
+  /// پہلے سے لاگ اِن اسٹوڈنٹ: لینڈنگ پیج سے Premier membership card یا Paid
+  /// فیس سلپ کی درخواست — نئے سائن اپ کی طرح نئی class سے منسلک نہیں،
+  /// صرف موجودہ اکاؤنٹ کیلئے ایک pending verification_requests row بنتی ہے
+  /// جسے ٹیچر Student Approvals میں دیکھ کر منظور کرے۔
+  Future<void> submitAccountUpgradeRequest({
+    String? membershipCard,
+    double? membershipFee,
+    String? receiptImageBase64,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception('NOT_LOGGED_IN');
+
+    String fullName = '';
+    String? phone;
+    try {
+      final row = await _supabase
+          .from('profiles')
+          .select('full_name, phone')
+          .eq('id', user.id)
+          .maybeSingle();
+      fullName = (row?['full_name'] as String?) ?? '';
+      phone = row?['phone'] as String?;
+    } catch (_) {}
+
+    await _supabase.from('verification_requests').insert({
+      'user_id': user.id,
+      'email': user.email ?? '',
+      'full_name': fullName,
+      'status': 'pending',
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (membershipCard != null) 'membership_card': membershipCard,
+      if (membershipFee != null) 'membership_fee': membershipFee,
+      if (receiptImageBase64 != null && receiptImageBase64.isNotEmpty)
+        'receipt_image': receiptImageBase64,
+    });
+  }
+
   /// اسٹوڈنٹ: ادائیگی کا دعویٰ جمع کرائے (تصویر کے ساتھ محفوظ ریسیٹ ہینڈلنگ)
   Future<void> submitPayment({
     required String classId,
