@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app_lang.dart';
 
 /// گہرے/نیومورفک انداز کی چمکتی ٹائل — آئیکن کے گرد نرم neon چمک، نیچے لیبل۔
 /// AppBar کے نیچے ایک افقی قطار کے طور پر استعمال ہوتی ہے۔
@@ -53,15 +54,20 @@ class NeonIconTile extends StatelessWidget {
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 6),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.4,
-                color: labelColor,
+            SizedBox(
+              height: 24,
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: AppLang.ur ? 12 : 10,
+                  height: AppLang.ur ? 1.6 : 1.2,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.4,
+                  color: labelColor,
+                ),
               ),
             ),
           ],
@@ -81,7 +87,7 @@ class NeonIconTileBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: 92,
+      height: 104,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(

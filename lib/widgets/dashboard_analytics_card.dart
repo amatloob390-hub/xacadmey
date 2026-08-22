@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../app_lang.dart';
 
 /// خوبصورت سرکلر گیج چارٹ (Radial Gauge Meter)
 class RadialGaugeCard extends StatelessWidget {
@@ -79,7 +80,7 @@ class RadialGaugeCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
-                  height: 36,
+                  height: AppLang.ur ? 46 : 36,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -93,7 +94,8 @@ class RadialGaugeCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppLang.ur ? 14 : 13,
+                            height: AppLang.ur ? 1.6 : 1.2,
                             fontWeight: FontWeight.bold,
                             color: subtextColor,
                           ),
@@ -108,6 +110,7 @@ class RadialGaugeCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 22,
+                    height: AppLang.ur ? 1.4 : 1.1,
                     fontWeight: FontWeight.w900,
                     color: textColor,
                   ),
@@ -115,14 +118,15 @@ class RadialGaugeCard extends StatelessWidget {
                 if (subtext.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   SizedBox(
-                    height: 28,
+                    height: AppLang.ur ? 38 : 28,
                     child: Text(
                       subtext,
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppLang.ur ? 13 : 11,
+                        height: AppLang.ur ? 1.6 : 1.2,
                         fontWeight: FontWeight.w500,
                         color: subtextColor.withValues(alpha: 0.9),
                       ),

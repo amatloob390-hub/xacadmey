@@ -337,7 +337,7 @@ class _StudentClassListState extends State<StudentClassList> {
                               children: [
                                 SizedBox(
                                   width: 260,
-                                  height: 148,
+                                  height: 172,
                                   child: RadialGaugeCard(
                                     title: L.t('کلاس وقت', 'Class Time'),
                                     valueText:
@@ -353,7 +353,7 @@ class _StudentClassListState extends State<StudentClassList> {
                                 ),
                                 SizedBox(
                                   width: 260,
-                                  height: 148,
+                                  height: 172,
                                   child: RadialGaugeCard(
                                     title: L.t('فعال کلاسز', 'Active Classes'),
                                     valueText: activePercent,

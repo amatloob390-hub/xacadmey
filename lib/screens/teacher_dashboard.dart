@@ -377,7 +377,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 children: [
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
-                    height: 148,
+                    height: 172,
                     child: RadialGaugeCard(
                       title: L.t('کلاسز کا وقت', 'Class Duration'),
                       valueText: '$totalHours ${L.t('گھنٹے', 'hrs')}',
@@ -391,7 +391,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
-                    height: 148,
+                    height: 172,
                     child: RadialGaugeCard(
                       title: L.t('فعال کلاسز کا تناسب', 'Active Classes Rate'),
                       valueText: activePercent,
@@ -403,7 +403,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
-                    height: 148,
+                    height: 172,
                     child: RadialGaugeCard(
                       title: L.t('نئی تصدیقیں', 'Pending Approvals'),
                       valueText: '$_pendingApprovalsCount',
@@ -419,7 +419,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   ),
                   SizedBox(
                     width: isWide ? (constraints.maxWidth * 0.235 - 10) : (constraints.maxWidth * 0.48 - 5),
-                    height: 148,
+                    height: 172,
                     child: RadialGaugeCard(
                       title: L.t('زیرِ التوا ادائیگیاں', 'Pending Payments'),
                       valueText: '$_pendingPaymentsCount',
@@ -602,7 +602,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           controller: _bodyScrollController,
           child: ListView(
           controller: _bodyScrollController,
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 24, 16),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 6, 24, 16),
           children: [
             _quickNavTileBar(goTo),
             _buildAnalyticsSection(goTo),
