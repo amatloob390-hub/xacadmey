@@ -9,12 +9,19 @@ class AuthService {
 
   /// نیا اکاؤنٹ (اسٹوڈنٹ غیر-تصدیق شدہ حالت میں بنے گا)۔
   /// [plan] = 'trial' | 'paid' | 'premier'؛ [classId] ہو تو اُسی class میں enroll۔
+  /// [phone] موبائل نمبر (اب signup پر ہی خود اسٹوڈنٹ بھرتا ہے)۔
+  /// [receiptImageBase64] صرف 'paid' پلان کیلئے — فیس سلپ کی تصویر۔
+  /// [membershipCard]/[membershipFee] صرف 'premier' پلان کیلئے — منتخب کردہ کارڈ۔
   Future<void> signUp({
     required String email,
     required String password,
     required String fullName,
     String plan = 'trial',
     String? classId,
+    String? phone,
+    String? receiptImageBase64,
+    String? membershipCard,
+    double? membershipFee,
   }) async {
     final response = await _supabase.auth.signUp(
       email: email,
@@ -22,6 +29,7 @@ class AuthService {
       data: {
         'full_name': fullName,
         'plan': plan,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
         if (classId != null && classId.isNotEmpty) 'registered_class_id': classId,
         if (classId != null && classId.isNotEmpty) 'class_id': classId,
       },
@@ -40,6 +48,7 @@ class AuthService {
           'id': user.id,
           'full_name': fullName,
           'email': email,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
           'is_verified': isTrialPlan,
           'is_trial': isTrialPlan,
           if (isTrialPlan)
@@ -68,6 +77,15 @@ class AuthService {
             'email': email,
             'full_name': fullName,
             'status': 'pending',
+            if (phone != null && phone.isNotEmpty) 'phone': phone,
+            if (plan == 'paid' &&
+                receiptImageBase64 != null &&
+                receiptImageBase64.isNotEmpty)
+              'receipt_image': receiptImageBase64,
+            if (plan == 'premier' && membershipCard != null)
+              'membership_card': membershipCard,
+            if (plan == 'premier' && membershipFee != null)
+              'membership_fee': membershipFee,
           });
         } catch (_) {}
       }

@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
+import '../membership_cards.dart';
 import '../widgets/teal_box.dart';
 
 class StudentApprovalsScreen extends StatefulWidget {
@@ -81,12 +83,79 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       }
     } catch (_) {}
 
+    // 3. verification_requests سے فون نمبر، فیس سلپ، اور membership card
+    //    کی تفصیل لائیں — یہ صرف signup پر paid/premier چننے والوں کیلئے
+    //    بنتی ہے، اسی لیے یہاں فقط enrich کرتے ہیں، خالی ہونا معمول ہے۔
+    if (map.isNotEmpty) {
+      try {
+        final rows = await _supabase
+            .from('verification_requests')
+            .select('user_id, phone, receipt_image, membership_card, membership_fee')
+            .inFilter('user_id', map.keys.toList());
+        if (rows is List) {
+          for (var r in rows) {
+            final m = Map<String, dynamic>.from(r as Map);
+            final id = m['user_id']?.toString() ?? '';
+            if (id.isNotEmpty && map.containsKey(id)) {
+              map[id]!['phone'] = m['phone'];
+              map[id]!['receipt_image'] = m['receipt_image'];
+              map[id]!['membership_card'] = m['membership_card'];
+              map[id]!['membership_fee'] = m['membership_fee'];
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     if (mounted) {
       setState(() {
         _pendingStudents = map.values.toList();
         _loading = false;
       });
     }
+  }
+
+  void _showReceiptDialog(String receiptBase64, ThemePreset theme) {
+    Widget content;
+    try {
+      final cleanBase64 =
+          receiptBase64.contains(',') ? receiptBase64.split(',').last : receiptBase64;
+      final bytes = base64Decode(cleanBase64.trim());
+      content = InteractiveViewer(
+        maxScale: 5,
+        child: Image.memory(bytes, fit: BoxFit.contain),
+      );
+    } catch (_) {
+      content = Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(L.t('تصویر لوڈ نہیں ہو سکی', 'Could not load image')),
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 480,
+              child: content,
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _chooseApproval(String userId, String studentEmail) async {
@@ -360,6 +429,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                             final name = item['full_name'] ?? 'اسٹوڈنٹ';
                             final email = item['email'] ?? '—';
                             final id = item['id'] as String;
+                            final phone = (item['phone'] as String?)?.trim();
+                            final receiptImage = (item['receipt_image'] as String?)?.trim();
+                            final card = MembershipCard.byKey(item['membership_card'] as String?);
 
                             return TealBox(
                               margin: const EdgeInsets.only(bottom: 12),
@@ -391,11 +463,58 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                               email,
                                               style: _ts(fontSize: 13, color: theme.subtextColor),
                                             ),
+                                            if (phone != null && phone.isNotEmpty)
+                                              Text(
+                                                phone,
+                                                style: _ts(fontSize: 13, color: theme.subtextColor),
+                                              ),
                                           ],
                                         ),
                                       ),
                                     ],
                                   ),
+                                  if (card != null || (receiptImage != null && receiptImage.isNotEmpty)) ...[
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        if (card != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: card.color.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(color: card.color.withValues(alpha: 0.6)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.card_membership_rounded, size: 14, color: card.color),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  '${L.t(card.labelUrdu, card.labelEn)} — ${L.t('روپے', 'Rs')} ${card.fee.toInt()}',
+                                                  style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: card.color),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        if (receiptImage != null && receiptImage.isNotEmpty)
+                                          OutlinedButton.icon(
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(0xFF10B981),
+                                              side: const BorderSide(color: Color(0xFF10B981)),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            ),
+                                            icon: const Icon(Icons.receipt_long_rounded, size: 14),
+                                            label: Text(L.t('فیس سلپ دیکھیں', 'View Fee Slip'),
+                                                style: _ts(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                                            onPressed: () => _showReceiptDialog(receiptImage, theme),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
                                   const SizedBox(height: 14),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,

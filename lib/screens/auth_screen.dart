@@ -1,12 +1,29 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
+import '../membership_cards.dart';
 import '../pending_class.dart';
 import '../services/auth_service.dart';
 
+// Conditional import: on web use dart:html directly, on native use stub
+import '../utils/web_file_picker_stub.dart'
+    if (dart.library.html) '../utils/web_file_picker.dart';
+
 class AuthScreen extends StatefulWidget {
   final bool initialIsSignUp;
-  const AuthScreen({super.key, this.initialIsSignUp = false});
+  final String? initialPlan;
+  final String? initialMembershipCard;
+  const AuthScreen({
+    super.key,
+    this.initialIsSignUp = false,
+    this.initialPlan,
+    this.initialMembershipCard,
+  });
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -18,17 +35,30 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
   bool _isLogin = true;
   bool _loading = false;
   String _plan = 'trial'; // 'trial' | 'paid' | 'premier'
   String? _className;
 
+  // 'paid' پلان: فیس سلپ کی تصویر (اختیاری)۔
+  Uint8List? _feeSlipBytes;
+
+  // 'premier' پلان: منتخب کردہ membership card۔
+  String? _membershipCard;
+
   @override
   void initState() {
     super.initState();
     if (widget.initialIsSignUp) {
       _isLogin = false;
+    }
+    if (widget.initialPlan != null) {
+      _plan = widget.initialPlan!;
+    }
+    if (widget.initialMembershipCard != null) {
+      _membershipCard = widget.initialMembershipCard;
     }
     if (PendingClass.id != null) {
       _isLogin = false; // class link سے آمد → رجسٹریشن
@@ -53,11 +83,63 @@ class _AuthScreenState extends State<AuthScreen> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _nameCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  /// Called from onTap — must stay synchronous on web so the browser's
+  /// user-gesture chain remains unbroken before the file dialog opens.
+  void _onPickFeeSlip() {
+    if (kIsWeb) {
+      pickFileOnWeb().then((bytes) {
+        if (bytes != null && bytes.isNotEmpty && mounted) {
+          setState(() => _feeSlipBytes = bytes);
+        }
+      });
+    } else {
+      _pickFeeSlipNative();
+    }
+  }
+
+  Future<void> _pickFeeSlipNative() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final bytes = result.files.first.bytes;
+        if (bytes != null && bytes.isNotEmpty) {
+          if (mounted) setState(() => _feeSlipBytes = bytes);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    try {
+      final picker = ImagePicker();
+      final XFile? image =
+          await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        if (bytes.isNotEmpty && mounted) {
+          setState(() => _feeSlipBytes = bytes);
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_isLogin && _plan == 'premier' && _membershipCard == null) {
+      _showMsg(
+          L.t('براہِ کرم membership card منتخب کریں', 'Please select a membership card'),
+          isError: true);
+      return;
+    }
+
     setState(() => _loading = true);
 
     try {
@@ -70,12 +152,19 @@ class _AuthScreenState extends State<AuthScreen> {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } else {
+        final selectedCard = MembershipCard.byKey(_membershipCard);
         await _auth.signUp(
           email: _emailCtrl.text.trim(),
           password: _passCtrl.text,
           fullName: _nameCtrl.text.trim(),
           plan: _plan,
           classId: PendingClass.id,
+          phone: _phoneCtrl.text.trim(),
+          receiptImageBase64: (_plan == 'paid' && _feeSlipBytes != null)
+              ? base64Encode(_feeSlipBytes!)
+              : null,
+          membershipCard: _plan == 'premier' ? _membershipCard : null,
+          membershipFee: _plan == 'premier' ? selectedCard?.fee : null,
         );
         if (mounted) {
           _showMsg(L.t(
@@ -134,6 +223,127 @@ class _AuthScreenState extends State<AuthScreen> {
       label: Text(label),
       selected: selected,
       onSelected: _loading ? null : (_) => setState(() => _plan = value),
+    );
+  }
+
+  /// 'paid' پلان کیلئے — فیس سلپ کی تصویر (اختیاری) اپلوڈ کا آپشن۔
+  Widget _feeSlipSection() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F8),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            L.t('فیس سلپ (اختیاری)', 'Fee Slip (optional)'),
+            style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+                fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            L.t('ابھی اپلوڈ کریں یا بعد میں ٹیچر کو دکھائیں۔',
+                'Upload now, or show it to the teacher later.'),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          if (_feeSlipBytes != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.memory(_feeSlipBytes!,
+                  height: 100, width: double.infinity, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 8),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _loading ? null : _onPickFeeSlip,
+              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+              label: Text(_feeSlipBytes == null
+                  ? L.t('رسید اپ لوڈ کریں', 'Upload receipt')
+                  : L.t('تصویر تبدیل کریں', 'Change photo')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 'premier' پلان کیلئے — membership card منتخب کریں (فیس کے ساتھ)۔
+  Widget _membershipCardSection() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F8),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            L.t('Membership card منتخب کریں', 'Choose a membership card'),
+            style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+                fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: MembershipCard.all.map((c) {
+              final selected = _membershipCard == c.key;
+              return GestureDetector(
+                onTap: _loading
+                    ? null
+                    : () => setState(() => _membershipCard = c.key),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 130,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: selected ? c.color.withValues(alpha: 0.15) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected ? c.color : Colors.grey.shade300,
+                      width: selected ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.card_membership_rounded,
+                          color: c.color, size: 22),
+                      const SizedBox(height: 6),
+                      Text(
+                        L.t(c.labelUrdu, c.labelEn),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                        style: TextStyle(
+                            color: Colors.grey.shade700, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -321,6 +531,22 @@ class _AuthScreenState extends State<AuthScreen> {
                                                 : null,
                                       ),
                                       const SizedBox(height: 14),
+                                      TextFormField(
+                                        controller: _phoneCtrl,
+                                        keyboardType: TextInputType.phone,
+                                        decoration: InputDecoration(
+                                          labelText: L.t(
+                                              'موبائل نمبر', 'Mobile number'),
+                                          prefixIcon:
+                                              const Icon(Icons.phone_outlined),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().length < 7)
+                                                ? L.t('درست موبائل نمبر درج کریں',
+                                                    'Enter a valid mobile number')
+                                                : null,
+                                      ),
+                                      const SizedBox(height: 14),
                                       Align(
                                         alignment:
                                             AlignmentDirectional.centerStart,
@@ -341,6 +567,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                             L.t('پریمیئر', 'Premier')),
                                       ]),
                                       const SizedBox(height: 14),
+                                      if (_plan == 'paid') _feeSlipSection(),
+                                      if (_plan == 'premier')
+                                        _membershipCardSection(),
                                     ],
                                     TextFormField(
                                       controller: _emailCtrl,

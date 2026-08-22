@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
+import '../membership_cards.dart';
 import '../widgets/theme_selector.dart';
 import 'auth_screen.dart';
 
@@ -42,11 +43,119 @@ class _LandingScreenState extends State<LandingScreen> {
     }
   }
 
-  void _navigateToAuth({bool isSignUp = false}) {
+  void _navigateToAuth({
+    bool isSignUp = false,
+    String? initialPlan,
+    String? initialMembershipCard,
+  }) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AuthScreen(initialIsSignUp: isSignUp),
+        builder: (_) => AuthScreen(
+          initialIsSignUp: isSignUp,
+          initialPlan: initialPlan,
+          initialMembershipCard: initialMembershipCard,
+        ),
       ),
+    );
+  }
+
+  /// Premier پلان کے بٹن پر — پہلے membership card منتخب کروائیں، پھر signup۔
+  void _showMembershipCardPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                L.t('Membership card منتخب کریں', 'Choose a membership card'),
+                textAlign: TextAlign.center,
+                style: _ts(
+                    fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                L.t('ہر کارڈ کی الگ ممبرشپ فیس ہے۔',
+                    'Each card has its own membership fee.'),
+                textAlign: TextAlign.center,
+                style: _ts(fontSize: 13, color: Colors.white.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 20),
+              ...MembershipCard.all.map((c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _navigateToAuth(
+                          isSignUp: true,
+                          initialPlan: 'premier',
+                          initialMembershipCard: c.key,
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: c.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: c.color.withValues(alpha: 0.6)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.card_membership_rounded,
+                                color: c.color, size: 28),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    L.t(c.labelUrdu, c.labelEn),
+                                    style: _ts(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                  ),
+                                  Text(
+                                    L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
+                                    style: _ts(
+                                        fontSize: 13,
+                                        color: Colors.white.withValues(alpha: 0.75)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward_ios_rounded,
+                                color: c.color, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1242,6 +1351,7 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget _buildPlansSection(ThemePreset theme, bool isWide, bool isLoggedIn) {
     final plans = [
       {
+        'planKey': 'trial',
         'titleUrdu': 'اگست ٹرائل',
         'titleEn': 'August Trial',
         'priceUrdu': 'مفت / 7 دن',
@@ -1258,6 +1368,7 @@ class _LandingScreenState extends State<LandingScreen> {
         ],
       },
       {
+        'planKey': 'paid',
         'titleUrdu': 'اگست Paid',
         'titleEn': 'August Paid',
         'priceUrdu': 'داخلہ / مکمل رسائی',
@@ -1274,6 +1385,7 @@ class _LandingScreenState extends State<LandingScreen> {
         ],
       },
       {
+        'planKey': 'premier',
         'titleUrdu': 'اگست Premier',
         'titleEn': 'August Premier',
         'priceUrdu': 'ایڈوانس / کورس',
@@ -1409,8 +1521,11 @@ class _LandingScreenState extends State<LandingScreen> {
                     if (Navigator.of(context).canPop()) {
                       Navigator.of(context).pop();
                     }
+                  } else if (p['planKey'] == 'premier') {
+                    _showMembershipCardPicker();
                   } else {
-                    _navigateToAuth(isSignUp: true);
+                    _navigateToAuth(
+                        isSignUp: true, initialPlan: p['planKey'] as String?);
                   }
                 },
                 style: ElevatedButton.styleFrom(
