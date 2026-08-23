@@ -18,6 +18,20 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
   final SupabaseClient _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _pendingStudents = [];
   bool _loading = true;
+  String _categoryFilter = 'all'; // all | new | cards
+
+  bool _isCardRequest(Map<String, dynamic> item) =>
+      item['is_upgrade'] == true && item['membership_card'] != null;
+
+  List<Map<String, dynamic>> get _filteredStudents {
+    if (_categoryFilter == 'new') {
+      return _pendingStudents.where((s) => s['is_upgrade'] != true).toList();
+    }
+    if (_categoryFilter == 'cards') {
+      return _pendingStudents.where(_isCardRequest).toList();
+    }
+    return _pendingStudents;
+  }
 
   @override
   void initState() {
@@ -365,6 +379,58 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
 
   /// is_verified/is_trial کو ہاتھ نہیں لگاتے، صرف verification_requests کو
   /// approved مارک کرتے ہیں (وہی اس درخواست کا حتمی ریکارڈ ہے)۔
+  /// 4 ہندسوں کا سیکیورٹی کوڈ ٹیچر خود مقرر کرتا ہے — یہی کارڈ پر
+  /// "پرنٹ شدہ" کوڈ کے طور پر اسٹوڈنٹ کو نظر آتا ہے۔
+  Future<String?> _askForCardPin(String studentName) async {
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text(L.t('کارڈ کا سیکیورٹی کوڈ مقرر کریں', 'Set Card Security Code')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(L.t(
+                '$studentName کے کارڈ کیلئے 4 ہندسوں کا کوڈ درج کریں — یہی کارڈ پر دکھے گا۔',
+                'Enter a 4-digit code for $studentName\'s card — it will be shown on the card.',
+              )),
+              const SizedBox(height: 14),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
+                onChanged: (_) => setDialogState(() {}),
+                decoration: InputDecoration(
+                  counterText: '',
+                  labelText: L.t('4 ہندسوں کا کوڈ', '4-digit code'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(L.t('منسوخ', 'Cancel')),
+            ),
+            ElevatedButton(
+              onPressed: RegExp(r'^\d{4}$').hasMatch(ctrl.text.trim())
+                  ? () => Navigator.pop(ctx, ctrl.text.trim())
+                  : null,
+              child: Text(L.t('تصدیق', 'Confirm')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _approveUpgrade(
       String userId, String studentEmail, Map<String, dynamic> item) async {
     final hasCard = item['membership_card'] != null;
@@ -376,14 +442,19 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     };
 
     // نیا card apply کرنے والے کیلئے — منظوری کے ساتھ ہی کارڈ خودکار جاری
-    // کریں: نمبر بنائیں، اجراء = ابھی، میعاد = 1 سال بعد۔ پہلے سے موجود
-    // کارڈ ہولڈر کی درج کردہ تفصیل بدلی نہیں جاتی، صرف تصدیق ہوتی ہے۔
+    // کریں: نمبر بنائیں، اجراء = ابھی، میعاد = 1 سال بعد، اور ٹیچر سے
+    // 4 ہندسوں کا سیکیورٹی کوڈ لیں۔ پہلے سے موجود کارڈ ہولڈر کی درج کردہ
+    // تفصیل بدلی نہیں جاتی، صرف تصدیق ہوتی ہے۔
     if (hasCard && !isExistingCard) {
+      final pin = await _askForCardPin(item['full_name'] ?? studentEmail);
+      if (pin == null) return; // ٹیچر نے منسوخ کر دیا — منظوری روک دیں۔
+
       final now = DateTime.now();
       updates['card_number'] = _generateCardNumber();
       updates['card_issue_date'] = now.toIso8601String();
       updates['card_expiry_date'] =
           now.add(const Duration(days: 365)).toIso8601String();
+      updates['card_pin'] = pin;
       final existingName = (item['name_on_card'] as String?)?.trim();
       if (existingName == null || existingName.isEmpty) {
         updates['name_on_card'] = item['full_name'] ?? studentEmail;
@@ -554,11 +625,47 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                             ),
                           ),
                         )
-                      : ListView.builder(
+                      : Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                              child: Wrap(
+                                spacing: 8,
+                                children: [
+                                  ChoiceChip(
+                                    label: Text(L.t('سب', 'All'),
+                                        style: _ts(fontSize: 12.5, fontWeight: FontWeight.bold, theme: theme)),
+                                    selected: _categoryFilter == 'all',
+                                    onSelected: (_) => setState(() => _categoryFilter = 'all'),
+                                  ),
+                                  ChoiceChip(
+                                    label: Text(L.t('نئی رجسٹریشن', 'New Registrations'),
+                                        style: _ts(fontSize: 12.5, fontWeight: FontWeight.bold, theme: theme)),
+                                    selected: _categoryFilter == 'new',
+                                    onSelected: (_) => setState(() => _categoryFilter = 'new'),
+                                  ),
+                                  ChoiceChip(
+                                    label: Text(L.t('کارڈ درخواستیں', 'Card Requests'),
+                                        style: _ts(fontSize: 12.5, fontWeight: FontWeight.bold, theme: theme)),
+                                    selected: _categoryFilter == 'cards',
+                                    onSelected: (_) => setState(() => _categoryFilter = 'cards'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: _filteredStudents.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        L.t('اس زمرے میں کچھ نہیں', 'Nothing in this category'),
+                                        style: _ts(fontSize: 14, color: theme.subtextColor, theme: theme),
+                                      ),
+                                    )
+                                  : ListView.builder(
                           padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 24, 20),
-                          itemCount: _pendingStudents.length,
+                          itemCount: _filteredStudents.length,
                           itemBuilder: (context, i) {
-                            final item = _pendingStudents[i];
+                            final item = _filteredStudents[i];
                             final name = item['full_name'] ?? 'اسٹوڈنٹ';
                             final email = item['email'] ?? '—';
                             final id = item['id'] as String;
@@ -729,6 +836,9 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                               ),
                             );
                           },
+                        ),
+                            ),
+                          ],
                         ),
             ),
           ),
