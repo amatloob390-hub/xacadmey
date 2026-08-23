@@ -20,6 +20,8 @@ const _cardBg = Color(0xFF1A1A1A);
 const _slate = Colors.white;
 const _slateMuted = Color(0xFFA0A0A0);
 const _borderMuted = Color(0x26FFFFFF);
+// لینڈنگ پیج کے ہیرو سیکشن کا وہی برانڈ رنگ — ہر card tier کا الگ رنگ نہیں۔
+const _brandColor = Color(0xFF10B981);
 
 /// منتخب کردہ membership card کیلئے تفصیلات کا صفحہ — پہلے پوچھا جاتا ہے
 /// "کیا آپ پہلے سے کارڈ ہولڈر ہیں؟":
@@ -207,7 +209,8 @@ class _MembershipApplicationScreenState
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-          child: ConstrainedBox(
+          child: Center(
+            child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -217,10 +220,10 @@ class _MembershipApplicationScreenState
                   decoration: BoxDecoration(
                     color: _cardBg,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: c.color.withValues(alpha: 0.8), width: 1.6),
+                    border: Border.all(color: _brandColor.withValues(alpha: 0.8), width: 1.6),
                     boxShadow: [
                       BoxShadow(
-                          color: c.color.withValues(alpha: 0.35),
+                          color: _brandColor.withValues(alpha: 0.35),
                           blurRadius: 26,
                           spreadRadius: 1),
                     ],
@@ -231,9 +234,9 @@ class _MembershipApplicationScreenState
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                         decoration: BoxDecoration(
-                          color: c.color.withValues(alpha: 0.15),
+                          color: _brandColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: c.color.withValues(alpha: 0.6)),
+                          border: Border.all(color: _brandColor.withValues(alpha: 0.6)),
                         ),
                         child: Text(
                           L.t('ممبرشپ کارڈ', 'MEMBERSHIP CARD'),
@@ -241,7 +244,7 @@ class _MembershipApplicationScreenState
                               fontSize: 10.5,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.6,
-                              color: c.color),
+                              color: _brandColor),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -249,7 +252,7 @@ class _MembershipApplicationScreenState
                         L.t(c.labelUrdu, c.labelEn).toUpperCase(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 20, color: c.color),
+                            fontWeight: FontWeight.w900, fontSize: 20, color: _brandColor),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -260,14 +263,14 @@ class _MembershipApplicationScreenState
                       const SizedBox(height: 16),
                       Text(
                         L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 34, color: c.color),
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 34, color: _brandColor),
                       ),
                       Text(
                         L.t('یک بار ممبرشپ فیس — 1 سال کارآمد', 'One-time membership fee — valid 1 year'),
                         style: const TextStyle(color: _slateMuted, fontSize: 12),
                       ),
                       const SizedBox(height: 18),
-                      Divider(color: c.color.withValues(alpha: 0.2), height: 1),
+                      Divider(color: _brandColor.withValues(alpha: 0.2), height: 1),
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 16,
@@ -278,7 +281,7 @@ class _MembershipApplicationScreenState
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.check_circle_rounded, color: c.color, size: 14),
+                                Icon(Icons.check_circle_rounded, color: _brandColor, size: 14),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(f,
@@ -370,8 +373,8 @@ class _MembershipApplicationScreenState
                         ? L.t('رسید اپ لوڈ کریں', 'Upload receipt')
                         : L.t('تصویر تبدیل کریں', 'Change photo')),
                     style: OutlinedButton.styleFrom(
-                        foregroundColor: c.color,
-                        side: BorderSide(color: c.color),
+                        foregroundColor: _brandColor,
+                        side: BorderSide(color: _brandColor),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape:
                             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
@@ -384,7 +387,7 @@ class _MembershipApplicationScreenState
                     child: ElevatedButton(
                       onPressed: _saving ? null : _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: c.color,
+                        backgroundColor: _brandColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -407,6 +410,7 @@ class _MembershipApplicationScreenState
                 const SizedBox(height: 20),
               ],
             ),
+            ),
           ),
         ),
       ),
@@ -423,10 +427,10 @@ class _MembershipApplicationScreenState
         padding: const EdgeInsets.symmetric(vertical: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? widget.card.color.withValues(alpha: 0.14) : _cardBg,
+          color: selected ? _brandColor.withValues(alpha: 0.14) : _cardBg,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: selected ? widget.card.color : _borderMuted,
+            color: selected ? _brandColor : _borderMuted,
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -436,7 +440,7 @@ class _MembershipApplicationScreenState
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 12.5,
-            color: selected ? widget.card.color : _slateMuted,
+            color: selected ? _brandColor : _slateMuted,
           ),
         ),
       ),
@@ -459,7 +463,7 @@ class _MembershipApplicationScreenState
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: widget.card.color, width: 1.6),
+          borderSide: BorderSide(color: _brandColor, width: 1.6),
         ),
       ),
       validator: (v) =>
@@ -481,7 +485,7 @@ class _MembershipApplicationScreenState
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: _borderMuted),
           ),
-          suffixIcon: Icon(Icons.calendar_month_outlined, color: widget.card.color),
+          suffixIcon: Icon(Icons.calendar_month_outlined, color: _brandColor),
         ),
         child: Text(value, style: const TextStyle(color: _slate)),
       ),

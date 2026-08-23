@@ -68,6 +68,9 @@ class _LandingScreenState extends State<LandingScreen> {
   void _showMembershipCardPicker({bool isLoggedIn = false}) {
     const cardBg = Color(0xFF1A1A1A);
     const sheetBg = Color(0xFF0A0A0A);
+    // لینڈنگ پیج کے ہیرو سیکشن کا وہی برانڈ رنگ — تمام کارڈز کیلئے ایک جیسا،
+    // ہر tier کا الگ رنگ نہیں (مرکزی تھیم سے مطابقت کیلئے)۔
+    const brandColor = Color(0xFF10B981);
 
     showModalBottomSheet(
       context: context,
@@ -128,6 +131,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     const spacing = 12.0;
                     final cardWidth = (constraints.maxWidth - spacing) / 2;
                     return Wrap(
+                      alignment: WrapAlignment.center,
                       spacing: spacing,
                       runSpacing: spacing,
                       children: MembershipCard.all.map((c) {
@@ -152,10 +156,10 @@ class _LandingScreenState extends State<LandingScreen> {
                                   color: cardBg,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color: c.color.withValues(alpha: 0.8), width: 1.2),
+                                      color: brandColor.withValues(alpha: 0.8), width: 1.2),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: c.color.withValues(alpha: 0.3),
+                                      color: brandColor.withValues(alpha: 0.3),
                                       blurRadius: 14,
                                       spreadRadius: 0.5,
                                     ),
@@ -164,7 +168,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.card_membership_rounded, color: c.color, size: 20),
+                                    Icon(Icons.card_membership_rounded, color: brandColor, size: 20),
                                     const SizedBox(height: 6),
                                     Text(
                                       L.t(c.labelUrdu, c.labelEn).toUpperCase(),
@@ -172,7 +176,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                       style: _ts(
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w900,
-                                          color: c.color,
+                                          color: brandColor,
                                           height: 1.15),
                                     ),
                                     Text(
@@ -191,7 +195,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Icon(Icons.check_circle_rounded,
-                                                  color: c.color, size: 11),
+                                                  color: brandColor, size: 11),
                                               const SizedBox(width: 5),
                                               Expanded(
                                                 child: Text(
@@ -209,7 +213,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                     Text(
                                       L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
                                       style: _ts(
-                                          fontSize: 16, fontWeight: FontWeight.w900, color: c.color),
+                                          fontSize: 16, fontWeight: FontWeight.w900, color: brandColor),
                                     ),
                                     const SizedBox(height: 8),
                                     Container(
@@ -218,7 +222,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                       decoration: BoxDecoration(
                                         color: Colors.black.withValues(alpha: 0.3),
                                         borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: c.color.withValues(alpha: 0.6)),
+                                        border: Border.all(color: brandColor.withValues(alpha: 0.6)),
                                       ),
                                       child: Text(
                                         L.t('منتخب کریں', 'SELECT'),
@@ -226,7 +230,7 @@ class _LandingScreenState extends State<LandingScreen> {
                                         style: _ts(
                                             fontSize: 10.5,
                                             fontWeight: FontWeight.w800,
-                                            color: c.color),
+                                            color: brandColor),
                                       ),
                                     ),
                                   ],
