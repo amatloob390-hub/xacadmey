@@ -66,8 +66,8 @@ class _LandingScreenState extends State<LandingScreen> {
   /// گہرے، چمکدار (glow-border) premium academy-membership کارڈز کے
   /// انداز میں — ہر tier کا اپنا اثر (silver/gold/platinum) رنگ۔
   void _showMembershipCardPicker({bool isLoggedIn = false}) {
-    const cardBg = Color(0xFF1A1A1A);
-    const sheetBg = Color(0xFF0A0A0A);
+    const cardBg = Color(0xFF2E2E31);
+    const sheetBg = Color(0xFF1F1F22);
     // لینڈنگ پیج کے ہیرو سیکشن کا وہی برانڈ رنگ — تمام کارڈز کیلئے ایک جیسا،
     // ہر tier کا الگ رنگ نہیں (مرکزی تھیم سے مطابقت کیلئے)۔
     const brandColor = Color(0xFF10B981);

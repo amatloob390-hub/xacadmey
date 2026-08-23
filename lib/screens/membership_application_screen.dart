@@ -15,8 +15,8 @@ import 'auth_screen.dart';
 import '../utils/web_file_picker_stub.dart'
     if (dart.library.html) '../utils/web_file_picker.dart';
 
-const _bg = Color(0xFF0A0A0A);
-const _cardBg = Color(0xFF1A1A1A);
+const _bg = Color(0xFF1F1F22);
+const _cardBg = Color(0xFF2E2E31);
 const _slate = Colors.white;
 const _slateMuted = Color(0xFFA0A0A0);
 const _borderMuted = Color(0x26FFFFFF);
