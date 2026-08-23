@@ -5,6 +5,7 @@ import '../app_theme.dart';
 import '../screens/ai_chat_screen.dart';
 import '../screens/landing_screen.dart';
 import '../screens/manage_roles.dart';
+import '../screens/membership_cards_screen.dart';
 import '../screens/pending_payments.dart';
 import '../screens/pending_students.dart';
 import '../screens/profile_screen.dart';
@@ -16,7 +17,7 @@ import '../services/auth_service.dart';
 /// سائیڈ بار کا کون سا پین فی الحال کھلا ہے (isFixed وسیع لے آؤٹ میں
 /// استعمال ہوتا ہے تاکہ صفحہ بدلنے پر بھی سائیڈ بار برقرار رہے)۔
 /// ٹیچر اور اسٹوڈنٹ دونوں سائیڈ بار اسی ایک enum سے پین شیئر کرتے ہیں۔
-enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile, aiChat, search }
+enum TeacherPane { dashboard, approvals, payments, pendingFees, roles, social, profile, aiChat, search, membershipCards }
 
 class AppDrawer extends StatefulWidget {
   final bool isTeacher;
@@ -520,6 +521,29 @@ class _AppDrawerState extends State<AppDrawer> {
                                       MaterialPageRoute(
                                           builder: (_) =>
                                               const PendingStudents()),
+                                    )),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // 6b. Membership Cards
+                          _buildDrawerTile(
+                            icon: Icons.card_membership_rounded,
+                            iconColor: const Color(0xFF10B981),
+                            title: L.t('ممبرشپ کارڈز', 'Membership Cards'),
+                            subtitle: L.t('جاری شدہ کارڈز اور اُن کی حیثیت دیکھیں',
+                                'View issued cards and their status'),
+                            textColor: textColor,
+                            subtextColor: subtextColor,
+                            isDark: isDark,
+                            isSelected: widget.isFixed &&
+                                widget.selectedTeacherPane == TeacherPane.membershipCards,
+                            onTap: () => _navTeacher(
+                                TeacherPane.membershipCards,
+                                () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const MembershipCardsScreen()),
                                     )),
                           ),
                           const SizedBox(height: 6),

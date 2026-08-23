@@ -19,6 +19,7 @@ import 'profile_screen.dart';
 import 'social_links_screen.dart';
 import 'student_approvals.dart';
 import 'attendance_report.dart';
+import 'membership_cards_screen.dart';
 import 'pending_payments.dart';
 import 'pending_students.dart';
 import 'manage_roles.dart';
@@ -329,6 +330,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         return dashboardContent;
       case TeacherPane.search:
         return const SearchStudentsScreen();
+      case TeacherPane.membershipCards:
+        return const MembershipCardsScreen();
     }
   }
 
@@ -555,6 +558,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               TeacherPane.pendingFees,
               () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const PendingStudents()))),
+        ),
+        NeonIconTile(
+          icon: Icons.card_membership_rounded,
+          label: L.t('کارڈز', 'Cards'),
+          color: const Color(0xFF10B981),
+          selected: _pane == TeacherPane.membershipCards,
+          onTap: () => goTo(
+              TeacherPane.membershipCards,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MembershipCardsScreen()))),
         ),
         if (_canAssignRoles)
           NeonIconTile(
