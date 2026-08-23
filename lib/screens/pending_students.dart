@@ -16,11 +16,22 @@ class _PendingStudentsState extends State<PendingStudents> {
   final PendingStudentService _service = PendingStudentService();
   late Future<List<PendingStudent>> _future;
   List<PendingStudent>? _localList;
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
     _future = _loadPending();
+    _searchCtrl.addListener(() {
+      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<List<PendingStudent>> _loadPending() async {
@@ -326,7 +337,63 @@ class _PendingStudentsState extends State<PendingStudents> {
                       ),
                       const SizedBox(height: 16),
 
-                      ...list.map((s) => _card(s, theme)),
+                      TextField(
+                        controller: _searchCtrl,
+                        style: _ts(fontSize: 14, theme: theme),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: theme.cardColor,
+                          hintText: L.t('اسٹوڈنٹ تلاش کریں (نام)', 'Search student by name'),
+                          hintStyle: _ts(fontSize: 14, color: theme.subtextColor),
+                          prefixIcon: Icon(Icons.search, color: theme.primaryColor),
+                          suffixIcon: _query.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: Icon(Icons.close, color: theme.subtextColor, size: 18),
+                                  onPressed: () => _searchCtrl.clear(),
+                                ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: theme.primaryColor, width: 1.6),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      Builder(builder: (context) {
+                        final filtered = _query.isEmpty
+                            ? list
+                            : list
+                                .where((s) =>
+                                    s.studentName.toLowerCase().contains(_query) ||
+                                    s.classTitle.toLowerCase().contains(_query))
+                                .toList();
+                        if (filtered.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 30),
+                            child: Center(
+                              child: Text(
+                                L.t('کوئی نتیجہ نہیں ملا', 'No matching students found'),
+                                style: _ts(fontSize: 14, color: theme.subtextColor),
+                              ),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: filtered.map((s) => _card(s, theme)).toList(),
+                        );
+                      }),
                     ],
                   );
                 },
