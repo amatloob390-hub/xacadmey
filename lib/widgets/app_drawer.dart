@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
+import '../membership_cards.dart';
 import '../screens/ai_chat_screen.dart';
 import '../screens/landing_screen.dart';
 import '../screens/manage_roles.dart';
@@ -53,11 +54,20 @@ class _AppDrawerState extends State<AppDrawer> {
   String? _name;
   String? _email;
   String? _role;
+  MembershipCard? _cardTier;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _loadCardTier();
+  }
+
+  Future<void> _loadCardTier() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    final tier = await fetchActiveMembershipTier(_supabase, user.id);
+    if (mounted) setState(() => _cardTier = tier);
   }
 
   Future<void> _loadUser() async {
@@ -265,6 +275,10 @@ class _AppDrawerState extends State<AppDrawer> {
                             ),
                           ),
                         ),
+                        if (_cardTier != null) ...[
+                          const SizedBox(height: 8),
+                          MembershipBadge(tier: _cardTier!),
+                        ],
                         const SizedBox(height: 12),
                         Text(
                           displayName,

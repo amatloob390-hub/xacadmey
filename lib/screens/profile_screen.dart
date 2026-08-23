@@ -467,6 +467,8 @@ class _PhoneTile extends StatelessWidget {
                         controller: controller,
                         autofocus: true,
                         keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => onSave(),
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -481,6 +483,16 @@ class _PhoneTile extends StatelessWidget {
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
+                if (editing) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    L.t('محفوظ کرنے کیلئے ✓ دبائیں', 'Tap ✓ to save'),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -490,6 +502,7 @@ class _PhoneTile extends StatelessWidget {
             IconButton(
               icon: Icon(editing ? Icons.check : Icons.edit_outlined,
                   size: 18, color: const Color(0xFF10B981)),
+              tooltip: editing ? L.t('محفوظ کریں', 'Save') : L.t('ترمیم کریں', 'Edit'),
               onPressed: editing ? onSave : onEdit,
             ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
+import '../membership_cards.dart';
 
 /// لاگ اِن یوزر کا نام اور ای میل دکھانے والا بینر
 /// (ٹیچر ڈیش بورڈ اور اسٹوڈنٹ کلاس لسٹ دونوں میں استعمال ہوتا ہے)
@@ -18,11 +19,20 @@ class _UserBannerState extends State<UserBanner> {
   final _supabase = Supabase.instance.client;
   String? _name;
   String? _role;
+  MembershipCard? _cardTier;
 
   @override
   void initState() {
     super.initState();
     _loadName();
+    _loadCardTier();
+  }
+
+  Future<void> _loadCardTier() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    final tier = await fetchActiveMembershipTier(_supabase, user.id);
+    if (mounted) setState(() => _cardTier = tier);
   }
 
   Future<void> _loadName() async {
@@ -134,6 +144,10 @@ class _UserBannerState extends State<UserBanner> {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
+                    if (_cardTier != null) ...[
+                      const SizedBox(height: 6),
+                      MembershipBadge(tier: _cardTier!),
+                    ],
                   ],
                 ),
               ),
