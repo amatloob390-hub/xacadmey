@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'app_lang.dart';
 
 /// Premier پلان کے membership card tiers — لینڈنگ پیج کے picker اور
 /// signup فارم دونوں میں استعمال ہوتے ہیں (ایک ہی جگہ سے فیس/لیبل بدلیں)۔
@@ -85,5 +87,59 @@ class MembershipCard {
       if (c.key == key) return c;
     }
     return null;
+  }
+}
+
+/// دیے گئے اسٹوڈنٹ کا فعال (approved اور میعاد کے اندر) membership card
+/// tier — پروفائل بیج دکھانے کیلئے۔ کوئی کارڈ نہ ہو یا میعاد ختم ہو چکی
+/// ہو تو null۔
+Future<MembershipCard?> fetchActiveMembershipTier(
+    SupabaseClient supabase, String userId) async {
+  try {
+    final row = await supabase
+        .from('verification_requests')
+        .select('membership_card, card_expiry_date')
+        .eq('user_id', userId)
+        .eq('status', 'approved')
+        .not('membership_card', 'is', null)
+        .order('card_issue_date', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (row == null) return null;
+    final expiry = DateTime.tryParse((row['card_expiry_date'] as String?) ?? '');
+    if (expiry != null && DateTime.now().isAfter(expiry)) return null;
+    return MembershipCard.byKey(row['membership_card'] as String?);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// tier-رنگ کا چھوٹا بیج — پروفائل اور اسٹوڈنٹ کی تفصیل میں دونوں طرف
+/// (اسٹوڈنٹ اور ٹیچر) دکھایا جاتا ہے۔
+class MembershipBadge extends StatelessWidget {
+  final MembershipCard tier;
+  const MembershipBadge({super.key, required this.tier});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: tier.color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tier.color.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.card_membership_rounded, size: 13, color: tier.color),
+          const SizedBox(width: 5),
+          Text(
+            AppLang.ur ? tier.labelUrdu : tier.labelEn,
+            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: tier.color),
+          ),
+        ],
+      ),
+    );
   }
 }

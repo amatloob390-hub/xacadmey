@@ -346,7 +346,16 @@ class _MembershipApplicationScreenState
                           onTap: () => _pickDate(isIssue: false),
                         ),
                         const SizedBox(height: 12),
-                        _field(_pinCtrl, L.t('PIN', 'PIN'), obscure: true),
+                        _field(
+                          _pinCtrl,
+                          L.t('کارڈ کوڈ (PIN)', 'Card Code (PIN)'),
+                          obscure: true,
+                          keyboardType: TextInputType.number,
+                          maxLength: 4,
+                          validator: (v) => RegExp(r'^\d{4}$').hasMatch((v ?? '').trim())
+                              ? null
+                              : L.t('4 ہندسوں کا کوڈ درج کریں', 'Enter a 4-digit code'),
+                        ),
                       ],
                     ),
                   ),
@@ -447,16 +456,26 @@ class _MembershipApplicationScreenState
     );
   }
 
-  Widget _field(TextEditingController ctrl, String label, {bool obscure = false}) {
+  Widget _field(
+    TextEditingController ctrl,
+    String label, {
+    bool obscure = false,
+    TextInputType? keyboardType,
+    int? maxLength,
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: ctrl,
       obscureText: obscure,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
       style: const TextStyle(color: _slate),
       decoration: InputDecoration(
         filled: true,
         fillColor: _cardBg,
         labelText: label,
         labelStyle: const TextStyle(color: _slateMuted),
+        counterStyle: const TextStyle(color: _slateMuted),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _borderMuted),
@@ -466,8 +485,10 @@ class _MembershipApplicationScreenState
           borderSide: BorderSide(color: _brandColor, width: 1.6),
         ),
       ),
-      validator: (v) =>
-          (v == null || v.trim().isEmpty) ? L.t('یہ خانہ ضروری ہے', 'This field is required') : null,
+      validator: validator ??
+          (v) => (v == null || v.trim().isEmpty)
+              ? L.t('یہ خانہ ضروری ہے', 'This field is required')
+              : null,
     );
   }
 

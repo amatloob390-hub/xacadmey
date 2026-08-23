@@ -12,6 +12,7 @@ import '../widgets/user_banner.dart';
 import '../widgets/theme_selector.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/teal_box.dart';
+import '../widgets/membership_card_picker.dart';
 import '../widgets/neon_icon_tile.dart';
 import '../widgets/profile_menu_button.dart';
 import '../widgets/keyboard_scrollable.dart';
@@ -517,6 +518,12 @@ class _StudentClassListState extends State<StudentClassList> {
           color: const Color(0xFF10B981),
           selected: _pane == TeacherPane.aiChat,
           onTap: () => _openAiOverlay('XAcademy Tutors'),
+        ),
+        NeonIconTile(
+          icon: Icons.card_membership_rounded,
+          label: L.t('کارڈ لیں', 'Get Card'),
+          color: const Color(0xFF10B981),
+          onTap: () => showMembershipCardPicker(context, isLoggedIn: true),
         ),
       ],
     );

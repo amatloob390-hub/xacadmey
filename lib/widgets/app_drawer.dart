@@ -6,6 +6,7 @@ import '../screens/ai_chat_screen.dart';
 import '../screens/landing_screen.dart';
 import '../screens/manage_roles.dart';
 import '../screens/membership_cards_screen.dart';
+import '../screens/my_membership_card_screen.dart';
 import '../screens/pending_payments.dart';
 import '../screens/pending_students.dart';
 import '../screens/profile_screen.dart';
@@ -392,6 +393,24 @@ class _AppDrawerState extends State<AppDrawer> {
                                       MaterialPageRoute(
                                           builder: (_) => const AiChatScreen()),
                                     )),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // 5. My Membership Card
+                          _buildDrawerTile(
+                            icon: Icons.card_membership_rounded,
+                            iconColor: const Color(0xFFF59E0B),
+                            title: L.t('میرا ممبرشپ کارڈ', 'My Membership Card'),
+                            subtitle: L.t('کارڈ نمبر، میعاد اور سیکیورٹی کوڈ دیکھیں',
+                                'View card number, expiry, and security code'),
+                            textColor: textColor,
+                            subtextColor: subtextColor,
+                            isDark: isDark,
+                            onTap: () => _nav(() => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const MyMembershipCardScreen()),
+                                )),
                           ),
                           const SizedBox(height: 6),
                         ] else ...[

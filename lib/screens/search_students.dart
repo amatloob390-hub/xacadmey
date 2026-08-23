@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
+import '../membership_cards.dart';
 import '../services/staff_service.dart';
 import '../widgets/teal_box.dart';
 
@@ -147,7 +150,8 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
                         autofocus: true,
                         onChanged: _onChanged,
                         decoration: InputDecoration(
-                          hintText: L.t('نام یا ای میل لکھیں…', 'Type a name or email…'),
+                          hintText: L.t('نام، ای میل یا موبائل نمبر لکھیں…',
+                              'Type a name, email, or mobile number…'),
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: _searchCtrl.text.isNotEmpty
                               ? IconButton(
@@ -206,6 +210,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
                                         final s = _results[i];
                                         final name = s['full_name']?.toString() ?? 'اسٹوڈنٹ';
                                         final email = s['email']?.toString() ?? '';
+                                        final phone = s['phone']?.toString() ?? '';
                                         final verified = s['is_verified'] == true;
                                         return TealBox(
                                           margin: const EdgeInsets.only(bottom: 10),
@@ -237,9 +242,21 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
                                                             style: _ts(
                                                                 fontSize: 12,
                                                                 color: theme.subtextColor)),
+                                                      if (phone.isNotEmpty)
+                                                        Text(phone,
+                                                            style: _ts(
+                                                                fontSize: 12,
+                                                                color: theme.subtextColor)),
                                                     ],
                                                   ),
                                                 ),
+                                                if (phone.isNotEmpty)
+                                                  IconButton(
+                                                    icon: Icon(Icons.call_rounded,
+                                                        color: theme.primaryColor, size: 20),
+                                                    tooltip: L.t('کال کریں', 'Call'),
+                                                    onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+                                                  ),
                                                 Icon(
                                                   verified
                                                       ? Icons.verified_rounded
@@ -291,12 +308,22 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
   bool _resettingPassword = false;
   String? _newPasswordShown; // successful reset ہونے کے بعد یہاں دکھایا جاتا ہے
 
+  MembershipCard? _cardTier;
+
   @override
   void initState() {
     super.initState();
     _phoneCtrl = TextEditingController(text: widget.student['phone']?.toString() ?? '');
     _enrollmentsFuture =
         widget.service.getStudentEnrollments(widget.student['id']?.toString() ?? '');
+    _loadCardTier();
+  }
+
+  Future<void> _loadCardTier() async {
+    final id = widget.student['id']?.toString();
+    if (id == null || id.isEmpty) return;
+    final tier = await fetchActiveMembershipTier(Supabase.instance.client, id);
+    if (mounted) setState(() => _cardTier = tier);
   }
 
   @override
@@ -504,8 +531,17 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(name,
-                          style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name,
+                              style: _ts(fontSize: 18, fontWeight: FontWeight.bold, theme: theme)),
+                          if (_cardTier != null) ...[
+                            const SizedBox(height: 4),
+                            MembershipBadge(tier: _cardTier!),
+                          ],
+                        ],
+                      ),
                     ),
                     Icon(
                       verified ? Icons.verified_rounded : Icons.hourglass_top_rounded,
