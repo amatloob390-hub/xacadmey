@@ -153,6 +153,30 @@ class PaymentService {
       phone = row?['phone'] as String?;
     } catch (_) {}
 
+    // اپ گریڈ: اگر اسٹوڈنٹ کے پاس پہلے سے کوئی فعال (approved، میعاد کے
+    // اندر) کارڈ ہے اور وہ نیا apply کر رہا ہے (existing-holder نہیں)،
+    // تو نئے کارڈ کی میعاد پرانے کارڈ جیسی ہی رہنی چاہیے — منظوری کے
+    // وقت یہ تاریخ استعمال ہوگی، نئے 1 سال کی بجائے۔
+    DateTime? preserveExpiry;
+    if (!isExistingHolder) {
+      try {
+        final existing = await _supabase
+            .from('verification_requests')
+            .select('card_expiry_date')
+            .eq('user_id', uid)
+            .eq('status', 'approved')
+            .not('membership_card', 'is', null)
+            .order('card_issue_date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        final expiryStr = existing?['card_expiry_date'] as String?;
+        final expiry = expiryStr != null ? DateTime.tryParse(expiryStr) : null;
+        if (expiry != null && DateTime.now().isBefore(expiry)) {
+          preserveExpiry = expiry;
+        }
+      } catch (_) {}
+    }
+
     await _supabase.from('verification_requests').insert({
       'user_id': uid,
       'email': email,
@@ -173,6 +197,8 @@ class PaymentService {
           receiptImageBase64 != null &&
           receiptImageBase64.isNotEmpty)
         'receipt_image': receiptImageBase64,
+      if (preserveExpiry != null)
+        'preserve_expiry_date': preserveExpiry.toIso8601String(),
     });
   }
 

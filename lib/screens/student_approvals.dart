@@ -104,7 +104,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     //    enrich نہیں کرتے، نئے (already-verified) entries بھی شامل کرتے ہیں۔
     try {
       final rows = await _supabase.from('verification_requests').select(
-          'user_id, phone, receipt_image, membership_card, membership_fee, email, full_name, is_existing_card_holder, name_on_card, card_number, card_issue_date, card_expiry_date').eq(
+          'user_id, phone, receipt_image, membership_card, membership_fee, email, full_name, is_existing_card_holder, name_on_card, card_number, card_issue_date, card_expiry_date, preserve_expiry_date').eq(
           'status', 'pending');
       if (rows is List && rows.isNotEmpty) {
         for (var r in rows) {
@@ -121,6 +121,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             'card_number': m['card_number'],
             'card_issue_date': m['card_issue_date'],
             'card_expiry_date': m['card_expiry_date'],
+            'preserve_expiry_date': m['preserve_expiry_date'],
           };
           if (map.containsKey(id)) {
             map[id]!.addAll(fields);
@@ -381,38 +382,88 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
   /// approved مارک کرتے ہیں (وہی اس درخواست کا حتمی ریکارڈ ہے)۔
   /// 4 ہندسوں کا سیکیورٹی کوڈ ٹیچر خود مقرر کرتا ہے — یہی کارڈ پر
   /// "پرنٹ شدہ" کوڈ کے طور پر اسٹوڈنٹ کو نظر آتا ہے۔
-  Future<String?> _askForCardPin(String studentName) async {
+  /// منظوری کے وقت ٹیچر خود دیکھ کر فیصلہ کرے کہ اسٹوڈنٹ نے جتنی فیس جمع
+  /// کی، اُس کے مطابق کون سا کارڈ tier جاری کرنا ہے — اسٹوڈنٹ کے شروع میں
+  /// منتخب کردہ tier پر آنکھ بند کر کے بھروسہ نہیں کرتے (تاکہ کوئی سلور کی
+  /// فیس دے کر گولڈ/پلاٹینم کارڈ کیلئے apply نہ کر سکے)۔ ساتھ ہی 4 ہندسوں
+  /// کا سیکیورٹی کوڈ بھی لیتے ہیں۔
+  Future<({String tier, String pin})?> _askForCardTierAndPin(
+    String studentName,
+    Map<String, dynamic> item,
+  ) async {
+    String selectedTier = (item['membership_card'] as String?) ?? MembershipCard.all.first.key;
+    final claimedFee = item['membership_fee'];
+    final receiptImage = (item['receipt_image'] as String?)?.trim();
     final ctrl = TextEditingController();
-    return showDialog<String>(
+
+    final result = await showDialog<({String tier, String pin})>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: Text(L.t('کارڈ کا سیکیورٹی کوڈ مقرر کریں', 'Set Card Security Code')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(L.t(
-                '$studentName کے کارڈ کیلئے 4 ہندسوں کا کوڈ درج کریں — یہی کارڈ پر دکھے گا۔',
-                'Enter a 4-digit code for $studentName\'s card — it will be shown on the card.',
-              )),
-              const SizedBox(height: 14),
-              TextField(
-                controller: ctrl,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
-                onChanged: (_) => setDialogState(() {}),
-                decoration: InputDecoration(
-                  counterText: '',
-                  labelText: L.t('4 ہندسوں کا کوڈ', '4-digit code'),
-                  border: const OutlineInputBorder(),
+          title: Text(L.t('کارڈ منظور اور جاری کریں', 'Approve & Issue Card')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  claimedFee != null
+                      ? L.t('$studentName نے جمع کروائی فیس: روپے $claimedFee',
+                          '$studentName submitted fee: Rs $claimedFee')
+                      : studentName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-              ),
-            ],
+                if (receiptImage != null && receiptImage.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _showReceiptDialog(receiptImage, AppTheme.currentTheme.value),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                    label: Text(L.t('فیس سلپ دیکھیں', 'View Fee Slip')),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Text(
+                  L.t('فیس دیکھ کر تصدیق کریں — کون سا کارڈ جاری کیا جائے:',
+                      'Confirm from the fee — which card to actually issue:'),
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: MembershipCard.all.map((c) {
+                    final selected = selectedTier == c.key;
+                    return ChoiceChip(
+                      label: Text(
+                          '${L.t(c.labelUrdu, c.labelEn)} — ${c.fee.toInt()}'),
+                      selected: selected,
+                      onSelected: (_) => setDialogState(() => selectedTier = c.key),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Text(L.t(
+                  '4 ہندسوں کا سیکیورٹی کوڈ — یہی کارڈ پر دکھے گا۔',
+                  'A 4-digit security code — it will be shown on the card.',
+                )),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: ctrl,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    labelText: L.t('4 ہندسوں کا کوڈ', '4-digit code'),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -421,14 +472,15 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             ),
             ElevatedButton(
               onPressed: RegExp(r'^\d{4}$').hasMatch(ctrl.text.trim())
-                  ? () => Navigator.pop(ctx, ctrl.text.trim())
+                  ? () => Navigator.pop(ctx, (tier: selectedTier, pin: ctrl.text.trim()))
                   : null,
-              child: Text(L.t('تصدیق', 'Confirm')),
+              child: Text(L.t('منظور کریں', 'Approve')),
             ),
           ],
         ),
       ),
     );
+    return result;
   }
 
   Future<void> _approveUpgrade(
@@ -441,20 +493,30 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       'updated_at': DateTime.now().toIso8601String(),
     };
 
-    // نیا card apply کرنے والے کیلئے — منظوری کے ساتھ ہی کارڈ خودکار جاری
-    // کریں: نمبر بنائیں، اجراء = ابھی، میعاد = 1 سال بعد، اور ٹیچر سے
-    // 4 ہندسوں کا سیکیورٹی کوڈ لیں۔ پہلے سے موجود کارڈ ہولڈر کی درج کردہ
-    // تفصیل بدلی نہیں جاتی، صرف تصدیق ہوتی ہے۔
+    // نیا card apply کرنے والے کیلئے — ٹیچر خود فیس دیکھ کر tier کی تصدیق
+    // کرے (اسٹوڈنٹ کے شروع میں منتخب کردہ tier پر آنکھ بند کر کے بھروسہ
+    // نہیں)، نمبر خودکار بنے، اجراء = ابھی، میعاد = پرانے کارڈ کی میعاد
+    // (اگر یہ upgrade ہے) ورنہ 1 سال بعد، اور 4 ہندسوں کا سیکیورٹی کوڈ۔
+    // پہلے سے موجود کارڈ ہولڈر کی درج کردہ تفصیل بدلی نہیں جاتی، صرف
+    // تصدیق ہوتی ہے۔
     if (hasCard && !isExistingCard) {
-      final pin = await _askForCardPin(item['full_name'] ?? studentEmail);
-      if (pin == null) return; // ٹیچر نے منسوخ کر دیا — منظوری روک دیں۔
+      final choice =
+          await _askForCardTierAndPin(item['full_name'] ?? studentEmail, item);
+      if (choice == null) return; // ٹیچر نے منسوخ کر دیا — منظوری روک دیں۔
 
       final now = DateTime.now();
+      final preserveExpiryStr = item['preserve_expiry_date'] as String?;
+      final preserveExpiry =
+          preserveExpiryStr != null ? DateTime.tryParse(preserveExpiryStr) : null;
+
+      final selectedTierData = MembershipCard.byKey(choice.tier);
+      updates['membership_card'] = choice.tier;
+      if (selectedTierData != null) updates['membership_fee'] = selectedTierData.fee;
       updates['card_number'] = _generateCardNumber();
       updates['card_issue_date'] = now.toIso8601String();
       updates['card_expiry_date'] =
-          now.add(const Duration(days: 365)).toIso8601String();
-      updates['card_pin'] = pin;
+          (preserveExpiry ?? now.add(const Duration(days: 365))).toIso8601String();
+      updates['card_pin'] = choice.pin;
       final existingName = (item['name_on_card'] as String?)?.trim();
       if (existingName == null || existingName.isEmpty) {
         updates['name_on_card'] = item['full_name'] ?? studentEmail;

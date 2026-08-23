@@ -221,9 +221,14 @@ class _AppDrawerState extends State<AppDrawer> {
                               padding: const EdgeInsets.all(3),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-                                ),
+                                gradient: _cardTier != null
+                                    ? LinearGradient(colors: [
+                                        _cardTier!.color,
+                                        _cardTier!.color.withValues(alpha: 0.55),
+                                      ])
+                                    : const LinearGradient(
+                                        colors: [Color(0xFF10B981), Color(0xFF2563EB)],
+                                      ),
                               ),
                               child: CircleAvatar(
                                 radius: 30,

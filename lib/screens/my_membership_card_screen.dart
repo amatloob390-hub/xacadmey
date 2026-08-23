@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
@@ -36,11 +37,29 @@ class _MyCardData {
 class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
   final _supabase = Supabase.instance.client;
   late Future<_MyCardData?> _future;
+  bool _pinVisible = false;
+  Timer? _hideTimer;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _togglePin() {
+    _hideTimer?.cancel();
+    setState(() => _pinVisible = !_pinVisible);
+    if (_pinVisible) {
+      _hideTimer = Timer(const Duration(seconds: 6), () {
+        if (mounted) setState(() => _pinVisible = false);
+      });
+    }
   }
 
   Future<_MyCardData?> _load() async {
@@ -207,13 +226,32 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                               Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
                                   style: const TextStyle(color: Colors.white54, fontSize: 11)),
                               Text(
-                                card.pin.isEmpty ? '••••' : card.pin,
+                                card.pin.isEmpty
+                                    ? '----'
+                                    : (_pinVisible ? card.pin : '••••'),
                                 style: TextStyle(
                                     color: color,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 4),
                               ),
+                              if (card.pin.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: _togglePin,
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      _pinVisible
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
+                                      size: 16,
+                                      color: color,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],

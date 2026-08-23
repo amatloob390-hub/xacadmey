@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
@@ -165,11 +166,6 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
     }
   }
 
-  String _fmtDate(DateTime? d) {
-    if (d == null) return '—';
-    return '${d.day}/${d.month}/${d.year}';
-  }
-
   TextStyle _ts({
     required double fontSize,
     FontWeight fontWeight = FontWeight.normal,
@@ -329,7 +325,11 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
                             ),
                           ),
                         ),
-                      ...filtered.map((c) => _cardTile(c, theme)),
+                      ...filtered.map((c) => _CardTile(
+                            card: c,
+                            theme: theme,
+                            onEditPin: _editPin,
+                          )),
                     ],
                   );
                 },
@@ -341,7 +341,79 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
     );
   }
 
-  Widget _cardTile(_IssuedCard c, ThemePreset theme) {
+}
+
+class _CardTile extends StatefulWidget {
+  final _IssuedCard card;
+  final ThemePreset theme;
+  final Future<void> Function(_IssuedCard) onEditPin;
+
+  const _CardTile({
+    required this.card,
+    required this.theme,
+    required this.onEditPin,
+  });
+
+  @override
+  State<_CardTile> createState() => _CardTileState();
+}
+
+class _CardTileState extends State<_CardTile> {
+  bool _pinVisible = false;
+  Timer? _hideTimer;
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _togglePin() {
+    _hideTimer?.cancel();
+    setState(() => _pinVisible = !_pinVisible);
+    if (_pinVisible) {
+      _hideTimer = Timer(const Duration(seconds: 6), () {
+        if (mounted) setState(() => _pinVisible = false);
+      });
+    }
+  }
+
+  String _fmtDate(DateTime? d) {
+    if (d == null) return '—';
+    return '${d.day}/${d.month}/${d.year}';
+  }
+
+  TextStyle _ts({
+    required double fontSize,
+    FontWeight fontWeight = FontWeight.normal,
+    Color? color,
+    ThemePreset? theme,
+  }) {
+    final defaultColor = theme != null ? theme.textColor : const Color(0xFF0F172A);
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color ?? defaultColor,
+      height: AppLang.ur ? 1.8 : 1.5,
+      fontFamily: AppLang.ur ? 'NotoNastaliqUrdu' : null,
+    );
+  }
+
+  Widget _infoBit(String label, String value, ThemePreset theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: _ts(fontSize: 10.5, color: theme.subtextColor)),
+        Text(value, style: _ts(fontSize: 13, fontWeight: FontWeight.bold, theme: theme)),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.card;
+    final theme = widget.theme;
     final tierColor = c.tier?.color ?? theme.primaryColor;
     final expired = c.isExpired;
     final daysLeft = c.expiryDate?.difference(DateTime.now()).inDays;
@@ -350,6 +422,7 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       borderRadius: 18,
+      accent: tierColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -423,12 +496,27 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
               Text(
                 c.pin.isEmpty
                     ? L.t('کوئی سیکیورٹی کوڈ مقرر نہیں', 'No security code set')
-                    : '${L.t('سیکیورٹی کوڈ', 'Security code')}: ${c.pin}',
+                    : '${L.t('سیکیورٹی کوڈ', 'Security code')}: ${_pinVisible ? c.pin : '••••'}',
                 style: _ts(fontSize: 12, fontWeight: FontWeight.bold, theme: theme),
               ),
+              if (c.pin.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: _togglePin,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      _pinVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      size: 15,
+                      color: tierColor,
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
               TextButton.icon(
-                onPressed: () => _editPin(c),
+                onPressed: () => widget.onEditPin(c),
                 icon: Icon(Icons.edit_outlined, size: 15, color: tierColor),
                 label: Text(
                   c.pin.isEmpty ? L.t('کوڈ مقرر کریں', 'Set code') : L.t('تبدیل کریں', 'Edit'),
@@ -439,17 +527,6 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _infoBit(String label, String value, ThemePreset theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: _ts(fontSize: 10.5, color: theme.subtextColor)),
-        Text(value, style: _ts(fontSize: 13, fontWeight: FontWeight.bold, theme: theme)),
-      ],
     );
   }
 }

@@ -225,11 +225,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
-                              ),
+                              gradient: _cardTier != null
+                                  ? LinearGradient(colors: [
+                                      _cardTier!.color,
+                                      _cardTier!.color.withValues(alpha: 0.55),
+                                    ])
+                                  : const LinearGradient(
+                                      colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
+                                    ),
                             ),
                             child: CircleAvatar(
                               radius: 44,

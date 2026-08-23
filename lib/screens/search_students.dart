@@ -524,10 +524,19 @@ class _StudentDetailsSheetState extends State<_StudentDetailsSheet> {
                 ),
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
-                      child: Icon(Icons.person_rounded, color: theme.primaryColor, size: 26),
+                    Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: _cardTier != null
+                            ? Border.all(color: _cardTier!.color, width: 2.5)
+                            : null,
+                      ),
+                      child: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
+                        child: Icon(Icons.person_rounded, color: theme.primaryColor, size: 26),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
