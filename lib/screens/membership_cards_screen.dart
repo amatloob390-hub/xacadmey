@@ -17,6 +17,8 @@ class MembershipCardsScreen extends StatefulWidget {
 }
 
 class _IssuedCard {
+  final String id;
+  final String userId;
   final String fullName;
   final String email;
   final String phone;
@@ -25,8 +27,11 @@ class _IssuedCard {
   final DateTime? issueDate;
   final DateTime? expiryDate;
   final bool isExistingHolder;
+  final String pin;
 
   _IssuedCard({
+    required this.id,
+    required this.userId,
     required this.fullName,
     required this.email,
     required this.phone,
@@ -35,6 +40,7 @@ class _IssuedCard {
     required this.issueDate,
     required this.expiryDate,
     required this.isExistingHolder,
+    required this.pin,
   });
 
   bool get isExpired => expiryDate != null && DateTime.now().isAfter(expiryDate!);
@@ -68,7 +74,7 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
     final rows = await _supabase
         .from('verification_requests')
         .select(
-            'full_name, email, phone, membership_card, membership_fee, card_number, card_issue_date, card_expiry_date, is_existing_card_holder')
+            'id, user_id, full_name, email, phone, membership_card, membership_fee, card_number, card_issue_date, card_expiry_date, is_existing_card_holder, card_pin')
         .not('membership_card', 'is', null)
         .eq('status', 'approved')
         .order('card_issue_date', ascending: false);
@@ -76,6 +82,8 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
     return rows.map((r) {
       final m = Map<String, dynamic>.from(r as Map);
       return _IssuedCard(
+        id: m['id'] as String,
+        userId: (m['user_id'] as String?) ?? '',
         fullName: (m['full_name'] as String?)?.trim().isNotEmpty == true
             ? m['full_name'] as String
             : 'اسٹوڈنٹ',
@@ -86,8 +94,75 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
         issueDate: DateTime.tryParse((m['card_issue_date'] as String?) ?? ''),
         expiryDate: DateTime.tryParse((m['card_expiry_date'] as String?) ?? ''),
         isExistingHolder: m['is_existing_card_holder'] == true,
+        pin: (m['card_pin'] as String?) ?? '',
       );
     }).toList();
+  }
+
+  Future<void> _editPin(_IssuedCard card) async {
+    final ctrl = TextEditingController(text: card.pin);
+    final newPin = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Text(L.t('سیکیورٹی کوڈ مقرر/تبدیل کریں', 'Set/Change Security Code')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${card.fullName} — ${card.cardNumber}'),
+              const SizedBox(height: 14),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8),
+                onChanged: (_) => setDialogState(() {}),
+                decoration: InputDecoration(
+                  counterText: '',
+                  labelText: L.t('4 ہندسوں کا کوڈ', '4-digit code'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(L.t('منسوخ', 'Cancel')),
+            ),
+            ElevatedButton(
+              onPressed: RegExp(r'^\d{4}$').hasMatch(ctrl.text.trim())
+                  ? () => Navigator.pop(ctx, ctrl.text.trim())
+                  : null,
+              child: Text(L.t('محفوظ کریں', 'Save')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (newPin == null) return;
+    try {
+      await _supabase.from('verification_requests').update({'card_pin': newPin}).eq('id', card.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('سیکیورٹی کوڈ محفوظ ہو گیا۔', 'Security code saved.')),
+          backgroundColor: Colors.green.shade700,
+        ));
+        _refresh();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('محفوظ نہیں ہو سکا، دوبارہ کوشش کریں۔',
+              'Could not save, please try again.')),
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    }
   }
 
   String _fmtDate(DateTime? d) {
@@ -338,6 +413,28 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
                 _infoBit(L.t('باقی دن', 'Days left'), '$daysLeft', theme),
               if (c.isExistingHolder)
                 _infoBit(L.t('ماخذ', 'Source'), L.t('پہلے سے ہولڈر', 'Existing holder'), theme),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.pin_outlined, size: 15, color: tierColor),
+              const SizedBox(width: 6),
+              Text(
+                c.pin.isEmpty
+                    ? L.t('کوئی سیکیورٹی کوڈ مقرر نہیں', 'No security code set')
+                    : '${L.t('سیکیورٹی کوڈ', 'Security code')}: ${c.pin}',
+                style: _ts(fontSize: 12, fontWeight: FontWeight.bold, theme: theme),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => _editPin(c),
+                icon: Icon(Icons.edit_outlined, size: 15, color: tierColor),
+                label: Text(
+                  c.pin.isEmpty ? L.t('کوڈ مقرر کریں', 'Set code') : L.t('تبدیل کریں', 'Edit'),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: tierColor),
+                ),
+              ),
             ],
           ),
         ],
