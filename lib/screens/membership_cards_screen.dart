@@ -166,6 +166,50 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
     }
   }
 
+  Future<void> _deleteCard(_IssuedCard card) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(L.t('کارڈ حذف کریں؟', 'Delete this card?')),
+        content: Text(L.t(
+            '${card.fullName} — ${card.cardNumber.isEmpty ? '' : card.cardNumber} کا کارڈ ہمیشہ کیلئے حذف ہو جائے گا۔ یہ عمل واپس نہیں ہو سکتا۔',
+            'This will permanently delete the card for ${card.fullName}'
+            '${card.cardNumber.isEmpty ? '' : ' (${card.cardNumber})'}. This cannot be undone.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(L.t('منسوخ', 'Cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(L.t('حذف کریں', 'Delete'), style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _supabase.from('verification_requests').delete().eq('id', card.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('کارڈ حذف کر دیا گیا۔', 'Card deleted.')),
+          backgroundColor: Colors.green.shade700,
+        ));
+        _refresh();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.t('حذف نہیں ہو سکا، دوبارہ کوشش کریں۔',
+              'Could not delete, please try again.')),
+          backgroundColor: Colors.red.shade700,
+        ));
+      }
+    }
+  }
+
   TextStyle _ts({
     required double fontSize,
     FontWeight fontWeight = FontWeight.normal,
@@ -329,6 +373,7 @@ class _MembershipCardsScreenState extends State<MembershipCardsScreen> {
                             card: c,
                             theme: theme,
                             onEditPin: _editPin,
+                            onDelete: _deleteCard,
                           )),
                     ],
                   );
@@ -347,11 +392,13 @@ class _CardTile extends StatefulWidget {
   final _IssuedCard card;
   final ThemePreset theme;
   final Future<void> Function(_IssuedCard) onEditPin;
+  final Future<void> Function(_IssuedCard) onDelete;
 
   const _CardTile({
     required this.card,
     required this.theme,
     required this.onEditPin,
+    required this.onDelete,
   });
 
   @override
@@ -464,6 +511,12 @@ class _CardTileState extends State<_CardTile> {
                     color: expired ? Colors.red : const Color(0xFF10B981),
                   ),
                 ),
+              ),
+              IconButton(
+                onPressed: () => widget.onDelete(c),
+                icon: const Icon(Icons.delete_outline, size: 19, color: Colors.red),
+                tooltip: L.t('کارڈ حذف کریں', 'Delete card'),
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
