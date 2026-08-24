@@ -41,6 +41,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
           color: sheetBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Scrollbar(
           thumbVisibility: true,
           radius: const Radius.circular(8),

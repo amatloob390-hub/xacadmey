@@ -210,6 +210,18 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(L.t('اجراء', 'ISSUED'),
+                                      style: const TextStyle(color: Colors.white54, fontSize: 9)),
+                                  Text(_fmtDate(card.issueDate),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

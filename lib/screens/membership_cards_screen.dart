@@ -548,8 +548,17 @@ class _CardTileState extends State<_CardTile> {
                         style: const TextStyle(
                             color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                       ),
-                      Text(L.t('میعاد: ', 'EXPIRES: ') + _fmtDate(c.expiryDate),
-                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(L.t('اجراء: ', 'ISSUED: ') + _fmtDate(c.issueDate),
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(L.t('میعاد: ', 'EXPIRES: ') + _fmtDate(c.expiryDate),
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       Row(
                         children: [
                           Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
@@ -587,7 +596,6 @@ class _CardTileState extends State<_CardTile> {
             spacing: 18,
             runSpacing: 6,
             children: [
-              _infoBit(L.t('اجراء', 'Issued'), _fmtDate(c.issueDate), theme),
               if (!expired && daysLeft != null)
                 _infoBit(L.t('باقی دن', 'Days left'), '$daysLeft', theme),
               if (c.isExistingHolder)
