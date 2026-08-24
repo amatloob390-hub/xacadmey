@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_lang.dart';
 import '../app_theme.dart';
 import '../membership_cards.dart';
-import '../widgets/teal_box.dart';
 
 /// ٹیچر کیلئے — جاری شدہ (approved) membership cards کی فہرست: کارڈ نمبر،
 /// tier، اجراء/میعاد کی تاریخ، اور فعال/ختم حیثیت۔ نئے کارڈ کی درخواستیں
@@ -465,32 +464,38 @@ class _CardTileState extends State<_CardTile> {
     final expired = c.isExpired;
     final daysLeft = c.expiryDate?.difference(DateTime.now()).inDays;
 
-    return TealBox(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      borderRadius: 18,
-      accent: tierColor,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [tierColor.withValues(alpha: 0.30), tierColor.withValues(alpha: 0.08)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tierColor.withValues(alpha: 0.8), width: 1.6),
+        boxShadow: [
+          BoxShadow(color: tierColor.withValues(alpha: 0.35), blurRadius: 22, spreadRadius: 1),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: tierColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.card_membership_rounded, color: tierColor),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(c.fullName,
-                        style: _ts(fontSize: 15, fontWeight: FontWeight.bold, theme: theme)),
-                    Text(c.email, style: _ts(fontSize: 12, color: theme.subtextColor)),
+                        style: _ts(fontSize: 19, fontWeight: FontWeight.w900, theme: theme)),
+                    const SizedBox(height: 3),
+                    Text(
+                      c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn) : '—',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: tierColor),
+                    ),
                   ],
                 ),
               ),
@@ -520,17 +525,13 @@ class _CardTileState extends State<_CardTile> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Divider(color: tierColor.withValues(alpha: 0.2), height: 1),
+          const SizedBox(height: 14),
+          Divider(color: tierColor.withValues(alpha: 0.3), height: 1),
           const SizedBox(height: 10),
           Wrap(
             spacing: 18,
             runSpacing: 6,
             children: [
-              _infoBit(
-                  L.t('کارڈ', 'Card'),
-                  c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn) : '—',
-                  theme),
               _infoBit(L.t('کارڈ نمبر', 'Card No.'),
                   c.cardNumber.isEmpty ? '—' : c.cardNumber, theme),
               _infoBit(L.t('اجراء', 'Issued'), _fmtDate(c.issueDate), theme),
