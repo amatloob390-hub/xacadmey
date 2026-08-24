@@ -36,36 +36,40 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
     builder: (ctx) {
       return Directionality(
         textDirection: AppLang.ur ? TextDirection.rtl : TextDirection.ltr,
-        child: ConstrainedBox(
-        // بغیر کسی واضح زیادہ سے زیادہ اونچائی کے، showModalBottomSheet کا
-        // builder اتنا ہی اونچا ہو جاتا ہے جتنا مواد — یعنی SingleChildScrollView
-        // کبھی حقیقتاً overflow نہیں کرتا (maxScrollExtent = 0)، اور نیچے کا
-        // مواد صرف اسکرین سے باہر کٹ جاتا ہے، scroll کرنے کیلئے کچھ نہیں بچتا۔
-        // یہی وجہ تھی کہ scrollbar/mouse-wheel کچھ بھی کام نہیں کر رہا تھا۔
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
-        child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
-        decoration: const BoxDecoration(
-          color: sheetBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ScrollConfiguration(
-          // ماؤس ڈریگ سے بھی scroll ہو سکے (ویب پر بذاتِ خود بند ہوتا ہے) —
-          // یہ صرف dragDevices شامل کرتا ہے، پچھلی بار والا scrollbars:false
-          // نہیں جو scrollbar کو بذاتِ خود کام کرنے سے روک رہا تھا۔
-          behavior: ScrollConfiguration.of(ctx).copyWith(dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-            PointerDeviceKind.trackpad,
-            PointerDeviceKind.stylus,
-          }),
-          child: Scrollbar(
+        // DraggableScrollableSheet — چار plain widgets خود سے جوڑنے کی بجائے
+        // (ConstrainedBox+Scrollbar+SingleChildScrollView کے مینوئل امتزاج سے
+        // اونچائی/سکرول درست کام نہیں کر رہا تھا)، Flutter کا بنا بنایا،
+        // آزمودہ widget استعمال کریں جو بلند bottom-sheet مواد کیلئے سکرولنگ
+        // کی ضمانت دیتا ہے۔
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context2, scrollController) {
+            return ScrollConfiguration(
+              // ماؤس ڈریگ سے بھی scroll ہو سکے (ویب پر بذاتِ خود بند ہوتا ہے)۔
+              behavior: ScrollConfiguration.of(context2).copyWith(dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.trackpad,
+                PointerDeviceKind.stylus,
+              }),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+                decoration: const BoxDecoration(
+                  color: sheetBg,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Scrollbar(
             thumbVisibility: true,
             interactive: true,
             thickness: 8,
             radius: const Radius.circular(8),
+            controller: scrollController,
             child: SingleChildScrollView(
+              controller: scrollController,
               padding: const EdgeInsetsDirectional.only(end: 14),
               child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -233,9 +237,10 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
             ],
             ),
           ),
-          ),
-        ),
-        ),
+                ),
+              ),
+            );
+          },
         ),
       );
     },
