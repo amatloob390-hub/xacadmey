@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../app_lang.dart';
 import '../membership_cards.dart';
@@ -42,8 +43,20 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Scrollbar(
+        child: ScrollConfiguration(
+          // ماؤس ڈریگ سے بھی scroll ہو سکے (ویب پر بذاتِ خود بند ہوتا ہے) —
+          // یہ صرف dragDevices شامل کرتا ہے، پچھلی بار والا scrollbars:false
+          // نہیں جو scrollbar کو بذاتِ خود کام کرنے سے روک رہا تھا۔
+          behavior: ScrollConfiguration.of(ctx).copyWith(dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.stylus,
+          }),
+          child: Scrollbar(
             thumbVisibility: true,
+            interactive: true,
+            thickness: 8,
             radius: const Radius.circular(8),
             child: SingleChildScrollView(
               padding: const EdgeInsetsDirectional.only(end: 14),
@@ -212,6 +225,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
               ),
             ],
             ),
+          ),
           ),
         ),
         ),
