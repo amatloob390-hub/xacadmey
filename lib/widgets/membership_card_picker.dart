@@ -36,6 +36,13 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
     builder: (ctx) {
       return Directionality(
         textDirection: AppLang.ur ? TextDirection.rtl : TextDirection.ltr,
+        child: ConstrainedBox(
+        // بغیر کسی واضح زیادہ سے زیادہ اونچائی کے، showModalBottomSheet کا
+        // builder اتنا ہی اونچا ہو جاتا ہے جتنا مواد — یعنی SingleChildScrollView
+        // کبھی حقیقتاً overflow نہیں کرتا (maxScrollExtent = 0)، اور نیچے کا
+        // مواد صرف اسکرین سے باہر کٹ جاتا ہے، scroll کرنے کیلئے کچھ نہیں بچتا۔
+        // یہی وجہ تھی کہ scrollbar/mouse-wheel کچھ بھی کام نہیں کر رہا تھا۔
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
         child: Container(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
         decoration: const BoxDecoration(
@@ -227,6 +234,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
             ),
           ),
           ),
+        ),
         ),
         ),
       );
