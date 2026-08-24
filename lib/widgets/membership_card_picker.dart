@@ -25,22 +25,28 @@ TextStyle _ts({
 void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) {
   const cardBg = Color(0xFF2E2E31);
   const sheetBg = Color(0xFF1F1F22);
-  // لینڈنگ پیج کے ہیرو سیکشن کا وہی برانڈ رنگ — تمام کارڈز کیلئے ایک جیسا۔
-  const brandColor = Color(0xFF10B981);
+  // ہر کارڈ کا برانڈ رنگ اب اُس کے اپنے tier کے رنگ کے مطابق ہے (نیچے
+  // c.color استعمال ہوتا ہے) — پہلے سب کیلئے ایک ہی رنگ تھا۔
 
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) {
-      return Container(
+      return Directionality(
+        textDirection: AppLang.ur ? TextDirection.rtl : TextDirection.ltr,
+        child: Container(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
         decoration: const BoxDecoration(
           color: sheetBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: SingleChildScrollView(
-          child: Column(
+        child: Scrollbar(
+          thumbVisibility: true,
+          radius: const Radius.circular(8),
+          child: SingleChildScrollView(
+            padding: const EdgeInsetsDirectional.only(end: 10),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -112,10 +118,10 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                 color: cardBg,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: brandColor.withValues(alpha: 0.8), width: 1.2),
+                                    color: c.color.withValues(alpha: 0.8), width: 1.2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: brandColor.withValues(alpha: 0.3),
+                                    color: c.color.withValues(alpha: 0.3),
                                     blurRadius: 14,
                                     spreadRadius: 0.5,
                                   ),
@@ -124,7 +130,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.card_membership_rounded, color: brandColor, size: 20),
+                                  Icon(Icons.card_membership_rounded, color: c.color, size: 20),
                                   const SizedBox(height: 6),
                                   Text(
                                     L.t(c.labelUrdu, c.labelEn).toUpperCase(),
@@ -132,8 +138,8 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                     style: _ts(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w900,
-                                        color: brandColor,
-                                        height: 1.15),
+                                        color: c.color,
+                                        height: AppLang.ur ? 1.7 : 1.15),
                                   ),
                                   Text(
                                     L.t('ممبرشپ', 'MEMBERSHIP'),
@@ -142,7 +148,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white.withValues(alpha: 0.8),
-                                        height: 1.15),
+                                        height: AppLang.ur ? 1.7 : 1.15),
                                   ),
                                   const SizedBox(height: 8),
                                   ...c.features(AppLang.ur).take(2).map((f) => Padding(
@@ -151,14 +157,14 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Icon(Icons.check_circle_rounded,
-                                                color: brandColor, size: 11),
+                                                color: c.color, size: 11),
                                             const SizedBox(width: 5),
                                             Expanded(
                                               child: Text(
                                                 f,
                                                 style: _ts(
                                                     fontSize: 9.5,
-                                                    height: 1.2,
+                                                    height: AppLang.ur ? 1.8 : 1.2,
                                                     color: Colors.white.withValues(alpha: 0.7)),
                                               ),
                                             ),
@@ -169,7 +175,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                   Text(
                                     L.t('روپے ${c.fee.toInt()}', 'Rs ${c.fee.toInt()}'),
                                     style: _ts(
-                                        fontSize: 16, fontWeight: FontWeight.w900, color: brandColor),
+                                        fontSize: 16, fontWeight: FontWeight.w900, color: c.color),
                                   ),
                                   const SizedBox(height: 8),
                                   Container(
@@ -178,7 +184,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                     decoration: BoxDecoration(
                                       color: Colors.black.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: brandColor.withValues(alpha: 0.6)),
+                                      border: Border.all(color: c.color.withValues(alpha: 0.6)),
                                     ),
                                     child: Text(
                                       L.t('منتخب کریں', 'SELECT'),
@@ -186,7 +192,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                                       style: _ts(
                                           fontSize: 10.5,
                                           fontWeight: FontWeight.w800,
-                                          color: brandColor),
+                                          color: c.color),
                                     ),
                                   ),
                                 ],
@@ -200,7 +206,9 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                 },
               ),
             ],
+            ),
           ),
+        ),
         ),
       );
     },

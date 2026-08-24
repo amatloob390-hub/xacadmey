@@ -104,13 +104,14 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     //    enrich نہیں کرتے، نئے (already-verified) entries بھی شامل کرتے ہیں۔
     try {
       final rows = await _supabase.from('verification_requests').select(
-          'user_id, phone, receipt_image, membership_card, membership_fee, email, full_name, is_existing_card_holder, name_on_card, card_number, card_issue_date, card_expiry_date, preserve_expiry_date').eq(
+          'id, user_id, phone, receipt_image, membership_card, membership_fee, email, full_name, is_existing_card_holder, name_on_card, card_number, card_issue_date, card_expiry_date, preserve_expiry_date').eq(
           'status', 'pending');
       if (rows is List && rows.isNotEmpty) {
         for (var r in rows) {
           final m = Map<String, dynamic>.from(r as Map);
           final id = m['user_id']?.toString() ?? '';
-          if (id.isEmpty) continue;
+          final requestId = m['id']?.toString() ?? '';
+          if (id.isEmpty || requestId.isEmpty) continue;
           final fields = {
             'phone': m['phone'],
             'receipt_image': m['receipt_image'],
@@ -123,14 +124,21 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
             'card_expiry_date': m['card_expiry_date'],
             'preserve_expiry_date': m['preserve_expiry_date'],
           };
-          if (map.containsKey(id)) {
-            map[id]!.addAll(fields);
+          // اگر یہاں پہلے سے کوئی entry موجود ہے اور وہ خود ایک upgrade
+          // درخواست نہیں (یعنی نئی رجسٹریشن کی entry ہے) تو یہ اُسی کی
+          // signup-وقت کی card تفصیل ہے — enrich کریں۔ لیکن اگر پہلے سے
+          // موجود entry خود ایک upgrade درخواست ہے (یعنی اسی صارف کی
+          // دوسری/تیسری pending upgrade درخواست) تو الگ tile بنائیں —
+          // ورنہ ایک پر Approve دبانے سے دونوں خاموشی سے منظور ہو جاتیں۔
+          final existing = map[id];
+          if (existing != null && existing['is_upgrade'] != true) {
+            existing.addAll(fields);
+            existing['request_id'] = requestId;
           } else {
-            // ابھی map میں نہیں — یعنی profiles.is_verified پہلے ہی true ہے
-            // (ورنہ اوپر والا !isVerified query اسے شامل کر چکا ہوتا)۔
-            // یہ ایک upgrade درخواست ہے۔
-            map[id] = {
+            final key = existing == null ? id : 'upg_$requestId';
+            map[key] = {
               'id': id,
+              'request_id': requestId,
               'full_name': m['full_name']?.toString() ?? 'اسٹوڈنٹ',
               'email': m['email']?.toString() ?? '',
               'is_trial': false,
@@ -523,12 +531,23 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
       }
     }
 
+    final requestId = item['request_id'] as String?;
+    if (requestId == null || requestId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('درخواست شناخت نہیں ہو سکی، دوبارہ کوشش کریں۔',
+            'Could not identify this request, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
+      return;
+    }
+
     bool ok = false;
     try {
       await _supabase
           .from('verification_requests')
           .update(updates)
-          .eq('user_id', userId)
+          .eq('id', requestId)
           .eq('status', 'pending');
       ok = true;
     } catch (_) {}
@@ -550,7 +569,8 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     _loadPendingStudents();
   }
 
-  Future<void> _rejectUpgrade(String userId, String studentEmail) async {
+  Future<void> _rejectUpgrade(
+      String userId, String studentEmail, Map<String, dynamic> item) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -575,12 +595,23 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
     );
     if (ok != true) return;
 
+    final requestId = item['request_id'] as String?;
+    if (requestId == null || requestId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('درخواست شناخت نہیں ہو سکی، دوبارہ کوشش کریں۔',
+            'Could not identify this request, please try again.')),
+        backgroundColor: Colors.red.shade700,
+      ));
+      return;
+    }
+
     bool rejected = false;
     try {
       await _supabase
           .from('verification_requests')
           .update({'status': 'rejected', 'updated_at': DateTime.now().toIso8601String()})
-          .eq('user_id', userId)
+          .eq('id', requestId)
           .eq('status', 'pending');
       rejected = true;
     } catch (_) {}
@@ -870,7 +901,7 @@ class _StudentApprovalsScreenState extends State<StudentApprovalsScreen> {
                                         label: Text(L.t('مسترد', 'Reject'),
                                             style: _ts(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
                                         onPressed: () => isUpgrade
-                                            ? _rejectUpgrade(id, email)
+                                            ? _rejectUpgrade(id, email, item)
                                             : _rejectStudent(id, email),
                                       ),
                                       const SizedBox(width: 10),
