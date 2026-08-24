@@ -144,7 +144,7 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
+                constraints: const BoxConstraints(maxWidth: 340),
                 child: Column(
                   children: [
                     // --- CARD VISUAL (real ISO credit/debit card ratio, 85.6×53.98mm) ---

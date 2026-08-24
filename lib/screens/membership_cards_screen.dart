@@ -470,11 +470,8 @@ class _CardTileState extends State<_CardTile> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Expanded(
-                child: Text(c.fullName,
-                    style: _ts(fontSize: 15, fontWeight: FontWeight.bold, theme: theme)),
-              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -501,75 +498,87 @@ class _CardTileState extends State<_CardTile> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // --- CARD VISUAL (real ISO credit/debit card ratio, 85.6×53.98mm) ---
-          AspectRatio(
-            aspectRatio: 85.60 / 53.98,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [const Color(0xFF1A1A1A), tierColor.withValues(alpha: 0.30)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: tierColor.withValues(alpha: 0.8), width: 1.6),
-                boxShadow: [
-                  BoxShadow(color: tierColor.withValues(alpha: 0.35), blurRadius: 22, spreadRadius: 1),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+          const SizedBox(height: 6),
+          // --- CARD VISUAL: real-world credit/debit card size (85.6×53.98mm
+          // ISO ID-1, scaled to ~340dp wide) — not stretched to list width.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: AspectRatio(
+                aspectRatio: 85.60 / 53.98,
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [const Color(0xFF1A1A1A), tierColor.withValues(alpha: 0.30)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: tierColor.withValues(alpha: 0.8), width: 1.6),
+                    boxShadow: [
+                      BoxShadow(color: tierColor.withValues(alpha: 0.35), blurRadius: 20, spreadRadius: 1),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('XACADEMY',
-                          style: TextStyle(
-                              color: tierColor, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 14)),
-                      Icon(Icons.card_membership_rounded, color: tierColor, size: 22),
-                    ],
-                  ),
-                  Text(
-                    c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn).toUpperCase() : '—',
-                    style: TextStyle(color: tierColor, fontWeight: FontWeight.w900, fontSize: 15),
-                  ),
-                  Text(
-                    c.cardNumber.isEmpty ? '•••• •••• •••• ••••' : c.cardNumber,
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 1.6),
-                  ),
-                  Text(L.t('میعاد: ', 'EXPIRES: ') + _fmtDate(c.expiryDate),
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
-                          style: const TextStyle(color: Colors.white54, fontSize: 10)),
-                      Text(
-                        c.pin.isEmpty ? '----' : (_pinVisible ? c.pin : '••••'),
-                        style: TextStyle(
-                            color: tierColor, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('XACADEMY',
+                              style: TextStyle(
+                                  color: tierColor, fontWeight: FontWeight.w900, letterSpacing: 1.6, fontSize: 11)),
+                          Icon(Icons.card_membership_rounded, color: tierColor, size: 18),
+                        ],
                       ),
-                      if (c.pin.isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: _togglePin,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              _pinVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                              size: 15,
-                              color: tierColor,
-                            ),
+                      Text(
+                        c.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                      ),
+                      Text(
+                        c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn).toUpperCase() : '—',
+                        style: TextStyle(color: tierColor, fontWeight: FontWeight.w800, fontSize: 11.5),
+                      ),
+                      Text(
+                        c.cardNumber.isEmpty ? '•••• •••• •••• ••••' : c.cardNumber,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      ),
+                      Text(L.t('میعاد: ', 'EXPIRES: ') + _fmtDate(c.expiryDate),
+                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
+                              style: const TextStyle(color: Colors.white54, fontSize: 9)),
+                          Text(
+                            c.pin.isEmpty ? '----' : (_pinVisible ? c.pin : '••••'),
+                            style: TextStyle(
+                                color: tierColor, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2.5),
                           ),
-                        ),
-                      ],
+                          if (c.pin.isNotEmpty) ...[
+                            const SizedBox(width: 4),
+                            InkWell(
+                              onTap: _togglePin,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: const EdgeInsets.all(3),
+                                child: Icon(
+                                  _pinVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                  size: 13,
+                                  color: tierColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
