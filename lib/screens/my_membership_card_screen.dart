@@ -147,16 +147,18 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(
                   children: [
-                    // --- CARD VISUAL ---
-                    Container(
-                      padding: const EdgeInsets.all(22),
+                    // --- CARD VISUAL (real ISO credit/debit card ratio, 85.6×53.98mm) ---
+                    AspectRatio(
+                      aspectRatio: 85.60 / 53.98,
+                      child: Container(
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [const Color(0xFF1A1A1A), color.withValues(alpha: 0.25)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: color.withValues(alpha: 0.8), width: 1.6),
                         boxShadow: [
                           BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 26, spreadRadius: 1),
@@ -164,6 +166,7 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -171,28 +174,25 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                               Text(
                                 'XACADEMY',
                                 style: TextStyle(
-                                    color: color, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 15),
+                                    color: color, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 14),
                               ),
-                              Icon(Icons.card_membership_rounded, color: color, size: 26),
+                              Icon(Icons.card_membership_rounded, color: color, size: 22),
                             ],
                           ),
-                          const SizedBox(height: 18),
                           Text(
                             card.tier != null
                                 ? L.t(card.tier!.labelUrdu, card.tier!.labelEn).toUpperCase()
                                 : L.t('ممبرشپ کارڈ', 'MEMBERSHIP CARD'),
-                            style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18),
+                            style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 15),
                           ),
-                          const SizedBox(height: 22),
                           Text(
                             card.cardNumber.isEmpty ? '•••• •••• •••• ••••' : card.cardNumber,
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 17,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 2),
+                                letterSpacing: 1.6),
                           ),
-                          const SizedBox(height: 18),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -201,10 +201,12 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(L.t('نام', 'NAME'),
-                                        style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                                        style: const TextStyle(color: Colors.white54, fontSize: 9)),
                                     Text(card.nameOnCard,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
-                                            color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                                            color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ),
@@ -212,31 +214,30 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(L.t('میعاد', 'EXPIRES'),
-                                      style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                                      style: const TextStyle(color: Colors.white54, fontSize: 9)),
                                   Text(_fmtDate(card.expiryDate),
                                       style: const TextStyle(
-                                          color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                                          color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
                           Row(
                             children: [
                               Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
-                                  style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                                  style: const TextStyle(color: Colors.white54, fontSize: 10)),
                               Text(
                                 card.pin.isEmpty
                                     ? '----'
                                     : (_pinVisible ? card.pin : '••••'),
                                 style: TextStyle(
                                     color: color,
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w900,
-                                    letterSpacing: 4),
+                                    letterSpacing: 3),
                               ),
                               if (card.pin.isNotEmpty) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 6),
                                 InkWell(
                                   onTap: _togglePin,
                                   borderRadius: BorderRadius.circular(20),
@@ -246,7 +247,7 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                                       _pinVisible
                                           ? Icons.visibility_off_rounded
                                           : Icons.visibility_rounded,
-                                      size: 16,
+                                      size: 15,
                                       color: color,
                                     ),
                                   ),
@@ -255,6 +256,7 @@ class _MyMembershipCardScreenState extends State<MyMembershipCardScreen> {
                             ],
                           ),
                         ],
+                      ),
                       ),
                     ),
                     const SizedBox(height: 18),

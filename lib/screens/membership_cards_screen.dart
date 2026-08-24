@@ -465,39 +465,15 @@ class _CardTileState extends State<_CardTile> {
     final daysLeft = c.expiryDate?.difference(DateTime.now()).inDays;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [tierColor.withValues(alpha: 0.30), tierColor.withValues(alpha: 0.08)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: tierColor.withValues(alpha: 0.8), width: 1.6),
-        boxShadow: [
-          BoxShadow(color: tierColor.withValues(alpha: 0.35), blurRadius: 22, spreadRadius: 1),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(c.fullName,
-                        style: _ts(fontSize: 19, fontWeight: FontWeight.w900, theme: theme)),
-                    const SizedBox(height: 3),
-                    Text(
-                      c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn) : '—',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: tierColor),
-                    ),
-                  ],
-                ),
+                child: Text(c.fullName,
+                    style: _ts(fontSize: 15, fontWeight: FontWeight.bold, theme: theme)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -525,59 +501,101 @@ class _CardTileState extends State<_CardTile> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Divider(color: tierColor.withValues(alpha: 0.3), height: 1),
+          const SizedBox(height: 8),
+          // --- CARD VISUAL (real ISO credit/debit card ratio, 85.6×53.98mm) ---
+          AspectRatio(
+            aspectRatio: 85.60 / 53.98,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [const Color(0xFF1A1A1A), tierColor.withValues(alpha: 0.30)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: tierColor.withValues(alpha: 0.8), width: 1.6),
+                boxShadow: [
+                  BoxShadow(color: tierColor.withValues(alpha: 0.35), blurRadius: 22, spreadRadius: 1),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('XACADEMY',
+                          style: TextStyle(
+                              color: tierColor, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 14)),
+                      Icon(Icons.card_membership_rounded, color: tierColor, size: 22),
+                    ],
+                  ),
+                  Text(
+                    c.tier != null ? L.t(c.tier!.labelUrdu, c.tier!.labelEn).toUpperCase() : '—',
+                    style: TextStyle(color: tierColor, fontWeight: FontWeight.w900, fontSize: 15),
+                  ),
+                  Text(
+                    c.cardNumber.isEmpty ? '•••• •••• •••• ••••' : c.cardNumber,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 1.6),
+                  ),
+                  Text(L.t('میعاد: ', 'EXPIRES: ') + _fmtDate(c.expiryDate),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      Text(L.t('سیکیورٹی کوڈ: ', 'SECURITY CODE: '),
+                          style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                      Text(
+                        c.pin.isEmpty ? '----' : (_pinVisible ? c.pin : '••••'),
+                        style: TextStyle(
+                            color: tierColor, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 3),
+                      ),
+                      if (c.pin.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: _togglePin,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              _pinVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                              size: 15,
+                              color: tierColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 18,
             runSpacing: 6,
             children: [
-              _infoBit(L.t('کارڈ نمبر', 'Card No.'),
-                  c.cardNumber.isEmpty ? '—' : c.cardNumber, theme),
               _infoBit(L.t('اجراء', 'Issued'), _fmtDate(c.issueDate), theme),
-              _infoBit(L.t('میعاد', 'Expires'), _fmtDate(c.expiryDate), theme),
               if (!expired && daysLeft != null)
                 _infoBit(L.t('باقی دن', 'Days left'), '$daysLeft', theme),
               if (c.isExistingHolder)
                 _infoBit(L.t('ماخذ', 'Source'), L.t('پہلے سے ہولڈر', 'Existing holder'), theme),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.pin_outlined, size: 15, color: tierColor),
-              const SizedBox(width: 6),
-              Text(
-                c.pin.isEmpty
-                    ? L.t('کوئی سیکیورٹی کوڈ مقرر نہیں', 'No security code set')
-                    : '${L.t('سیکیورٹی کوڈ', 'Security code')}: ${_pinVisible ? c.pin : '••••'}',
-                style: _ts(fontSize: 12, fontWeight: FontWeight.bold, theme: theme),
+          const SizedBox(height: 6),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              onPressed: () => widget.onEditPin(c),
+              icon: Icon(Icons.edit_outlined, size: 15, color: tierColor),
+              label: Text(
+                c.pin.isEmpty ? L.t('کوڈ مقرر کریں', 'Set code') : L.t('تبدیل کریں', 'Edit'),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: tierColor),
               ),
-              if (c.pin.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                InkWell(
-                  onTap: _togglePin,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      _pinVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                      size: 15,
-                      color: tierColor,
-                    ),
-                  ),
-                ),
-              ],
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => widget.onEditPin(c),
-                icon: Icon(Icons.edit_outlined, size: 15, color: tierColor),
-                label: Text(
-                  c.pin.isEmpty ? L.t('کوڈ مقرر کریں', 'Set code') : L.t('تبدیل کریں', 'Edit'),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: tierColor),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

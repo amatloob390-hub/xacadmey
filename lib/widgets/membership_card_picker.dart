@@ -115,7 +115,11 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
                             child: Container(
                               padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
                               decoration: BoxDecoration(
-                                color: cardBg,
+                                gradient: LinearGradient(
+                                  colors: [cardBg, c.color.withValues(alpha: 0.38)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                     color: c.color.withValues(alpha: 0.8), width: 1.2),
