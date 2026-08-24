@@ -42,12 +42,18 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Scrollbar(
-          thumbVisibility: true,
-          radius: const Radius.circular(8),
-          child: SingleChildScrollView(
-            padding: const EdgeInsetsDirectional.only(end: 10),
-            child: Column(
+        child: ScrollConfiguration(
+          // ویب/ڈیسک ٹاپ پر Flutter خودکار طور پر ہر scrollable کے گرد
+          // اپنا platform scrollbar لگا دیتا ہے — نیچے کا اپنا Scrollbar
+          // اُس کے ساتھ ٹکرا کر دو scrollbars یا غلط جگہ بنا سکتا تھا،
+          // اسی لیے خودکار والا یہاں بند کر دیا۔
+          behavior: ScrollConfiguration.of(ctx).copyWith(scrollbars: false),
+          child: Scrollbar(
+            thumbVisibility: true,
+            radius: const Radius.circular(8),
+            child: SingleChildScrollView(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -212,6 +218,7 @@ void showMembershipCardPicker(BuildContext context, {required bool isLoggedIn}) 
               ),
             ],
             ),
+          ),
           ),
         ),
         ),
